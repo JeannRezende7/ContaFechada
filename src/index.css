@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  /* Visible keyboard focus everywhere, never removed */
+  :focus-visible {
+    outline: 2px solid theme('colors.ledger.500');
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Every currency value in the app renders through this class:
+     tabular figures so amounts line up like a real ledger column. */
+  .money {
+    font-family: 'IBM Plex Mono', monospace;
+    font-feature-settings: 'tnum' 1;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

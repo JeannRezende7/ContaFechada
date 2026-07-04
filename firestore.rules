@@ -1,0 +1,39 @@
+rules_version = '2';
+
+// Enforces REQ-02 (isolamento por workspace) and REQ-06 (papéis) at the
+// database layer, so the client-side role checks in constants/roles.js
+// are a UX convenience, not the actual security boundary.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function memberRole(workspaceId) {
+      return get(/databases/$(database)/documents/workspaces/$(workspaceId))
+        .data.members[request.auth.uid].role;
+    }
+
+    function isMember(workspaceId) {
+      return request.auth != null && memberRole(workspaceId) != null;
+    }
+
+    function isAdmin(workspaceId) {
+      return isMember(workspaceId) && memberRole(workspaceId) == 'admin';
+    }
+
+    function canWrite(workspaceId) {
+      return isMember(workspaceId) &&
+        (memberRole(workspaceId) == 'admin' || memberRole(workspaceId) == 'operador');
+    }
+
+    match /workspaces/{workspaceId} {
+      allow read: if isMember(workspaceId);
+      allow create: if request.auth != null; // qualquer usuário autenticado pode criar seu workspace
+      allow update, delete: if isAdmin(workspaceId);
+
+      match /{subcollection}/{docId} {
+        allow read: if isMember(workspaceId);
+        allow create, update: if canWrite(workspaceId);
+        allow delete: if isAdmin(workspaceId);
+      }
+    }
+  }
+}
