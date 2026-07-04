@@ -4,57 +4,77 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Deep ink navy - primary dark surface / text
+        // Slate - primary dark surface / text
         ink: {
-          DEFAULT: '#101A24',
-          50: '#F2F4F6',
-          100: '#DDE3E8',
-          300: '#8FA0AC',
-          500: '#3D4E5C',
-          700: '#1B2733',
-          900: '#101A24',
+          DEFAULT: '#0F172A',
+          50: '#F8FAFC',
+          100: '#E2E8F0',
+          300: '#94A3B8',
+          500: '#64748B',
+          700: '#334155',
+          900: '#0F172A',
         },
-        // Cool off-white paper (intentionally NOT warm cream)
+        // Slate-tinted page background
         paper: {
-          DEFAULT: '#F3F5F2',
-          dim: '#E8EBE7',
+          DEFAULT: '#F8FAFC',
+          dim: '#F1F5F9',
         },
-        // Ledger green - positive balances, primary actions, "pago"
+        // Emerald - positive balances, primary actions, "pago"
         ledger: {
-          50: '#E6F5EE',
-          200: '#A9DEC4',
-          400: '#3FB585',
-          500: '#1F9D6C',
-          600: '#167A54',
-          700: '#0F5C3F',
+          50: '#ECFDF5',
+          200: '#A7F3D0',
+          400: '#34D399',
+          500: '#10B981',
+          600: '#059669',
+          700: '#047857',
         },
-        // Signal red - overdue, negative balances, destructive actions
+        // Rose - overdue, negative balances, destructive actions
         signal: {
-          50: '#FBEAE8',
-          200: '#EFB3AC',
-          400: '#DF6F63',
-          500: '#D64545',
-          600: '#B23434',
+          50: '#FFF1F2',
+          200: '#FECDD3',
+          400: '#FB7185',
+          500: '#F43F5E',
+          600: '#E11D48',
         },
         // Amber - pending / scheduled
         pending: {
-          400: '#E0A93F',
-          500: '#C98F1F',
+          400: '#FBBF24',
+          500: '#F59E0B',
+        },
+        // Orange accent - personality touches: recurring badge, illustrations, highlights
+        clay: {
+          50: '#FFF7ED',
+          200: '#FED7AA',
+          400: '#FB923C',
+          500: '#F97316',
+          600: '#EA580C',
+        },
+        // Category color: "Outros Recebimentos" (teal, receita subgroup)
+        mint: {
+          50: '#F0FDFA',
+          500: '#14B8A6',
+          700: '#0F766E',
+        },
+        // Category color: "Patrimônio" (gold)
+        gold: {
+          50: '#FEFCE8',
+          500: '#CA8A04',
+          700: '#713F12',
         },
       },
       fontFamily: {
-        // Display face with a technical, ledger-adjacent character
         display: ['"Space Grotesk"', 'sans-serif'],
-        // Body face, optimized for reading dense UI
         sans: ['"Inter"', 'sans-serif'],
-        // Tabular mono for every currency value in the app
         ledger: ['"IBM Plex Mono"', 'monospace'],
       },
       borderRadius: {
-        card: '14px',
+        card: '18px',
+        pill: '999px',
       },
       boxShadow: {
-        card: '0 1px 2px 0 rgb(16 26 36 / 0.06), 0 1px 8px -2px rgb(16 26 36 / 0.08)',
+        card: '0 1px 2px 0 rgb(15 23 42 / 0.05), 0 6px 20px -6px rgb(15 23 42 / 0.12)',
+        'card-hover': '0 2px 4px 0 rgb(15 23 42 / 0.06), 0 10px 28px -6px rgb(15 23 42 / 0.16)',
+        pop: '0 12px 32px -8px rgb(15 23 42 / 0.28)',
       },
     },
   },

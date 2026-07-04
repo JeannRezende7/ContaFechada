@@ -1,5 +1,5 @@
 {
-  "name": "saas-contas",
+  "name": "contafechada",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "firebase": "^10.12.2",
+    "lucide-react": "^1.23.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.24.1",

@@ -3,9 +3,9 @@ export default function GoogleButton({ onClick, loading }) {
     <button
       onClick={onClick}
       disabled={loading}
-      className="w-full flex items-center justify-center gap-3 rounded-md border border-ink-100
-                 bg-white py-2.5 text-sm font-medium text-ink-900 hover:bg-ink-50 transition-colors
-                 disabled:opacity-60"
+      className="w-full flex items-center justify-center gap-3 rounded-xl border border-ink-100
+                 bg-white py-3 text-sm font-medium text-ink-900 hover:shadow-card-hover hover:-translate-y-px
+                 transition-all disabled:opacity-60 disabled:translate-y-0 disabled:shadow-none"
     >
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92C16.66 14.2 17.64 11.9 17.64 9.2Z" />

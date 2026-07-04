@@ -16,7 +16,7 @@ export default function StatusBadge({ status, onChange }) {
     <select
       value={status}
       onChange={(e) => onChange(e.target.value)}
-      className={`text-xs font-medium rounded-full px-2.5 py-1 border-0 cursor-pointer ${config.className}`}
+      className={`text-xs font-medium rounded-pill px-3 py-1.5 border-0 cursor-pointer ${config.className}`}
     >
       {OPTIONS.map((key) => (
         <option key={key} value={key}>

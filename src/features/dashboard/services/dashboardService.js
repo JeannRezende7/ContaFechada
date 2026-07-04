@@ -1,22 +1,17 @@
-import { listTenantDocs } from '../../../firebase/firestore.js';
+import { listLancamentosByMonth } from '../../lancamentos/services/lancamentosService.js';
+import { ensureGeneratedForMonth } from '../../recorrencias/services/recorrenciasService.js';
 
 /**
- * Computes the three headline indicators (REQ-05):
- * saldo atual, total a pagar no mês, total a receber no mês.
- * MVP version: works client-side over the lancamentos collection.
+ * Computes the headline indicators for the given 'YYYY-MM' month:
+ * saldo do mês, total a pagar, total a receber.
+ * MVP version: works client-side over that month's lancamentos.
  * Move to a Cloud Function / aggregation query once volume grows.
  */
-export async function getDashboardIndicators(slug) {
-  const lancamentos = await listTenantDocs(slug, 'lancamentos');
+export async function getDashboardIndicators(uid, monthKey) {
+  await ensureGeneratedForMonth(uid, monthKey);
+  const lancamentos = await listLancamentosByMonth(uid, monthKey);
 
-  const now = new Date();
-  const isCurrentMonth = (dateStr) => {
-    if (!dateStr) return false;
-    const d = new Date(dateStr);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  };
-
-  let saldoAtual = 0;
+  let saldoMes = 0;
   let totalAPagar = 0;
   let totalAReceber = 0;
   let contasAtrasadas = 0;
@@ -26,16 +21,14 @@ export async function getDashboardIndicators(slug) {
     const isReceita = item.tipo === 'receita';
 
     if (item.status === 'pago' || item.status === 'recebido') {
-      saldoAtual += isReceita ? valor : -valor;
-    }
-
-    if (isCurrentMonth(item.dataVencimento)) {
-      if (isReceita && item.status !== 'recebido') totalAReceber += valor;
-      if (!isReceita && item.status !== 'pago') totalAPagar += valor;
+      saldoMes += isReceita ? valor : -valor;
+    } else {
+      if (isReceita) totalAReceber += valor;
+      else totalAPagar += valor;
     }
 
     if (item.status === 'atrasado') contasAtrasadas += 1;
   }
 
-  return { saldoAtual, totalAPagar, totalAReceber, contasAtrasadas };
+  return { saldoMes, totalAPagar, totalAReceber, contasAtrasadas };
 }

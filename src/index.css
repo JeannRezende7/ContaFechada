@@ -17,6 +17,16 @@
     outline: 2px solid theme('colors.ledger.500');
     outline-offset: 2px;
   }
+  ::selection {
+    background: theme('colors.ledger.200');
+    color: theme('colors.ink.900');
+  }
+  button {
+    transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 100ms ease;
+  }
+  button:active {
+    transform: scale(0.98);
+  }
 }
 
 @layer components {
