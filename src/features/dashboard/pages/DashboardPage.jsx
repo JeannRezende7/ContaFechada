@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Wallet, ArrowDownCircle, ArrowUpCircle, PieChart, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { getDashboardIndicators } from '../services/dashboardService.js';
-import IndicatorCard from '../components/IndicatorCard.jsx';
+import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import { getCurrentMonthKey } from '../../../utils/monthKey.js';

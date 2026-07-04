@@ -2,20 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { listCategorias, createCategoria, deleteCategoria, ensureDefaultCategorias } from '../services/categoriasService.js';
-import { GROUP_ORDER } from '../data/defaultCategorias.js';
 import { COLOR_MAP, getColor } from '../colorMap.js';
+import { ICON_MAP, getIcon } from '../iconMap.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
-
-const NOVO_GRUPO = '__novo__';
-
-function groupOrderIndex(label) {
-  const i = GROUP_ORDER.findIndex((g) => g.label === label);
-  return i === -1 ? GROUP_ORDER.length : i;
-}
-
-function groupEmoji(label) {
-  return GROUP_ORDER.find((g) => g.label === label)?.emoji ?? '🏷️';
-}
 
 export default function CategoriasPage() {
   const { user } = useAuth();
@@ -23,9 +12,8 @@ export default function CategoriasPage() {
   const [categorias, setCategorias] = useState([]);
   const [tab, setTab] = useState('despesa');
   const [nome, setNome] = useState('');
-  const [grupoSel, setGrupoSel] = useState('');
-  const [novoGrupo, setNovoGrupo] = useState('');
   const [corKey, setCorKey] = useState('cinza');
+  const [icone, setIcone] = useState('tag');
 
   const reload = async () => {
     if (!uid) return;
@@ -43,26 +31,18 @@ export default function CategoriasPage() {
 
   useEffect(() => {
     setNome('');
-    setGrupoSel('');
-    setNovoGrupo('');
   }, [tab]);
 
-  const doTipo = useMemo(() => categorias.filter((c) => c.tipo === tab), [categorias, tab]);
-
-  const grupos = useMemo(() => {
-    const labels = [...new Set(doTipo.map((c) => c.grupo))];
-    return labels.sort((a, b) => groupOrderIndex(a) - groupOrderIndex(b));
-  }, [doTipo]);
-
-  const grupoOptions = useMemo(() => [...new Set(doTipo.map((c) => c.grupo))], [doTipo]);
+  const doTipo = useMemo(
+    () => categorias.filter((c) => c.tipo === tab).sort((a, b) => a.ordem - b.ordem),
+    [categorias, tab]
+  );
 
   async function handleAdd(e) {
     e.preventDefault();
-    const grupo = grupoSel === NOVO_GRUPO ? novoGrupo.trim() : grupoSel;
-    if (!nome.trim() || !grupo) return;
-    await createCategoria(uid, { nome: nome.trim(), tipo: tab, grupo, corKey, ordem: Date.now() });
+    if (!nome.trim()) return;
+    await createCategoria(uid, { nome: nome.trim(), tipo: tab, corKey, icone, ordem: Date.now() });
     setNome('');
-    setNovoGrupo('');
     reload();
   }
 
@@ -94,40 +74,30 @@ export default function CategoriasPage() {
           </button>
         </div>
 
-        <div className="flex flex-col gap-6">
-          {grupos.map((grupo) => (
-            <div key={grupo}>
-              <p className="text-sm font-medium text-ink-500 mb-2">
-                {groupEmoji(grupo)} {grupo}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {doTipo
-                  .filter((c) => c.grupo === grupo)
-                  .sort((a, b) => a.ordem - b.ordem)
-                  .map((c) => {
-                    const color = getColor(c.corKey);
-                    return (
-                      <span
-                        key={c.id}
-                        className={`inline-flex items-center gap-2 rounded-pill pl-3 pr-2 py-1.5 text-sm ${color.chipBg} ${color.chipText}`}
-                      >
-                        <span className={`w-2 h-2 rounded-full ${color.dot}`} />
-                        {c.nome}
-                        <button
-                          onClick={() => handleDelete(c.id)}
-                          aria-label={`Excluir ${c.nome}`}
-                          className="text-current opacity-50 hover:opacity-100 transition-opacity"
-                        >
-                          <X size={13} strokeWidth={2.5} />
-                        </button>
-                      </span>
-                    );
-                  })}
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-x-2 gap-y-4">
+          {doTipo.map((c) => {
+            const color = getColor(c.corKey);
+            const Icon = getIcon(c.icone);
+            return (
+              <div key={c.id} className="flex flex-col items-center gap-1">
+                <div className="relative">
+                  <span className={`w-14 h-14 rounded-full flex items-center justify-center ${color.dot}`}>
+                    <Icon size={22} strokeWidth={2} className="text-white" />
+                  </span>
+                  <button
+                    onClick={() => handleDelete(c.id)}
+                    aria-label={`Excluir ${c.nome}`}
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white shadow-card flex items-center justify-center text-ink-300 hover:text-signal-500 transition-colors"
+                  >
+                    <X size={12} strokeWidth={2.5} />
+                  </button>
+                </div>
+                <span className="text-[11px] text-ink-500 text-center leading-tight line-clamp-2">{c.nome}</span>
               </div>
-            </div>
-          ))}
-          {grupos.length === 0 && (
-            <p className="text-sm text-ink-300 text-center py-6">Nenhuma categoria ainda.</p>
+            );
+          })}
+          {doTipo.length === 0 && (
+            <p className="col-span-full text-sm text-ink-300 text-center py-6">Nenhuma categoria ainda.</p>
           )}
         </div>
 
@@ -141,33 +111,7 @@ export default function CategoriasPage() {
             className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <select
-              value={grupoSel}
-              onChange={(e) => setGrupoSel(e.target.value)}
-              className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm bg-white"
-            >
-              <option value="" disabled>
-                Grupo
-              </option>
-              {grupoOptions.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-              <option value={NOVO_GRUPO}>+ Novo grupo</option>
-            </select>
-
-            {grupoSel === NOVO_GRUPO && (
-              <input
-                value={novoGrupo}
-                onChange={(e) => setNovoGrupo(e.target.value)}
-                placeholder="Nome do novo grupo"
-                className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
-              />
-            )}
-          </div>
-
+          <p className="text-xs font-medium text-ink-300 -mb-1">Cor</p>
           <div className="flex flex-wrap gap-2">
             {Object.keys(COLOR_MAP).map((key) => (
               <button
@@ -179,6 +123,23 @@ export default function CategoriasPage() {
                   corKey === key ? 'ring-2 ring-offset-2 ring-ink-900' : ''
                 }`}
               />
+            ))}
+          </div>
+
+          <p className="text-xs font-medium text-ink-300 -mb-1">Ícone</p>
+          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+            {Object.entries(ICON_MAP).map(([key, Icon]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setIcone(key)}
+                aria-label={`Ícone ${key}`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${COLOR_MAP[corKey].dot} ${
+                  icone === key ? 'ring-2 ring-offset-2 ring-ink-900' : 'opacity-60 hover:opacity-100'
+                }`}
+              >
+                <Icon size={15} strokeWidth={2.25} className="text-white" />
+              </button>
             ))}
           </div>
 

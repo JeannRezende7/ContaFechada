@@ -1,10 +1,12 @@
 import {
   createUserDoc,
   deleteUserDoc,
+  deleteAllUserDocs,
   listUserDocs,
   batchSetUserDocs,
 } from '../../../firebase/firestore.js';
 import { DEFAULT_CATEGORIAS } from '../data/defaultCategorias.js';
+import { slugify } from '../../../utils/slugify.js';
 
 const COLLECTION = 'categorias';
 
@@ -12,20 +14,11 @@ const COLLECTION = 'categorias';
  * @typedef {Object} Categoria
  * @property {string} nome
  * @property {'receita'|'despesa'} tipo
- * @property {string} grupo
  * @property {string} corKey  key into COLOR_MAP, never a raw Tailwind class
+ * @property {string} icone  key into ICON_MAP
  * @property {boolean} padrao
  * @property {number} ordem
  */
-
-function slugify(text) {
-  return text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
 
 export function listCategorias(uid) {
   return listUserDocs(uid, COLLECTION, { field: 'ordem', direction: 'asc' });
@@ -39,6 +32,11 @@ export function deleteCategoria(uid, id) {
   return deleteUserDoc(uid, COLLECTION, id);
 }
 
+/** Wipes every categoria — the next visit to Categorias/Lançamentos re-seeds the defaults. */
+export function deleteAllCategorias(uid) {
+  return deleteAllUserDocs(uid, COLLECTION);
+}
+
 /**
  * Seeds the default taxonomy once per user, using deterministic ids so a
  * retry (two tabs, a flaky connection) overwrites in place instead of
@@ -50,7 +48,7 @@ export async function ensureDefaultCategorias(uid) {
   if (existing.length > 0) return;
 
   const itemsById = Object.fromEntries(
-    DEFAULT_CATEGORIAS.map((c) => [slugify(`${c.grupo}-${c.nome}`), { ...c, padrao: true }])
+    DEFAULT_CATEGORIAS.map((c) => [slugify(`${c.tipo}-${c.nome}`), { ...c, padrao: true }])
   );
   await batchSetUserDocs(uid, COLLECTION, itemsById);
 }

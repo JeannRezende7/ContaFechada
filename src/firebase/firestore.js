@@ -64,6 +64,20 @@ export async function deleteUserDoc(uid, subcollection, docId) {
   await deleteDoc(userDoc(uid, subcollection, docId));
 }
 
+/** Deletes every doc in a subcollection — chunked to stay under Firestore's 500-writes-per-batch limit. */
+export async function deleteAllUserDocs(uid, subcollection) {
+  const snap = await getDocs(userCollection(uid, subcollection));
+  const ids = snap.docs.map((d) => d.id);
+  const CHUNK = 400;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const batch = writeBatch(db);
+    for (const id of ids.slice(i, i + CHUNK)) {
+      batch.delete(userDoc(uid, subcollection, id));
+    }
+    await batch.commit();
+  }
+}
+
 export async function getUserDoc(uid, subcollection, docId) {
   const snap = await getDoc(userDoc(uid, subcollection, docId));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;

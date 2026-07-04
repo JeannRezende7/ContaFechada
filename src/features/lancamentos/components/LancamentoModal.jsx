@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Repeat } from 'lucide-react';
+import { Repeat, Layers } from 'lucide-react';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
+import { formatCurrency } from '../../../utils/formatCurrency.js';
+import { getTodayISODate, shiftISODate } from '../../../utils/formatDate.js';
 
 const EMPTY = {
   tipo: 'despesa',
@@ -8,11 +10,18 @@ const EMPTY = {
   valor: '',
   dataVencimento: '',
   diaVencimento: '',
-  recorrente: false,
+  modo: 'normal', // 'normal' | 'recorrente' | 'parcelado' — only meaningful for new entries
+  numParcelas: '2',
   status: 'pendente',
   observacoes: '',
   categoriaId: '',
 };
+
+const MODOS = [
+  { key: 'normal', label: 'Única' },
+  { key: 'recorrente', label: 'Recorrente' },
+  { key: 'parcelado', label: 'Parcelado' },
+];
 
 /**
  * Fast entry modal. Esc closes. New entries can toggle "Repete todo mês" to
@@ -20,7 +29,7 @@ const EMPTY = {
  * instance (one-off or already generated from a recorrência) is always
  * edited as a single entry, the toggle only applies to brand new entries.
  */
-export default function LancamentoModal({ open, initialData, categorias = [], onClose, onSave }) {
+export default function LancamentoModal({ open, initialData, categorias = [], defaultTipo, onClose, onSave, onDelete }) {
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
   const isNew = !initialData;
@@ -32,10 +41,14 @@ export default function LancamentoModal({ open, initialData, categorias = [], on
 
   useEffect(() => {
     if (open) {
-      setForm(initialData ? { ...EMPTY, ...initialData } : EMPTY);
+      setForm(
+        initialData
+          ? { ...EMPTY, ...initialData, observacoes: initialData.observacoes ?? '' }
+          : { ...EMPTY, tipo: defaultTipo ?? EMPTY.tipo }
+      );
       setTimeout(() => firstFieldRef.current?.focus(), 0);
     }
-  }, [open, initialData]);
+  }, [open, initialData, defaultTipo]);
 
   useEffect(() => {
     function handleKey(e) {
@@ -61,7 +74,8 @@ export default function LancamentoModal({ open, initialData, categorias = [], on
   function handleSubmit(e) {
     e.preventDefault();
     const valor = Number(form.valor);
-    if (isNew && form.recorrente) {
+    const dataVencimento = form.dataVencimento || getTodayISODate();
+    if (isNew && form.modo === 'recorrente') {
       onSave({
         recorrente: true,
         tipo: form.tipo,
@@ -71,13 +85,24 @@ export default function LancamentoModal({ open, initialData, categorias = [], on
         observacoes: form.observacoes || null,
         categoriaId: form.categoriaId || null,
       });
+    } else if (isNew && form.modo === 'parcelado') {
+      onSave({
+        parcelado: true,
+        tipo: form.tipo,
+        descricao: form.descricao,
+        valorTotal: valor,
+        numParcelas: Number(form.numParcelas),
+        dataVencimento,
+        observacoes: form.observacoes || null,
+        categoriaId: form.categoriaId || null,
+      });
     } else {
       onSave({
         recorrente: false,
         tipo: form.tipo,
         descricao: form.descricao,
         valor,
-        dataVencimento: form.dataVencimento,
+        dataVencimento,
         status: form.status,
         observacoes: form.observacoes || null,
         categoriaId: form.categoriaId || null,
@@ -119,22 +144,33 @@ export default function LancamentoModal({ open, initialData, categorias = [], on
         </div>
 
         {isNew && (
-          <label className="flex items-center gap-2 mb-4 text-sm text-ink-700 bg-clay-50/60 rounded-xl px-3 py-2.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.recorrente}
-              onChange={(e) => update('recorrente', e.target.checked)}
-              className="rounded border-ink-100 text-clay-500 focus:ring-clay-500"
-            />
-            <Repeat size={15} strokeWidth={2} className="text-clay-500" />
-            Repete todo mês
-          </label>
+          <div className="flex gap-1 mb-4 bg-ink-50 rounded-pill p-1">
+            {MODOS.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => update('modo', opt.key)}
+                className={`flex-1 rounded-pill py-1.5 text-xs font-medium transition-colors ${
+                  form.modo === opt.key ? 'bg-white shadow-card text-ink-900' : 'text-ink-500'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         )}
 
         {initialData?.origemRecorrenciaId && (
           <p className="flex items-center gap-1.5 text-xs text-clay-600 bg-clay-50/60 rounded-xl px-3 py-2 mb-3">
             <Repeat size={13} strokeWidth={2.25} />
             Gerado de uma recorrência — a edição vale só para este mês.
+          </p>
+        )}
+
+        {initialData?.parcelamentoId && (
+          <p className="flex items-center gap-1.5 text-xs text-clay-600 bg-clay-50/60 rounded-xl px-3 py-2 mb-3">
+            <Layers size={13} strokeWidth={2.25} />
+            Parcela {initialData.parcelaAtual}/{initialData.totalParcelas} — a edição vale só para esta parcela.
           </p>
         )}
 
@@ -150,7 +186,9 @@ export default function LancamentoModal({ open, initialData, categorias = [], on
 
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
-            <label className="block text-xs font-medium text-ink-300 mb-1">Valor</label>
+            <label className="block text-xs font-medium text-ink-300 mb-1">
+              {isNew && form.modo === 'parcelado' ? 'Valor total' : 'Valor'}
+            </label>
             <input
               required
               type="number"
@@ -164,9 +202,9 @@ export default function LancamentoModal({ open, initialData, categorias = [], on
           </div>
           <div>
             <label className="block text-xs font-medium text-ink-300 mb-1">
-              {isNew && form.recorrente ? 'Dia do vencimento' : 'Vencimento'}
+              {isNew && form.modo === 'recorrente' ? 'Dia do vencimento' : 'Data'}
             </label>
-            {isNew && form.recorrente ? (
+            {isNew && form.modo === 'recorrente' ? (
               <input
                 required
                 type="number"
@@ -179,15 +217,67 @@ export default function LancamentoModal({ open, initialData, categorias = [], on
               />
             ) : (
               <input
-                required
                 type="date"
                 value={form.dataVencimento}
                 onChange={(e) => update('dataVencimento', e.target.value)}
+                placeholder="Hoje"
                 className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
               />
             )}
           </div>
         </div>
+
+        {!(isNew && form.modo === 'recorrente') && (
+          <div className="flex gap-1.5 mb-3 -mt-1.5">
+            {[
+              { label: 'Hoje', dias: 0 },
+              { label: 'Ontem', dias: -1 },
+              { label: 'Anteontem', dias: -2 },
+            ].map((opt) => {
+              const alvo = shiftISODate(getTodayISODate(), opt.dias);
+              const selecionado = form.dataVencimento === alvo;
+              return (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => update('dataVencimento', alvo)}
+                  className={`rounded-pill px-3 py-1 text-xs font-medium transition-colors ${
+                    selecionado ? 'bg-ink-900 text-white' : 'bg-ink-50 text-ink-500 hover:bg-ink-100'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {isNew && form.modo === 'parcelado' && (
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="block text-xs font-medium text-ink-300 mb-1">Número de parcelas</label>
+              <input
+                required
+                type="number"
+                min="2"
+                max="60"
+                value={form.numParcelas}
+                onChange={(e) => update('numParcelas', e.target.value)}
+                className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+              />
+            </div>
+            <div className="flex items-end pb-2.5">
+              {Number(form.valor) > 0 && Number(form.numParcelas) > 1 && (
+                <p className="text-xs text-ink-300">
+                  {form.numParcelas}x de{' '}
+                  <span className="font-medium text-ink-700">
+                    {formatCurrency(Number(form.valor) / Number(form.numParcelas))}
+                  </span>
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         <label className="block text-xs font-medium text-ink-300 mb-1">Categoria</label>
         <div className="mb-3">
@@ -221,6 +311,18 @@ export default function LancamentoModal({ open, initialData, categorias = [], on
             Salvar
           </button>
         </div>
+
+        {!isNew && (
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm('Excluir este lançamento?')) onDelete(initialData.id);
+            }}
+            className="w-full mt-2 rounded-xl py-2 text-xs font-medium text-signal-500 hover:bg-signal-50 transition-colors"
+          >
+            Excluir lançamento
+          </button>
+        )}
       </form>
     </div>
   );

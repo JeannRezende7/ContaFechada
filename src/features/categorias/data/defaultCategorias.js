@@ -1,64 +1,50 @@
-/** Display order for category groups, shared by CategoriasPage and the LancamentoModal picker. */
-export const GROUP_ORDER = [
-  { label: 'Renda Principal', emoji: '💼' },
-  { label: 'Renda Extra', emoji: '🚀' },
-  { label: 'Outros Recebimentos', emoji: '💸' },
-  { label: 'Moradia', emoji: '🏠' },
-  { label: 'Transporte', emoji: '🚗' },
-  { label: 'Cuidados Pessoais', emoji: '🛒' },
-  { label: 'Lazer & Estilo de Vida', emoji: '🍕' },
-  { label: 'Evolução', emoji: '🎓' },
-  { label: 'Dívidas', emoji: '📉' },
-  { label: 'Patrimônio', emoji: '🛡️' },
-];
-
 let n = 0;
-const item = (nome, tipo, grupo, corKey) => ({ nome, tipo, grupo, corKey, ordem: n++ });
+const item = (nome, tipo, corKey, icone) => ({ nome, tipo, corKey, icone, ordem: n++ });
 
 /** Seeded once per user on first visit to Categorias (see ensureDefaultCategorias). */
 export const DEFAULT_CATEGORIAS = [
-  item('Salário / Pró-labore', 'receita', 'Renda Principal', 'verde'),
-  item('Aposentadoria / Proventos', 'receita', 'Renda Principal', 'verde'),
+  item('Salário / Pró-labore', 'receita', 'verde', 'wallet'),
+  item('Aposentadoria / Proventos', 'receita', 'verde', 'piggyBank'),
 
-  item('Freelances / Projetos', 'receita', 'Renda Extra', 'verdeClaro'),
-  item('Vendas / Desapegos', 'receita', 'Renda Extra', 'verdeClaro'),
-  item('Comissões / Bônus', 'receita', 'Renda Extra', 'verdeClaro'),
+  item('Freelances / Projetos', 'receita', 'verdeClaro', 'laptop'),
+  item('Vendas / Desapegos', 'receita', 'verdeClaro', 'tag'),
+  item('Comissões / Bônus', 'receita', 'verdeClaro', 'award'),
 
-  item('Pix de Terceiros', 'receita', 'Outros Recebimentos', 'menta'),
-  item('Cashback / Estornos', 'receita', 'Outros Recebimentos', 'menta'),
-  item('Rendimentos', 'receita', 'Outros Recebimentos', 'menta'),
+  item('Pix de Terceiros', 'receita', 'menta', 'arrowLeftRight'),
+  item('Cashback / Estornos', 'receita', 'menta', 'rotateCcw'),
+  item('Rendimentos', 'receita', 'menta', 'trendingUp'),
 
-  item('Aluguel / Financiamento / Condomínio', 'despesa', 'Moradia', 'azul'),
-  item('Contas da Casa (Luz, Água, Gás)', 'despesa', 'Moradia', 'azul'),
-  item('Internet / TV / Celular', 'despesa', 'Moradia', 'azul'),
-  item('Mercado', 'despesa', 'Moradia', 'azul'),
-  item('Faxina / Manutenção', 'despesa', 'Moradia', 'azul'),
+  item('Aluguel / Financiamento / Condomínio', 'despesa', 'azul', 'home'),
+  item('Contas da Casa (Luz, Água, Gás)', 'despesa', 'azul', 'zap'),
+  item('Internet / TV / Celular', 'despesa', 'azul', 'wifi'),
+  item('Mercado', 'despesa', 'azul', 'shoppingBasket'),
+  item('Faxina / Manutenção', 'despesa', 'azul', 'sprayCan'),
 
-  item('Combustível', 'despesa', 'Transporte', 'cinza'),
-  item('Apps de Transporte (Uber, 99)', 'despesa', 'Transporte', 'cinza'),
-  item('Transporte Público', 'despesa', 'Transporte', 'cinza'),
-  item('Manutenção / Seguro / IPVA', 'despesa', 'Transporte', 'cinza'),
+  item('Combustível', 'despesa', 'cinza', 'fuel'),
+  item('Apps de Transporte (Uber, 99)', 'despesa', 'cinza', 'car'),
+  item('Transporte Público', 'despesa', 'cinza', 'bus'),
+  item('Manutenção / Seguro / IPVA', 'despesa', 'cinza', 'wrench'),
 
-  item('Farmácia / Médicos', 'despesa', 'Cuidados Pessoais', 'azulClaro'),
-  item('Academia / Esportes', 'despesa', 'Cuidados Pessoais', 'azulClaro'),
-  item('Higiene / Beleza', 'despesa', 'Cuidados Pessoais', 'azulClaro'),
-  item('Pets', 'despesa', 'Cuidados Pessoais', 'azulClaro'),
+  item('Farmácia / Médicos', 'despesa', 'azulClaro', 'heartPulse'),
+  item('Academia / Esportes', 'despesa', 'azulClaro', 'dumbbell'),
+  item('Higiene / Beleza', 'despesa', 'azulClaro', 'sparkles'),
+  item('Pets', 'despesa', 'azulClaro', 'dog'),
 
-  item('Delivery / iFood', 'despesa', 'Lazer & Estilo de Vida', 'roxo'),
-  item('Bares / Restaurantes', 'despesa', 'Lazer & Estilo de Vida', 'roxo'),
-  item('Cinema / Shows', 'despesa', 'Lazer & Estilo de Vida', 'roxo'),
-  item('Viagens', 'despesa', 'Lazer & Estilo de Vida', 'roxo'),
-  item('Compras', 'despesa', 'Lazer & Estilo de Vida', 'roxo'),
-  item('Jogos / Hobbies', 'despesa', 'Lazer & Estilo de Vida', 'roxo'),
-  item('Streaming / Assinaturas', 'despesa', 'Lazer & Estilo de Vida', 'roxo'),
+  item('Delivery / iFood', 'despesa', 'roxo', 'utensilsCrossed'),
+  item('Bares / Restaurantes', 'despesa', 'roxo', 'beer'),
+  item('Cinema / Shows', 'despesa', 'roxo', 'clapperboard'),
+  item('Viagens', 'despesa', 'roxo', 'plane'),
+  item('Compras', 'despesa', 'roxo', 'shoppingBag'),
+  item('Jogos / Hobbies', 'despesa', 'roxo', 'gamepad2'),
+  item('Streaming / Assinaturas', 'despesa', 'roxo', 'tv'),
 
-  item('Cursos / Facul', 'despesa', 'Evolução', 'amarelo'),
-  item('Livros / Softwares', 'despesa', 'Evolução', 'amarelo'),
+  item('Cursos / Facul', 'despesa', 'amarelo', 'graduationCap'),
+  item('Livros / Softwares', 'despesa', 'amarelo', 'bookOpen'),
 
-  item('Empréstimos / Financiamentos', 'despesa', 'Dívidas', 'vermelho'),
-  item('Tarifas Bancárias', 'despesa', 'Dívidas', 'vermelho'),
-  item('Juros / Multas', 'despesa', 'Dívidas', 'vermelho'),
+  item('Empréstimos / Financiamentos', 'despesa', 'vermelho', 'landmark'),
+  item('Tarifas Bancárias', 'despesa', 'vermelho', 'creditCard'),
+  item('Juros / Multas', 'despesa', 'vermelho', 'alertTriangle'),
 
-  item('Investimentos', 'despesa', 'Patrimônio', 'dourado'),
-  item('Reserva de Emergência', 'despesa', 'Patrimônio', 'dourado'),
+  item('Investimentos', 'despesa', 'dourado', 'lineChart'),
+  item('Reserva de Emergência', 'despesa', 'dourado', 'shieldCheck'),
 ];
