@@ -155,7 +155,7 @@ export default function DashboardPage() {
           <div className="mt-4 bg-white dark:bg-ink-700 rounded-card shadow-card divide-y divide-ink-100 dark:divide-ink-900">
             {indicators.maiorGasto && (
               <div className="flex items-center gap-3 p-4">
-                <span className="w-9 h-9 rounded-full bg-clay-50 text-clay-500 flex items-center justify-center shrink-0">
+                <span className="w-9 h-9 rounded-full bg-clay-500 text-white flex items-center justify-center shrink-0">
                   <Flame size={16} strokeWidth={1.75} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -169,7 +169,7 @@ export default function DashboardPage() {
             )}
             {indicators.ultimoLancamento && (
               <div className="flex items-center gap-3 p-4">
-                <span className="w-9 h-9 rounded-full bg-mint-50 text-mint-600 flex items-center justify-center shrink-0">
+                <span className="w-9 h-9 rounded-full bg-mint-500 text-white flex items-center justify-center shrink-0">
                   <Clock size={16} strokeWidth={1.75} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -181,7 +181,7 @@ export default function DashboardPage() {
             )}
             {indicators.proximoVencimento && (
               <div className="flex items-center gap-3 p-4">
-                <span className="w-9 h-9 rounded-full bg-pending-50 text-pending-500 flex items-center justify-center shrink-0">
+                <span className="w-9 h-9 rounded-full bg-pending-500 text-white flex items-center justify-center shrink-0">
                   <CalendarClock size={16} strokeWidth={1.75} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -197,7 +197,7 @@ export default function DashboardPage() {
         <div className="mt-4 bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-gold-50 text-gold-600 flex items-center justify-center shrink-0">
+              <span className="w-8 h-8 rounded-full bg-gold-500 text-white flex items-center justify-center shrink-0">
                 <Target size={15} strokeWidth={1.75} />
               </span>
               <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Desafio de economia</p>
@@ -252,7 +252,7 @@ export default function DashboardPage() {
         {insights.length > 0 && (
           <div className="mt-4 bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <span className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0">
                 <Sparkles size={15} strokeWidth={1.75} />
               </span>
               <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Insights automáticos</p>
