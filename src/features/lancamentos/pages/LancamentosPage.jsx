@@ -18,7 +18,7 @@ import {
   deleteRecorrencia,
   ensureGeneratedForMonth,
 } from '../../recorrencias/services/recorrenciasService.js';
-import { listCategorias, ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
+import { ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
@@ -62,11 +62,9 @@ export default function LancamentosPage() {
   const reload = useCallback(async () => {
     if (!uid) return;
     const meses = monthKeysInRange(gte, lte);
-    await Promise.all(meses.map((mk) => ensureGeneratedForMonth(uid, mk)));
-    const [items, todasRecorrencias] = await Promise.all([
-      listLancamentosByRange(uid, gte, lte),
-      listRecorrencias(uid),
-    ]);
+    const todasRecorrencias = await listRecorrencias(uid);
+    await Promise.all(meses.map((mk) => ensureGeneratedForMonth(uid, mk, todasRecorrencias)));
+    const items = await listLancamentosByRange(uid, gte, lte);
     setLancamentos(items);
     setRecorrencias(todasRecorrencias);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,10 +77,7 @@ export default function LancamentosPage() {
   // Categorias don't depend on the selected period — loaded once per user.
   useEffect(() => {
     if (!uid) return;
-    (async () => {
-      await ensureDefaultCategorias(uid);
-      setCategorias(await listCategorias(uid));
-    })();
+    ensureDefaultCategorias(uid).then(setCategorias);
   }, [uid]);
 
   const categoriasById = useMemo(

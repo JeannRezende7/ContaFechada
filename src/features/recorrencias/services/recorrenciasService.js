@@ -47,9 +47,13 @@ export function deleteRecorrencia(uid, id) {
  * == monthKey`) instead of one round trip per recorrência — with several
  * recorrências active, a per-item `getUserDoc` loop turned every page load
  * into a chain of sequential network round trips.
+ *
+ * Accepts an optional pre-fetched `recorrencias` list so a caller checking
+ * several months in the same pass (or that already needs the list itself)
+ * doesn't pay for a repeat `listRecorrencias` round trip per month.
  */
-export async function ensureGeneratedForMonth(uid, monthKey) {
-  const recorrencias = await listRecorrencias(uid);
+export async function ensureGeneratedForMonth(uid, monthKey, recorrenciasPreFetched) {
+  const recorrencias = recorrenciasPreFetched ?? (await listRecorrencias(uid));
   const ativas = recorrencias.filter(
     (r) => r.ativo && (!r.createdAt || monthKey >= monthKeyFromTimestamp(r.createdAt))
   );

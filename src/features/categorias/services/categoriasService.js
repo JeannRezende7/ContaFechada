@@ -42,13 +42,18 @@ export function deleteAllCategorias(uid) {
  * retry (two tabs, a flaky connection) overwrites in place instead of
  * duplicating. Only runs when the collection is empty — if the user deletes
  * every category, the next load re-seeds the defaults.
+ *
+ * Returns the resulting list so callers don't need a second `listCategorias`
+ * round trip right after — on every normal (already-seeded) load this makes
+ * the check-and-use path a single query instead of two.
  */
 export async function ensureDefaultCategorias(uid) {
   const existing = await listCategorias(uid);
-  if (existing.length > 0) return;
+  if (existing.length > 0) return existing;
 
   const itemsById = Object.fromEntries(
     DEFAULT_CATEGORIAS.map((c) => [slugify(`${c.tipo}-${c.nome}`), { ...c, padrao: true }])
   );
   await batchSetUserDocs(uid, COLLECTION, itemsById);
+  return listCategorias(uid);
 }
