@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback, lazy, Suspense } from 'react';
-import { Plus, Sprout, Repeat, X, ArrowUpCircle, ArrowDownCircle, Wallet, FileUp, Trash2, Receipt } from 'lucide-react';
+import { Plus, Sprout, Repeat, X, ArrowUpCircle, ArrowDownCircle, Wallet, FileUp, Trash2, Receipt, Search, Download } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import {
   listLancamentosByRange,
@@ -25,6 +25,8 @@ import { FEATURES } from '../../../config/premium.js';
 import { getTodayISODate } from '../../../utils/formatDate.js';
 import { getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
+import { buildLancamentoMatcher } from '../utils/searchLancamentos.js';
+import { buildCsv, downloadCsv } from '../../../utils/exportCsv.js';
 import LancamentoRow from '../components/LancamentoRow.jsx';
 import LancamentoModal from '../components/LancamentoModal.jsx';
 import RecorrenciaModal from '../components/RecorrenciaModal.jsx';
@@ -53,6 +55,7 @@ export default function LancamentosPage() {
   const [recorrenciaModalOpen, setRecorrenciaModalOpen] = useState(false);
   const [editingRecorrencia, setEditingRecorrencia] = useState(null);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [busca, setBusca] = useState('');
 
   const { gte, lte } = getRangeForPeriod(periodType, anchor, customRange);
 
@@ -91,6 +94,11 @@ export default function LancamentosPage() {
     () => lancamentos.filter((l) => l.tipo === tab),
     [lancamentos, tab]
   );
+
+  const lancamentosFiltrados = useMemo(() => {
+    const matcher = buildLancamentoMatcher(busca, categoriasById);
+    return lancamentosDoTipo.filter(matcher);
+  }, [lancamentosDoTipo, busca, categoriasById]);
 
   // Totals reflect the whole period regardless of the despesa/receita tab —
   // the tab only filters which rows are listed below.
@@ -154,6 +162,19 @@ export default function LancamentosPage() {
     if (!(await confirm(`Excluir ${lancamentosDoTipo.length} ${tipoLabel} de "${label}"? Essa ação não pode ser desfeita.`))) return;
     await deleteLancamentosByIds(uid, lancamentosDoTipo.map((l) => l.id));
     reload();
+  }
+
+  function handleExportCsv() {
+    const label = formatPeriodLabel(periodType, anchor, customRange);
+    const csv = buildCsv(lancamentosFiltrados, [
+      { label: 'Data', value: (l) => l.dataVencimento },
+      { label: 'Descrição', value: (l) => l.descricao },
+      { label: 'Categoria', value: (l) => categoriasById[l.categoriaId]?.nome ?? '' },
+      { label: 'Valor', value: (l) => Number(l.valor).toFixed(2).replace('.', ',') },
+      { label: 'Status', value: (l) => l.status },
+      { label: 'Observações', value: (l) => l.observacoes ?? '' },
+    ]);
+    downloadCsv(`lancamentos-${tab}-${label.replace(/\s+/g, '-')}.csv`, csv);
   }
 
   async function handleStatusChange(id, status) {
@@ -224,9 +245,19 @@ export default function LancamentosPage() {
           />
         </div>
 
+        <div className="relative mb-4">
+          <Search size={16} strokeWidth={2} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-300" />
+          <input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Pesquisar: pix, mercado, junho, acima de 500..."
+            className="w-full rounded-pill border border-ink-100 bg-white dark:bg-ink-900 dark:border-ink-700 text-ink-900 dark:text-ink-50 pl-10 pr-4 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+          />
+        </div>
+
         <div className="flex justify-between items-center mb-4 gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <p className="text-sm text-ink-300 shrink-0">{lancamentosDoTipo.length} lançamento(s)</p>
+            <p className="text-sm text-ink-300 shrink-0">{lancamentosFiltrados.length} lançamento(s)</p>
             {lancamentosDoTipo.length > 0 && (
               <button
                 onClick={handleDeleteEmMassa}
@@ -234,6 +265,15 @@ export default function LancamentosPage() {
                 className="text-ink-300 hover:text-signal-500 transition-colors shrink-0"
               >
                 <Trash2 size={14} strokeWidth={2} />
+              </button>
+            )}
+            {lancamentosFiltrados.length > 0 && (
+              <button
+                onClick={handleExportCsv}
+                aria-label="Exportar para CSV"
+                className="text-ink-300 hover:text-ledger-600 transition-colors shrink-0"
+              >
+                <Download size={14} strokeWidth={2} />
               </button>
             )}
           </div>
@@ -262,7 +302,7 @@ export default function LancamentosPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          {lancamentosDoTipo.map((l) => (
+          {lancamentosFiltrados.map((l) => (
             <LancamentoRow
               key={l.id}
               lancamento={l}
@@ -292,6 +332,11 @@ export default function LancamentosPage() {
                 + Novo lançamento
               </button>
             </div>
+          )}
+          {lancamentosDoTipo.length > 0 && lancamentosFiltrados.length === 0 && (
+            <p className="text-sm text-ink-300 text-center py-8">
+              Nenhum lançamento encontrado para "{busca}".
+            </p>
           )}
         </div>
 

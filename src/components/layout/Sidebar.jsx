@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Receipt, Tag, PieChart, PiggyBank } from 'lucide-react';
+import { Home, Receipt, Tag, PieChart, PiggyBank, Target } from 'lucide-react';
 
 const ITEMS = [
   { to: '/', label: 'Início', icon: Home },
   { to: '/lancamentos', label: 'Lançamentos', icon: Receipt },
   { to: '/categorias', label: 'Categorias', icon: Tag },
   { to: '/relatorios', label: 'Relatórios', icon: PieChart },
+  { to: '/metas', label: 'Metas', icon: Target },
 ];
 
 /** Visible on desktop only (>= md). Mobile uses <BottomNav /> instead. */
