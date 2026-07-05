@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Repeat, Layers } from 'lucide-react';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
-import { getTodayISODate, shiftISODate } from '../../../utils/formatDate.js';
-import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
+import { getTodayISODate, shiftISODate, isSaneISODate } from '../../../utils/formatDate.js';
+import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
 
 const EMPTY = {
   tipo: 'despesa',
@@ -35,6 +35,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
   const firstFieldRef = useRef(null);
   const isNew = !initialData;
   const confirm = useConfirm();
+  const confirmChoice = useConfirmChoice();
 
   const categoriasDoTipo = useMemo(
     () => categorias.filter((c) => c.tipo === form.tipo),
@@ -71,6 +72,23 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
       const aindaValida = categorias.some((c) => c.id === prev.categoriaId && c.tipo === tipo);
       return { ...prev, tipo, categoriaId: aindaValida ? prev.categoriaId : '' };
     });
+  }
+
+  async function handleDeleteClick() {
+    if (initialData.parcelamentoId && initialData.parcelaAtual < initialData.totalParcelas) {
+      const escolha = await confirmChoice(
+        `Esta é a parcela ${initialData.parcelaAtual}/${initialData.totalParcelas}. O que você quer excluir?`,
+        [
+          { value: 'only', label: 'Excluir apenas esta parcela', tone: 'danger' },
+          { value: 'future', label: 'Excluir esta e as próximas parcelas', tone: 'danger' },
+          { value: 'cancel', label: 'Cancelar', tone: 'neutral' },
+        ]
+      );
+      if (escolha === 'only') onDelete(initialData, { futureInstallments: false });
+      else if (escolha === 'future') onDelete(initialData, { futureInstallments: true });
+    } else if (await confirm('Excluir este lançamento?')) {
+      onDelete(initialData, {});
+    }
   }
 
   function handleSubmit(e) {
@@ -204,7 +222,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
           </div>
           <div>
             <label className="block text-xs font-medium text-ink-300 mb-1">
-              {isNew && form.modo === 'recorrente' ? 'Dia do vencimento' : 'Data'}
+              {isNew && form.modo === 'recorrente' ? 'Dia do mês' : 'Data'}
             </label>
             {isNew && form.modo === 'recorrente' ? (
               <input
@@ -220,8 +238,10 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
             ) : (
               <input
                 type="date"
+                min="1900-01-01"
+                max="2100-12-31"
                 value={form.dataVencimento}
-                onChange={(e) => update('dataVencimento', e.target.value)}
+                onChange={(e) => isSaneISODate(e.target.value) && update('dataVencimento', e.target.value)}
                 placeholder="Hoje"
                 className="[color-scheme:light] w-full bg-white text-ink-900 rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
               />
@@ -317,9 +337,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
         {!isNew && (
           <button
             type="button"
-            onClick={async () => {
-              if (await confirm('Excluir este lançamento?')) onDelete(initialData.id);
-            }}
+            onClick={handleDeleteClick}
             className="w-full mt-2 rounded-xl py-2 text-xs font-medium text-signal-500 hover:bg-signal-50 transition-colors"
           >
             Excluir lançamento

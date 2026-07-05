@@ -64,6 +64,7 @@ export async function ensureGeneratedForMonth(uid, monthKey) {
       dataPagamento: null,
       status: 'pendente',
       observacoes: r.observacoes ?? null,
+      categoriaId: r.categoriaId ?? null,
       origemRecorrenciaId: r.id,
       mesReferencia: monthKey,
     });

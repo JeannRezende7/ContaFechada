@@ -133,8 +133,16 @@ export default function LancamentosPage() {
     reload();
   }
 
-  async function handleDeleteLancamento(id) {
-    await deleteLancamento(uid, id);
+  async function handleDeleteLancamento(item, { futureInstallments = false } = {}) {
+    if (futureInstallments && item.parcelamentoId && item.totalParcelas) {
+      const ids = [];
+      for (let n = item.parcelaAtual; n <= item.totalParcelas; n++) {
+        ids.push(`${item.parcelamentoId}_${n}`);
+      }
+      await deleteLancamentosByIds(uid, ids);
+    } else {
+      await deleteLancamento(uid, item.id);
+    }
     setModalOpen(false);
     reload();
   }

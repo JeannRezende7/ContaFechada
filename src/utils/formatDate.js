@@ -25,3 +25,16 @@ export function shiftISODate(isoDateStr, deltaDays) {
   const d = new Date(year, month - 1, day + deltaDays);
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
+
+/**
+ * Guards against native <input type="date"> letting the year segment overflow
+ * past 4 digits when typed quickly (e.g. "31/12/275760") — reject anything
+ * outside a sane range instead of storing garbage.
+ */
+export function isSaneISODate(value) {
+  if (!value) return true;
+  const match = value.match(/^(\d{4})-\d{2}-\d{2}$/);
+  if (!match) return false;
+  const year = Number(match[1]);
+  return year >= 1900 && year <= 2100;
+}

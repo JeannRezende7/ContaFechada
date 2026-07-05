@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { PERIOD_TYPES, shiftAnchor, formatPeriodLabel } from '../../utils/periodRange.js';
+import { isSaneISODate } from '../../utils/formatDate.js';
 
 /**
  * Period-type switcher (Dia/Semana/Mês/Ano/Período) + prev/next navigator for
@@ -29,8 +30,10 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
             <label className="block text-[11px] text-ink-300 mb-0.5">De</label>
             <input
               type="date"
+              min="1900-01-01"
+              max="2100-12-31"
               value={customRange?.de ?? ''}
-              onChange={(e) => onChangeCustomRange({ ...customRange, de: e.target.value })}
+              onChange={(e) => isSaneISODate(e.target.value) && onChangeCustomRange({ ...customRange, de: e.target.value })}
               className="[color-scheme:light] w-full min-w-0 text-sm md:text-base bg-white text-ink-900 rounded-lg border border-ink-100 px-2 py-1.5"
             />
           </div>
@@ -39,8 +42,10 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
             <label className="block text-[11px] text-ink-300 mb-0.5">Até</label>
             <input
               type="date"
+              min="1900-01-01"
+              max="2100-12-31"
               value={customRange?.ate ?? ''}
-              onChange={(e) => onChangeCustomRange({ ...customRange, ate: e.target.value })}
+              onChange={(e) => isSaneISODate(e.target.value) && onChangeCustomRange({ ...customRange, ate: e.target.value })}
               className="[color-scheme:light] w-full min-w-0 text-sm md:text-base bg-white text-ink-900 rounded-lg border border-ink-100 px-2 py-1.5"
             />
           </div>

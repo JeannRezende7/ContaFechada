@@ -86,7 +86,7 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-ink-300 mb-1">Dia do vencimento</label>
+            <label className="block text-xs font-medium text-ink-300 mb-1">Dia do mês</label>
             <input
               required
               type="number"
