@@ -26,11 +26,19 @@ export const auth = getAuth(app);
  * once the connection returns — no custom sync code needed. Falls back to
  * plain in-memory Firestore if the browser can't support it (e.g. some
  * private-browsing modes), so the app still works, just without offline data.
+ *
+ * `experimentalAutoDetectLongPolling` avoids a known thrash: without it, some
+ * networks/browsers (proxies, mobile carriers, iOS Safari) let Firestore's
+ * streaming connection open but silently break it, so the SDK keeps
+ * reconnecting every ~150ms in a loop instead of holding one real connection.
+ * This makes it explicitly probe first and commit to whichever transport
+ * actually works.
  */
 export let db;
 try {
   db = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    experimentalAutoDetectLongPolling: true,
   });
 } catch {
   db = getFirestore(app);

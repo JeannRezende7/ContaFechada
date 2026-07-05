@@ -68,7 +68,7 @@ export default function OpcoesPage() {
         </div>
 
         <p className="text-center text-xs text-ink-300 mt-8">
-          Conta Fechada · desenvolvido por <span className="font-medium text-ink-500">LeliaLabs</span>
+          Conta Fechada v{__APP_VERSION__} · desenvolvido por <span className="font-medium text-ink-500">LeliaLabs</span>
         </p>
       </div>
     </>
