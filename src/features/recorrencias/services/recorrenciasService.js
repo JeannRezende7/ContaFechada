@@ -2,9 +2,9 @@ import {
   createUserDoc,
   updateUserDoc,
   deleteUserDoc,
-  getUserDoc,
-  setUserDoc,
   listUserDocs,
+  listUserDocsWhereEquals,
+  batchSetUserDocs,
 } from '../../../firebase/firestore.js';
 import { clampDayToMonth, monthKeyFromTimestamp } from '../../../utils/monthKey.js';
 
@@ -42,31 +42,41 @@ export function deleteRecorrencia(uid, id) {
  * re-visiting the same month is a no-op instead of creating duplicates.
  * Doesn't touch instances already generated for other months, and never
  * backfills a month before the recorrência existed.
+ *
+ * Checks which instances already exist with a single query (`mesReferencia
+ * == monthKey`) instead of one round trip per recorrência — with several
+ * recorrências active, a per-item `getUserDoc` loop turned every page load
+ * into a chain of sequential network round trips.
  */
 export async function ensureGeneratedForMonth(uid, monthKey) {
   const recorrencias = await listRecorrencias(uid);
+  const ativas = recorrencias.filter(
+    (r) => r.ativo && (!r.createdAt || monthKey >= monthKeyFromTimestamp(r.createdAt))
+  );
+  if (ativas.length === 0) return;
 
-  for (const r of recorrencias.filter((item) => item.ativo)) {
-    if (r.createdAt && monthKey < monthKeyFromTimestamp(r.createdAt)) continue;
+  const jaGerados = await listUserDocsWhereEquals(uid, 'lancamentos', 'mesReferencia', monthKey);
+  const idsGerados = new Set(jaGerados.map((d) => d.id));
+
+  const novos = {};
+  for (const r of ativas) {
+    const generatedId = `${r.id}_${monthKey}`;
+    if (idsGerados.has(generatedId)) continue;
 
     const dia = clampDayToMonth(monthKey, r.diaVencimento);
-    const dataVencimento = `${monthKey}-${String(dia).padStart(2, '0')}`;
-    const generatedId = `${r.id}_${monthKey}`;
-
-    const existing = await getUserDoc(uid, 'lancamentos', generatedId);
-    if (existing) continue;
-
-    await setUserDoc(uid, 'lancamentos', generatedId, {
+    novos[generatedId] = {
       tipo: r.tipo,
       descricao: r.descricao,
       valor: r.valor,
-      dataVencimento,
+      dataVencimento: `${monthKey}-${String(dia).padStart(2, '0')}`,
       dataPagamento: null,
       status: 'pendente',
       observacoes: r.observacoes ?? null,
       categoriaId: r.categoriaId ?? null,
       origemRecorrenciaId: r.id,
       mesReferencia: monthKey,
-    });
+    };
   }
+
+  if (Object.keys(novos).length > 0) await batchSetUserDocs(uid, 'lancamentos', novos);
 }
