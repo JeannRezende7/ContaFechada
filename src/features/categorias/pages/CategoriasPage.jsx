@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Tag } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { listCategorias, createCategoria, deleteCategoria, ensureDefaultCategorias } from '../services/categoriasService.js';
 import { COLOR_MAP, getColor } from '../colorMap.js';
@@ -53,13 +53,13 @@ export default function CategoriasPage() {
 
   return (
     <>
-      <Topbar title="Categorias" />
+      <Topbar title="Categorias" icon={Tag} />
       <div className="p-4 md:p-8 max-w-4xl">
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setTab('despesa')}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-              tab === 'despesa' ? 'bg-ink-900 text-white' : 'bg-ink-50 text-ink-500'
+              tab === 'despesa' ? 'bg-ink-900 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
             }`}
           >
             Despesas
@@ -67,7 +67,7 @@ export default function CategoriasPage() {
           <button
             onClick={() => setTab('receita')}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-              tab === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 text-ink-500'
+              tab === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
             }`}
           >
             Receitas
@@ -87,7 +87,7 @@ export default function CategoriasPage() {
                   <button
                     onClick={() => handleDelete(c.id)}
                     aria-label={`Excluir ${c.nome}`}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white shadow-card flex items-center justify-center text-ink-300 hover:text-signal-500 transition-colors"
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white dark:bg-ink-700 shadow-card flex items-center justify-center text-ink-300 hover:text-signal-500 transition-colors"
                   >
                     <X size={12} strokeWidth={2.5} />
                   </button>
@@ -101,8 +101,8 @@ export default function CategoriasPage() {
           )}
         </div>
 
-        <form onSubmit={handleAdd} className="mt-8 bg-white rounded-card shadow-card p-4 flex flex-col gap-3">
-          <p className="text-sm font-medium text-ink-900">Nova categoria de {tab === 'despesa' ? 'despesa' : 'receita'}</p>
+        <form onSubmit={handleAdd} className="mt-8 bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex flex-col gap-3">
+          <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Nova categoria de {tab === 'despesa' ? 'despesa' : 'receita'}</p>
 
           <input
             value={nome}

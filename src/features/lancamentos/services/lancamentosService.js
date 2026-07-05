@@ -3,6 +3,7 @@ import {
   updateUserDoc,
   deleteUserDoc,
   deleteAllUserDocs,
+  deleteUserDocsByIds,
   listUserDocs,
   listUserDocsInRange,
   batchSetUserDocs,
@@ -115,37 +116,73 @@ function importDocId(item) {
 
 /**
  * Bulk-creates parsed statement/fatura transactions, skipping any whose
- * deterministic id already exists (see importDocId) — status is 'pago'/
- * 'recebido' since these are historical transactions, not upcoming bills.
+ * deterministic id already exists — a fatura only shows the installment
+ * due *this* period, so when a line carries parcela info (e.g. "2/10") the
+ * remaining future installments (3/10 .. 10/10) are generated too, exactly
+ * like the manual "Parcelado" flow. Every installment of the same purchase
+ * shares one `${parcelamentoId}_${n}` id (derived from the description),
+ * so re-importing this or a later fatura for the same purchase can't
+ * duplicate what's already there.
  */
 export async function importLancamentos(uid, itens) {
   const existentes = await listUserDocs(uid, COLLECTION);
   const idsExistentes = new Set(existentes.map((d) => d.id));
 
   const novos = {};
+  let totalConsiderados = 0;
+
   for (const item of itens) {
-    const id = importDocId(item);
-    if (idsExistentes.has(id) || novos[id]) continue;
-    novos[id] = {
-      tipo: item.tipo,
-      descricao: item.descricao,
-      valor: item.valor,
-      dataVencimento: item.dataVencimento,
-      dataPagamento: item.dataVencimento,
-      status: item.tipo === 'despesa' ? 'pago' : 'recebido',
-      observacoes: null,
-      categoriaId: null,
-      ...(item.parcelaAtual
-        ? {
-            parcelamentoId: `imp-${slugify(item.descricao)}`,
-            parcelaAtual: item.parcelaAtual,
-            totalParcelas: item.totalParcelas,
-          }
-        : {}),
-    };
+    if (item.parcelaAtual && item.totalParcelas) {
+      const parcelamentoId = `imp-${slugify(item.descricao)}`;
+      const [ano, mes, dia] = item.dataVencimento.split('-').map(Number);
+      const mesAtualKey = `${ano}-${String(mes).padStart(2, '0')}`;
+
+      for (let n = item.parcelaAtual; n <= item.totalParcelas; n++) {
+        totalConsiderados++;
+        const id = `${parcelamentoId}_${n}`;
+        if (idsExistentes.has(id) || novos[id]) continue;
+
+        const monthKey = shiftMonthKey(mesAtualKey, n - item.parcelaAtual);
+        const diaClamped = clampDayToMonth(monthKey, dia);
+        const isAtual = n === item.parcelaAtual;
+
+        novos[id] = {
+          tipo: item.tipo,
+          descricao: `${item.descricao} (${n}/${item.totalParcelas})`,
+          valor: item.valor,
+          dataVencimento: `${monthKey}-${String(diaClamped).padStart(2, '0')}`,
+          dataPagamento: isAtual ? item.dataVencimento : null,
+          status: isAtual ? (item.tipo === 'despesa' ? 'pago' : 'recebido') : 'pendente',
+          observacoes: null,
+          categoriaId: item.categoriaId ?? null,
+          parcelamentoId,
+          parcelaAtual: n,
+          totalParcelas: item.totalParcelas,
+        };
+      }
+    } else {
+      totalConsiderados++;
+      const id = importDocId(item);
+      if (idsExistentes.has(id) || novos[id]) continue;
+      novos[id] = {
+        tipo: item.tipo,
+        descricao: item.descricao,
+        valor: item.valor,
+        dataVencimento: item.dataVencimento,
+        dataPagamento: item.dataVencimento,
+        status: item.tipo === 'despesa' ? 'pago' : 'recebido',
+        observacoes: null,
+        categoriaId: item.categoriaId ?? null,
+      };
+    }
   }
 
   const idsNovos = Object.keys(novos);
   if (idsNovos.length > 0) await batchSetUserDocs(uid, COLLECTION, novos);
-  return { importados: idsNovos.length, duplicados: itens.length - idsNovos.length };
+  return { importados: idsNovos.length, duplicados: totalConsiderados - idsNovos.length };
+}
+
+/** Deletes exactly the given lançamentos — used for "excluir deste período" bulk actions. */
+export async function deleteLancamentosByIds(uid, ids) {
+  await deleteUserDocsByIds(uid, COLLECTION, ids);
 }

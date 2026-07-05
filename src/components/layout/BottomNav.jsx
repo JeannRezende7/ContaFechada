@@ -12,7 +12,7 @@ const ITEMS = [
 export default function BottomNav() {
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-paper/95 backdrop-blur border-t border-ink-100
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-paper/95 dark:bg-ink-900/95 backdrop-blur border-t border-ink-100 dark:border-ink-700
                  flex justify-around pb-[env(safe-area-inset-bottom)] z-20"
     >
       {ITEMS.map((item) => {

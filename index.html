@@ -13,8 +13,17 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap"
       rel="stylesheet"
     />
+    <script>
+      // Runs before paint so a saved/preferred dark theme applies immediately —
+      // no flash of the light theme while React boots (kept in sync with ThemeContext.jsx).
+      (function () {
+        var saved = localStorage.getItem('contafechada-theme');
+        var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (dark) document.documentElement.classList.add('dark');
+      })();
+    </script>
   </head>
-  <body class="bg-paper text-ink-900">
+  <body class="bg-paper text-ink-900 dark:bg-ink-900 dark:text-ink-50">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

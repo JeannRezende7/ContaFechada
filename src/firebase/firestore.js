@@ -44,16 +44,21 @@ export async function setUserDoc(uid, subcollection, docId, data) {
 }
 
 /**
- * Atomically creates multiple docs with caller-chosen ids — used for
- * idempotent default-data seeding (a partial loop of individual writes could
- * leave a collection non-empty but incomplete, permanently skipping re-seed).
+ * Creates multiple docs with caller-chosen ids — used for idempotent
+ * default-data seeding and bulk imports. Chunked to stay under Firestore's
+ * 500-writes-per-batch limit (a large fatura import with many parcelamentos
+ * can easily produce more writes than that).
  */
 export async function batchSetUserDocs(uid, subcollection, itemsById) {
-  const batch = writeBatch(db);
-  for (const [docId, data] of Object.entries(itemsById)) {
-    batch.set(userDoc(uid, subcollection, docId), { ...data, createdAt: serverTimestamp() });
+  const entries = Object.entries(itemsById);
+  const CHUNK = 400;
+  for (let i = 0; i < entries.length; i += CHUNK) {
+    const batch = writeBatch(db);
+    for (const [docId, data] of entries.slice(i, i + CHUNK)) {
+      batch.set(userDoc(uid, subcollection, docId), { ...data, createdAt: serverTimestamp() });
+    }
+    await batch.commit();
   }
-  await batch.commit();
 }
 
 export async function updateUserDoc(uid, subcollection, docId, data) {
@@ -64,10 +69,8 @@ export async function deleteUserDoc(uid, subcollection, docId) {
   await deleteDoc(userDoc(uid, subcollection, docId));
 }
 
-/** Deletes every doc in a subcollection — chunked to stay under Firestore's 500-writes-per-batch limit. */
-export async function deleteAllUserDocs(uid, subcollection) {
-  const snap = await getDocs(userCollection(uid, subcollection));
-  const ids = snap.docs.map((d) => d.id);
+/** Deletes the given doc ids — chunked to stay under Firestore's 500-writes-per-batch limit. */
+export async function deleteUserDocsByIds(uid, subcollection, ids) {
   const CHUNK = 400;
   for (let i = 0; i < ids.length; i += CHUNK) {
     const batch = writeBatch(db);
@@ -76,6 +79,12 @@ export async function deleteAllUserDocs(uid, subcollection) {
     }
     await batch.commit();
   }
+}
+
+/** Deletes every doc in a subcollection. */
+export async function deleteAllUserDocs(uid, subcollection) {
+  const snap = await getDocs(userCollection(uid, subcollection));
+  await deleteUserDocsByIds(uid, subcollection, snap.docs.map((d) => d.id));
 }
 
 export async function getUserDoc(uid, subcollection, docId) {

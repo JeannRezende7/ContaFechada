@@ -4,7 +4,7 @@ import { formatMonthLabel, shiftMonthKey } from '../../utils/monthKey.js';
 /** Prev/next month switcher — the "flip the spreadsheet page" control. */
 export default function MonthNav({ monthKey, onChange }) {
   return (
-    <div className="flex items-center justify-between bg-white rounded-card shadow-card px-2 py-2 mb-4">
+    <div className="flex items-center justify-between bg-white dark:bg-ink-700 rounded-card shadow-card px-2 py-2 mb-4">
       <button
         type="button"
         onClick={() => onChange(shiftMonthKey(monthKey, -1))}
@@ -13,7 +13,7 @@ export default function MonthNav({ monthKey, onChange }) {
       >
         <ChevronLeft size={20} strokeWidth={1.75} />
       </button>
-      <span className="flex items-center gap-2 font-display text-sm font-semibold text-ink-900">
+      <span className="flex items-center gap-2 font-display text-sm font-semibold text-ink-900 dark:text-ink-50">
         <Calendar size={16} className="text-ledger-500" strokeWidth={1.75} />
         {formatMonthLabel(monthKey)}
       </span>

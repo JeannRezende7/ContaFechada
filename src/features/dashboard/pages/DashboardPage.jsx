@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, ArrowDownCircle, ArrowUpCircle, PieChart, ChevronRight } from 'lucide-react';
+import { Wallet, ArrowDownCircle, ArrowUpCircle, PieChart, ChevronRight, Home } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { getDashboardIndicators } from '../services/dashboardService.js';
 import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
@@ -21,7 +21,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Topbar title="Início" />
+      <Topbar title="Início" icon={Home} />
       <div className="p-4 md:p-8 max-w-4xl">
         <MonthNav monthKey={monthKey} onChange={setMonthKey} />
 
@@ -49,7 +49,7 @@ export default function DashboardPage() {
 
         <Link
           to="/relatorios"
-          className="mt-8 flex items-center gap-2.5 text-ink-500 text-sm bg-white rounded-card shadow-card hover:shadow-card-hover p-4 transition-shadow"
+          className="mt-8 flex items-center gap-2.5 text-ink-500 text-sm bg-white dark:bg-ink-700 rounded-card shadow-card hover:shadow-card-hover p-4 transition-shadow"
         >
           <span className="w-8 h-8 rounded-full bg-clay-50 text-clay-500 flex items-center justify-center shrink-0">
             <PieChart size={16} strokeWidth={1.75} />

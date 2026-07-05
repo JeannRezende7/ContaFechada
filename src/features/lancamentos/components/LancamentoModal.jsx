@@ -3,6 +3,7 @@ import { Repeat, Layers } from 'lucide-react';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { getTodayISODate, shiftISODate } from '../../../utils/formatDate.js';
+import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 
 const EMPTY = {
   tipo: 'despesa',
@@ -33,6 +34,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
   const isNew = !initialData;
+  const confirm = useConfirm();
 
   const categoriasDoTipo = useMemo(
     () => categorias.filter((c) => c.tipo === form.tipo),
@@ -114,11 +116,11 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
     <div className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-30 px-0 sm:px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
+        className="bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
       >
-        <div className="w-10 h-1.5 rounded-pill bg-ink-100 mx-auto mb-4 sm:hidden" />
+        <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
 
-        <h2 className="font-display text-base font-semibold text-ink-900 mb-4">
+        <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-4">
           {isNew ? 'Novo lançamento' : 'Editar lançamento'}
         </h2>
 
@@ -127,7 +129,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
             type="button"
             onClick={() => handleTipoChange('despesa')}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-              form.tipo === 'despesa' ? 'bg-ink-900 text-white' : 'bg-ink-50 text-ink-500'
+              form.tipo === 'despesa' ? 'bg-ink-900 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
             }`}
           >
             Despesa
@@ -136,7 +138,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
             type="button"
             onClick={() => handleTipoChange('receita')}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-              form.tipo === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 text-ink-500'
+              form.tipo === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
             }`}
           >
             Receita
@@ -144,14 +146,14 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
         </div>
 
         {isNew && (
-          <div className="flex gap-1 mb-4 bg-ink-50 rounded-pill p-1">
+          <div className="flex gap-1 mb-4 bg-ink-50 dark:bg-ink-900 rounded-pill p-1">
             {MODOS.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
                 onClick={() => update('modo', opt.key)}
                 className={`flex-1 rounded-pill py-1.5 text-xs font-medium transition-colors ${
-                  form.modo === opt.key ? 'bg-white shadow-card text-ink-900' : 'text-ink-500'
+                  form.modo === opt.key ? 'bg-white dark:bg-ink-700 shadow-card text-ink-900 dark:text-ink-50' : 'text-ink-500'
                 }`}
               >
                 {opt.label}
@@ -242,7 +244,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
                   type="button"
                   onClick={() => update('dataVencimento', alvo)}
                   className={`rounded-pill px-3 py-1 text-xs font-medium transition-colors ${
-                    selecionado ? 'bg-ink-900 text-white' : 'bg-ink-50 text-ink-500 hover:bg-ink-100'
+                    selecionado ? 'bg-ink-900 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500 hover:bg-ink-100'
                   }`}
                 >
                   {opt.label}
@@ -315,8 +317,8 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
         {!isNew && (
           <button
             type="button"
-            onClick={() => {
-              if (confirm('Excluir este lançamento?')) onDelete(initialData.id);
+            onClick={async () => {
+              if (await confirm('Excluir este lançamento?')) onDelete(initialData.id);
             }}
             className="w-full mt-2 rounded-xl py-2 text-xs font-medium text-signal-500 hover:bg-signal-50 transition-colors"
           >

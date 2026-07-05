@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
+import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 
 const EMPTY = { descricao: '', valor: '', diaVencimento: '', categoriaId: '', observacoes: '' };
 
@@ -7,6 +8,7 @@ const EMPTY = { descricao: '', valor: '', diaVencimento: '', categoriaId: '', ob
 export default function RecorrenciaModal({ open, recorrencia, categorias = [], onClose, onSave, onDelete }) {
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
+  const confirm = useConfirm();
 
   const categoriasDoTipo = categorias.filter((c) => c.tipo === recorrencia?.tipo);
 
@@ -52,11 +54,11 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
     <div className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-30 px-0 sm:px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
+        className="bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
       >
-        <div className="w-10 h-1.5 rounded-pill bg-ink-100 mx-auto mb-4 sm:hidden" />
+        <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
 
-        <h2 className="font-display text-base font-semibold text-ink-900 mb-1">Editar recorrência</h2>
+        <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1">Editar recorrência</h2>
         <p className="text-xs text-ink-300 mb-4">
           Vale a partir do próximo mês gerado — meses já lançados não mudam.
         </p>
@@ -132,8 +134,8 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
 
         <button
           type="button"
-          onClick={() => {
-            if (confirm('Encerrar esta recorrência? Os lançamentos já gerados continuam existindo.')) {
+          onClick={async () => {
+            if (await confirm('Encerrar esta recorrência? Os lançamentos já gerados continuam existindo.')) {
               onDelete(recorrencia.id);
             }
           }}

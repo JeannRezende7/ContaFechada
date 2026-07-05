@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, useCallback, lazy, Suspense } from 'react';
-import { Plus, Sprout, Repeat, X, ArrowUpCircle, ArrowDownCircle, Wallet, FileUp } from 'lucide-react';
+import { Plus, Sprout, Repeat, X, ArrowUpCircle, ArrowDownCircle, Wallet, FileUp, Trash2, Receipt } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import {
   listLancamentosByRange,
   createLancamento,
   updateLancamento,
   deleteLancamento,
+  deleteLancamentosByIds,
   setLancamentoStatus,
   createParcelamento,
 } from '../services/lancamentosService.js';
@@ -17,8 +18,9 @@ import {
   ensureGeneratedForMonth,
 } from '../../recorrencias/services/recorrenciasService.js';
 import { listCategorias, ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
+import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { getTodayISODate } from '../../../utils/formatDate.js';
-import { getRangeForPeriod, monthKeysInRange } from '../../../utils/periodRange.js';
+import { getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import LancamentoRow from '../components/LancamentoRow.jsx';
 import LancamentoModal from '../components/LancamentoModal.jsx';
@@ -34,6 +36,7 @@ const ImportarFaturaModal = lazy(() => import('../components/ImportarFaturaModal
 export default function LancamentosPage() {
   const { user } = useAuth();
   const uid = user?.uid;
+  const confirm = useConfirm();
   const [tab, setTab] = useState('despesa');
   const [periodType, setPeriodType] = useState('mes');
   const [anchor, setAnchor] = useState(getTodayISODate());
@@ -131,6 +134,14 @@ export default function LancamentosPage() {
     reload();
   }
 
+  async function handleDeleteEmMassa() {
+    const label = formatPeriodLabel(periodType, anchor, customRange);
+    const tipoLabel = tab === 'despesa' ? 'despesas' : 'receitas';
+    if (!(await confirm(`Excluir ${lancamentosDoTipo.length} ${tipoLabel} de "${label}"? Essa ação não pode ser desfeita.`))) return;
+    await deleteLancamentosByIds(uid, lancamentosDoTipo.map((l) => l.id));
+    reload();
+  }
+
   async function handleStatusChange(id, status) {
     await setLancamentoStatus(uid, id, status);
     reload();
@@ -152,13 +163,13 @@ export default function LancamentosPage() {
 
   return (
     <>
-      <Topbar title="Lançamentos" />
+      <Topbar title="Lançamentos" icon={Receipt} />
       <div className="p-4 md:p-8 max-w-4xl">
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setTab('despesa')}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-              tab === 'despesa' ? 'bg-ink-900 text-white' : 'bg-ink-50 text-ink-500'
+              tab === 'despesa' ? 'bg-ink-900 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
             }`}
           >
             Despesas
@@ -166,7 +177,7 @@ export default function LancamentosPage() {
           <button
             onClick={() => setTab('receita')}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-              tab === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 text-ink-500'
+              tab === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
             }`}
           >
             Renda
@@ -197,11 +208,22 @@ export default function LancamentosPage() {
         </div>
 
         <div className="flex justify-between items-center mb-4 gap-2">
-          <p className="text-sm text-ink-300 shrink-0">{lancamentosDoTipo.length} lançamento(s)</p>
+          <div className="flex items-center gap-2 min-w-0">
+            <p className="text-sm text-ink-300 shrink-0">{lancamentosDoTipo.length} lançamento(s)</p>
+            {lancamentosDoTipo.length > 0 && (
+              <button
+                onClick={handleDeleteEmMassa}
+                aria-label="Excluir lançamentos deste período"
+                className="text-ink-300 hover:text-signal-500 transition-colors shrink-0"
+              >
+                <Trash2 size={14} strokeWidth={2} />
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setImportModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-pill bg-ink-50 text-ink-500 pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ink-100 transition-colors"
+              className="flex items-center gap-1.5 rounded-pill bg-ink-50 dark:bg-ink-900 text-ink-500 pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ink-100 transition-colors"
             >
               <FileUp size={16} strokeWidth={2.25} />
               <span className="hidden sm:inline">Importar PDF</span>
@@ -267,17 +289,17 @@ export default function LancamentosPage() {
                     setEditingRecorrencia(r);
                     setRecorrenciaModalOpen(true);
                   }}
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 bg-white rounded-card shadow-card
+                  className="flex items-center justify-between gap-3 px-4 py-2.5 bg-white dark:bg-ink-700 rounded-card shadow-card
                              cursor-pointer hover:shadow-card-hover hover:-translate-y-px transition-all"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-ink-900 truncate">{r.descricao}</p>
+                    <p className="text-sm font-medium text-ink-900 dark:text-ink-50 truncate">{r.descricao}</p>
                     <p className="text-xs text-ink-300">Todo dia {r.diaVencimento}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span
                       className={`money text-sm font-semibold ${
-                        r.tipo === 'receita' ? 'text-ledger-600' : 'text-ink-900'
+                        r.tipo === 'receita' ? 'text-ledger-600' : 'text-ink-900 dark:text-ink-50'
                       }`}
                     >
                       {formatCurrency(r.valor)}
@@ -325,6 +347,7 @@ export default function LancamentosPage() {
           <ImportarFaturaModal
             open={importModalOpen}
             uid={uid}
+            categorias={categorias}
             onClose={() => setImportModalOpen(false)}
             onImported={reload}
           />

@@ -22,6 +22,11 @@ export const COLOR_MAP = {
   amarelo: { dot: 'bg-amber-500', chipBg: 'bg-amber-50', chipText: 'text-amber-700', hex: '#F59E0B' },
   vermelho: { dot: 'bg-rose-500', chipBg: 'bg-rose-50', chipText: 'text-rose-700', hex: '#F43F5E' },
   dourado: { dot: 'bg-gold-500', chipBg: 'bg-gold-50', chipText: 'text-gold-700', hex: '#CA8A04' },
+  rosa: { dot: 'bg-pink-500', chipBg: 'bg-pink-50', chipText: 'text-pink-700', hex: '#EC4899' },
+  laranja: { dot: 'bg-orange-500', chipBg: 'bg-orange-50', chipText: 'text-orange-700', hex: '#F97316' },
+  violeta: { dot: 'bg-violet-500', chipBg: 'bg-violet-50', chipText: 'text-violet-700', hex: '#8B5CF6' },
+  lima: { dot: 'bg-lime-500', chipBg: 'bg-lime-50', chipText: 'text-lime-700', hex: '#84CC16' },
+  fucsia: { dot: 'bg-fuchsia-500', chipBg: 'bg-fuchsia-50', chipText: 'text-fuchsia-700', hex: '#D946EF' },
 };
 
 export function getColor(corKey) {

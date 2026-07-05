@@ -25,8 +25,8 @@ function CategoriaTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
   return (
-    <div className="bg-white rounded-xl shadow-card-hover px-3 py-2 text-sm">
-      <p className="font-medium text-ink-900">{item.nome}</p>
+    <div className="bg-white dark:bg-ink-700 rounded-xl shadow-card-hover px-3 py-2 text-sm">
+      <p className="font-medium text-ink-900 dark:text-ink-50">{item.nome}</p>
       <p className="text-ink-500">{formatCurrency(item.total)}</p>
     </div>
   );
@@ -35,8 +35,8 @@ function CategoriaTooltip({ active, payload }) {
 function EvolucaoTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white rounded-xl shadow-card-hover px-3 py-2 text-sm">
-      <p className="font-medium text-ink-900 mb-1">{label}</p>
+    <div className="bg-white dark:bg-ink-700 rounded-xl shadow-card-hover px-3 py-2 text-sm">
+      <p className="font-medium text-ink-900 dark:text-ink-50 mb-1">{label}</p>
       {payload.map((p) => (
         <p key={p.dataKey} style={{ color: p.color }}>
           {p.dataKey === 'receitas' ? 'Entradas' : 'Saídas'}: {formatCurrency(p.value)}
@@ -73,17 +73,17 @@ export default function RelatoriosPage() {
 
   return (
     <>
-      <Topbar title="Relatórios" />
+      <Topbar title="Relatórios" icon={PieChartIcon} />
       <div className="p-4 md:p-8 max-w-4xl flex flex-col gap-8">
         <MonthNav monthKey={monthKey} onChange={setMonthKey} />
 
-        <section className="bg-white rounded-card shadow-card p-4 md:p-6">
+        <section className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 md:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="flex items-center gap-2 font-display text-base font-semibold text-ink-900">
+            <h2 className="flex items-center gap-2 font-display text-base font-semibold text-ink-900 dark:text-ink-50">
               <PieChartIcon size={18} className="text-clay-500" strokeWidth={1.75} />
               Por categoria
             </h2>
-            <div className="flex gap-1 bg-ink-50 rounded-pill p-1">
+            <div className="flex gap-1 bg-ink-50 dark:bg-ink-900 rounded-pill p-1">
               <button
                 onClick={() => setTipo('despesa')}
                 className={`rounded-pill px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -144,7 +144,7 @@ export default function RelatoriosPage() {
                       />
                       <span className="text-sm text-ink-700 truncate flex-1">{item.nome}</span>
                       <span className="text-xs text-ink-300 shrink-0 w-9 text-right">{pct}%</span>
-                      <span className="money text-sm font-medium text-ink-900 shrink-0">
+                      <span className="money text-sm font-medium text-ink-900 dark:text-ink-50 shrink-0">
                         {formatCurrency(item.total)}
                       </span>
                     </div>
@@ -155,8 +155,8 @@ export default function RelatoriosPage() {
           )}
         </section>
 
-        <section className="bg-white rounded-card shadow-card p-4 md:p-6">
-          <h2 className="flex items-center gap-2 font-display text-base font-semibold text-ink-900 mb-4">
+        <section className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 md:p-6">
+          <h2 className="flex items-center gap-2 font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-4">
             <TrendingUp size={18} className="text-clay-500" strokeWidth={1.75} />
             Evolução mensal
           </h2>

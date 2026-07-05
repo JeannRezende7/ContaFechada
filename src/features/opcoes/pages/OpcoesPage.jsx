@@ -1,23 +1,25 @@
 import { useState } from 'react';
-import { Trash2, Tag } from 'lucide-react';
+import { Trash2, Tag, Settings } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { deleteAllLancamentos } from '../../lancamentos/services/lancamentosService.js';
 import { deleteAllCategorias } from '../../categorias/services/categoriasService.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
 
 export default function OpcoesPage() {
   const { user } = useAuth();
+  const confirm = useConfirm();
   const [loading, setLoading] = useState(null);
 
   async function handleZerarLancamentos() {
-    if (!confirm('Excluir TODOS os lançamentos? Essa ação não pode ser desfeita.')) return;
+    if (!(await confirm('Excluir TODOS os lançamentos? Essa ação não pode ser desfeita.'))) return;
     setLoading('lancamentos');
     await deleteAllLancamentos(user.uid);
     window.location.reload();
   }
 
   async function handleZerarCategorias() {
-    if (!confirm('Excluir TODAS as categorias? As categorias padrão voltam na próxima visita. Essa ação não pode ser desfeita.')) return;
+    if (!(await confirm('Excluir TODAS as categorias? As categorias padrão voltam na próxima visita. Essa ação não pode ser desfeita.'))) return;
     setLoading('categorias');
     await deleteAllCategorias(user.uid);
     window.location.reload();
@@ -25,15 +27,15 @@ export default function OpcoesPage() {
 
   return (
     <>
-      <Topbar title="Opções" />
+      <Topbar title="Opções" icon={Settings} />
       <div className="p-4 md:p-8 max-w-2xl flex flex-col gap-4">
         <p className="text-sm text-ink-300">
           Ações abaixo afetam todos os seus dados e não podem ser desfeitas.
         </p>
 
-        <div className="bg-white rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-ink-900">Zerar lançamentos</p>
+            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Zerar lançamentos</p>
             <p className="text-xs text-ink-300 mt-0.5">
               Apaga todos os lançamentos. Recorrências continuam ativas e voltam a gerar entradas.
             </p>
@@ -48,9 +50,9 @@ export default function OpcoesPage() {
           </button>
         </div>
 
-        <div className="bg-white rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-ink-900">Zerar categorias</p>
+            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Zerar categorias</p>
             <p className="text-xs text-ink-300 mt-0.5">
               Apaga todas as categorias. As categorias padrão voltam na próxima visita.
             </p>
@@ -64,6 +66,10 @@ export default function OpcoesPage() {
             Zerar
           </button>
         </div>
+
+        <p className="text-center text-xs text-ink-300 mt-8">
+          Conta Fechada · desenvolvido por <span className="font-medium text-ink-500">LeliaLabs</span>
+        </p>
       </div>
     </>
   );
