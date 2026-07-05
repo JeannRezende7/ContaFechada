@@ -53,6 +53,18 @@ export function clampDayToMonth(monthKey, day) {
   return Math.min(day, daysInMonth(monthKey));
 }
 
+/**
+ * Days left to budget for in `monthKey`: the whole month if it's still in
+ * the future, 0 if it's already over, and "today through month-end"
+ * (inclusive) if it's the current month.
+ */
+export function daysRemainingInMonth(monthKey) {
+  const current = getCurrentMonthKey();
+  if (monthKey < current) return 0;
+  if (monthKey > current) return daysInMonth(monthKey);
+  return daysInMonth(monthKey) - new Date().getDate() + 1;
+}
+
 /** Inclusive ['YYYY-MM-DD', 'YYYY-MM-DD'] bounds for a range query, safe as string comparison. */
 export function monthRangeBounds(monthKey) {
   return { gte: `${monthKey}-01`, lte: `${monthKey}-31` };

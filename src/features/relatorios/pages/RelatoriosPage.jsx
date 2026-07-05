@@ -142,7 +142,7 @@ export default function RelatoriosPage() {
                         className="w-2.5 h-2.5 rounded-full shrink-0"
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="text-sm text-ink-700 truncate flex-1">{item.nome}</span>
+                      <span className="text-sm text-ink-700 dark:text-ink-50 truncate flex-1">{item.nome}</span>
                       <span className="text-xs text-ink-300 shrink-0 w-9 text-right">{pct}%</span>
                       <span className="money text-sm font-medium text-ink-900 dark:text-ink-50 shrink-0">
                         {formatCurrency(item.total)}

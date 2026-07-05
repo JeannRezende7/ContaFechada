@@ -87,6 +87,18 @@ export async function deleteAllUserDocs(uid, subcollection) {
   await deleteUserDocsByIds(uid, subcollection, snap.docs.map((d) => d.id));
 }
 
+/** Applies the same partial update to multiple docs — chunked like batchSetUserDocs. */
+export async function batchUpdateUserDocs(uid, subcollection, ids, data) {
+  const CHUNK = 400;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const batch = writeBatch(db);
+    for (const id of ids.slice(i, i + CHUNK)) {
+      batch.update(userDoc(uid, subcollection, id), data);
+    }
+    await batch.commit();
+  }
+}
+
 export async function getUserDoc(uid, subcollection, docId) {
   const snap = await getDoc(userDoc(uid, subcollection, docId));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
@@ -103,6 +115,14 @@ export async function listUserDocs(uid, subcollection, { field, direction = 'des
 export async function listUserDocsInRange(uid, subcollection, { field, gte, lte, direction = 'asc' }) {
   const col = userCollection(uid, subcollection);
   const q = query(col, where(field, '>=', gte), where(field, '<=', lte), orderBy(field, direction));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/** Equality query on a single field (e.g. every lançamento generated from one recorrência). */
+export async function listUserDocsWhereEquals(uid, subcollection, field, value) {
+  const col = userCollection(uid, subcollection);
+  const q = query(col, where(field, '==', value));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }

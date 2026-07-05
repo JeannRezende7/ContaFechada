@@ -4,8 +4,10 @@ import {
   deleteUserDoc,
   deleteAllUserDocs,
   deleteUserDocsByIds,
+  batchUpdateUserDocs,
   listUserDocs,
   listUserDocsInRange,
+  listUserDocsWhereEquals,
   batchSetUserDocs,
 } from '../../../firebase/firestore.js';
 import { monthRangeBounds, shiftMonthKey, clampDayToMonth } from '../../../utils/monthKey.js';
@@ -56,6 +58,13 @@ export function deleteLancamento(uid, id) {
 /** Wipes every lançamento for the user — recorrências/categorias are untouched. */
 export function deleteAllLancamentos(uid) {
   return deleteAllUserDocs(uid, COLLECTION);
+}
+
+/** Re-categorizes every lançamento already generated from a given recorrência. */
+export async function setCategoriaForRecorrencia(uid, recorrenciaId, categoriaId) {
+  const gerados = await listUserDocsWhereEquals(uid, COLLECTION, 'origemRecorrenciaId', recorrenciaId);
+  if (gerados.length === 0) return;
+  await batchUpdateUserDocs(uid, COLLECTION, gerados.map((l) => l.id), { categoriaId });
 }
 
 /** Quick status change from the list row, without opening the modal. */

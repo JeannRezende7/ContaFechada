@@ -292,7 +292,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
               {Number(form.valor) > 0 && Number(form.numParcelas) > 1 && (
                 <p className="text-xs text-ink-300">
                   {form.numParcelas}x de{' '}
-                  <span className="font-medium text-ink-700">
+                  <span className="font-medium text-ink-700 dark:text-ink-50">
                     {formatCurrency(Number(form.valor) / Number(form.numParcelas))}
                   </span>
                 </p>

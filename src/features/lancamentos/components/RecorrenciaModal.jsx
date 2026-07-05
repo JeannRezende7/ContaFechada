@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
-import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
+import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
 
 const EMPTY = { descricao: '', valor: '', diaVencimento: '', categoriaId: '', observacoes: '' };
 
@@ -9,6 +9,7 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
   const confirm = useConfirm();
+  const confirmChoice = useConfirmChoice();
 
   const categoriasDoTipo = categorias.filter((c) => c.tipo === recorrencia?.tipo);
 
@@ -39,15 +40,34 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    onSave(recorrencia.id, {
-      descricao: form.descricao,
-      valor: Number(form.valor),
-      diaVencimento: Number(form.diaVencimento),
-      categoriaId: form.categoriaId || null,
-      observacoes: form.observacoes || null,
-    });
+    const novaCategoriaId = form.categoriaId || null;
+    const categoriaMudou = novaCategoriaId !== (recorrencia.categoriaId ?? null);
+
+    let atualizarGerados = false;
+    if (categoriaMudou) {
+      const escolha = await confirmChoice(
+        'Você alterou a categoria desta recorrência. Quer atualizar também os lançamentos já gerados por ela?',
+        [
+          { value: 'gerados', label: 'Sim, atualizar os já gerados', tone: 'primary' },
+          { value: 'futuros', label: 'Não, só os próximos', tone: 'neutral' },
+        ]
+      );
+      atualizarGerados = escolha === 'gerados';
+    }
+
+    onSave(
+      recorrencia.id,
+      {
+        descricao: form.descricao,
+        valor: Number(form.valor),
+        diaVencimento: Number(form.diaVencimento),
+        categoriaId: novaCategoriaId,
+        observacoes: form.observacoes || null,
+      },
+      { atualizarCategoriaGerados: atualizarGerados }
+    );
   }
 
   return (

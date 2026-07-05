@@ -9,6 +9,7 @@ import {
   deleteLancamentosByIds,
   setLancamentoStatus,
   createParcelamento,
+  setCategoriaForRecorrencia,
 } from '../services/lancamentosService.js';
 import {
   listRecorrencias,
@@ -160,8 +161,11 @@ export default function LancamentosPage() {
     reload();
   }
 
-  async function handleSaveRecorrencia(id, data) {
+  async function handleSaveRecorrencia(id, data, { atualizarCategoriaGerados = false } = {}) {
     await updateRecorrencia(uid, id, data);
+    if (atualizarCategoriaGerados) {
+      await setCategoriaForRecorrencia(uid, id, data.categoriaId);
+    }
     setRecorrenciaModalOpen(false);
     reload();
   }
