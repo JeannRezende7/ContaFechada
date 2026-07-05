@@ -223,7 +223,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
                 value={form.dataVencimento}
                 onChange={(e) => update('dataVencimento', e.target.value)}
                 placeholder="Hoje"
-                className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+                className="[color-scheme:light] w-full bg-white text-ink-900 rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
               />
             )}
           </div>

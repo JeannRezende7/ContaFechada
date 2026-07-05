@@ -5,6 +5,7 @@ import App from './App.jsx';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { ConfirmProvider } from './contexts/ConfirmContext.jsx';
 import { ThemeProvider } from './contexts/ThemeContext.jsx';
+import { PremiumProvider } from './contexts/PremiumContext.jsx';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -13,7 +14,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <AuthProvider>
           <ConfirmProvider>
-            <App />
+            <PremiumProvider>
+              <App />
+            </PremiumProvider>
           </ConfirmProvider>
         </AuthProvider>
       </ThemeProvider>

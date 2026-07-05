@@ -112,7 +112,7 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
                 >
                   <span
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${color.dot} ${
-                      selected ? 'ring-2 ring-offset-2 ring-ink-900' : 'opacity-90 hover:opacity-100'
+                      selected ? 'ring-2 ring-offset-2 dark:ring-offset-ink-700 ring-ink-900 dark:ring-ink-50' : 'opacity-90 hover:opacity-100'
                     }`}
                   >
                     <Icon size={19} strokeWidth={2} className="text-white" />

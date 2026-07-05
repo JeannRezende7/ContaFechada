@@ -41,11 +41,11 @@ export default function StatusBadge({ status, tipo, onChange }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1.5 text-xs font-medium rounded-pill pl-2.5 pr-2 py-1.5 transition-colors ${config.className}`}
+        className={`flex items-center gap-1.5 text-xs md:text-sm font-medium rounded-pill pl-2.5 pr-2 py-1.5 md:py-2 transition-colors ${config.className}`}
       >
-        <Icon size={12} strokeWidth={2.25} />
+        <Icon size={12} strokeWidth={2.25} className="md:w-3.5 md:h-3.5" />
         {config.label}
-        <ChevronDown size={12} strokeWidth={2.25} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={12} strokeWidth={2.25} className={`md:w-3.5 md:h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (

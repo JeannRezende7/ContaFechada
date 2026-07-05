@@ -19,6 +19,8 @@ import {
 } from '../../recorrencias/services/recorrenciasService.js';
 import { listCategorias, ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
+import { usePremium } from '../../../contexts/PremiumContext.jsx';
+import { FEATURES } from '../../../config/premium.js';
 import { getTodayISODate } from '../../../utils/formatDate.js';
 import { getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
@@ -37,6 +39,7 @@ export default function LancamentosPage() {
   const { user } = useAuth();
   const uid = user?.uid;
   const confirm = useConfirm();
+  const { guardFeature } = usePremium();
   const [tab, setTab] = useState('despesa');
   const [periodType, setPeriodType] = useState('mes');
   const [anchor, setAnchor] = useState(getTodayISODate());
@@ -116,6 +119,8 @@ export default function LancamentosPage() {
   async function handleSave(data) {
     const { recorrente, parcelado, ...rest } = data;
     if (recorrente) {
+      const ativasCount = recorrencias.filter((r) => r.ativo).length;
+      if (!guardFeature(FEATURES.RECORRENCIAS, { count: ativasCount })) return;
       await createRecorrencia(uid, rest);
     } else if (parcelado) {
       await createParcelamento(uid, rest);
@@ -164,11 +169,11 @@ export default function LancamentosPage() {
   return (
     <>
       <Topbar title="Lançamentos" icon={Receipt} />
-      <div className="p-4 md:p-8 max-w-4xl">
+      <div className="p-4 md:p-8 max-w-4xl mx-auto">
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setTab('despesa')}
-            className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
+            className={`flex-1 rounded-xl py-2.5 md:py-3 text-sm md:text-base font-medium transition-colors ${
               tab === 'despesa' ? 'bg-ink-900 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
             }`}
           >
@@ -176,7 +181,7 @@ export default function LancamentosPage() {
           </button>
           <button
             onClick={() => setTab('receita')}
-            className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
+            className={`flex-1 rounded-xl py-2.5 md:py-3 text-sm md:text-base font-medium transition-colors ${
               tab === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
             }`}
           >
@@ -222,7 +227,10 @@ export default function LancamentosPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setImportModalOpen(true)}
+              onClick={() => {
+                if (!guardFeature(FEATURES.IMPORTAR_PDF)) return;
+                setImportModalOpen(true);
+              }}
               className="flex items-center gap-1.5 rounded-pill bg-ink-50 dark:bg-ink-900 text-ink-500 pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ink-100 transition-colors"
             >
               <FileUp size={16} strokeWidth={2.25} />

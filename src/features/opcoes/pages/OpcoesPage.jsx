@@ -28,7 +28,7 @@ export default function OpcoesPage() {
   return (
     <>
       <Topbar title="Opções" icon={Settings} />
-      <div className="p-4 md:p-8 max-w-2xl flex flex-col gap-4">
+      <div className="p-4 md:p-8 max-w-2xl mx-auto flex flex-col gap-4">
         <p className="text-sm text-ink-300">
           Ações abaixo afetam todos os seus dados e não podem ser desfeitas.
         </p>

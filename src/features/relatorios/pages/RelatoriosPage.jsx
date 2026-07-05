@@ -74,7 +74,7 @@ export default function RelatoriosPage() {
   return (
     <>
       <Topbar title="Relatórios" icon={PieChartIcon} />
-      <div className="p-4 md:p-8 max-w-4xl flex flex-col gap-8">
+      <div className="p-4 md:p-8 max-w-4xl mx-auto flex flex-col gap-8">
         <MonthNav monthKey={monthKey} onChange={setMonthKey} />
 
         <section className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 md:p-6">

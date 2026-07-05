@@ -4,11 +4,14 @@ import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { listCategorias, createCategoria, deleteCategoria, ensureDefaultCategorias } from '../services/categoriasService.js';
 import { COLOR_MAP, getColor } from '../colorMap.js';
 import { ICON_MAP, getIcon } from '../iconMap.js';
+import { usePremium } from '../../../contexts/PremiumContext.jsx';
+import { FEATURES } from '../../../config/premium.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
 
 export default function CategoriasPage() {
   const { user } = useAuth();
   const uid = user?.uid;
+  const { guardFeature } = usePremium();
   const [categorias, setCategorias] = useState([]);
   const [tab, setTab] = useState('despesa');
   const [nome, setNome] = useState('');
@@ -41,6 +44,8 @@ export default function CategoriasPage() {
   async function handleAdd(e) {
     e.preventDefault();
     if (!nome.trim()) return;
+    const customCount = categorias.filter((c) => !c.padrao).length;
+    if (!guardFeature(FEATURES.CATEGORIAS_CUSTOM, { count: customCount })) return;
     await createCategoria(uid, { nome: nome.trim(), tipo: tab, corKey, icone, ordem: Date.now() });
     setNome('');
     reload();
@@ -54,7 +59,7 @@ export default function CategoriasPage() {
   return (
     <>
       <Topbar title="Categorias" icon={Tag} />
-      <div className="p-4 md:p-8 max-w-4xl">
+      <div className="p-4 md:p-8 max-w-4xl mx-auto">
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setTab('despesa')}
@@ -112,30 +117,30 @@ export default function CategoriasPage() {
           />
 
           <p className="text-xs font-medium text-ink-300 -mb-1">Cor</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-8 sm:grid-cols-10 gap-3 p-1">
             {Object.keys(COLOR_MAP).map((key) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => setCorKey(key)}
                 aria-label={`Cor ${key}`}
-                className={`w-7 h-7 rounded-full ${COLOR_MAP[key].dot} transition-all ${
-                  corKey === key ? 'ring-2 ring-offset-2 ring-ink-900' : ''
+                className={`w-7 h-7 rounded-full mx-auto ${COLOR_MAP[key].dot} transition-all ${
+                  corKey === key ? 'ring-2 ring-offset-2 dark:ring-offset-ink-700 ring-ink-900 dark:ring-ink-50' : ''
                 }`}
               />
             ))}
           </div>
 
           <p className="text-xs font-medium text-ink-300 -mb-1">Ícone</p>
-          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+          <div className="grid grid-cols-8 sm:grid-cols-10 gap-3 p-1 max-h-40 overflow-y-auto">
             {Object.entries(ICON_MAP).map(([key, Icon]) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => setIcone(key)}
                 aria-label={`Ícone ${key}`}
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${COLOR_MAP[corKey].dot} ${
-                  icone === key ? 'ring-2 ring-offset-2 ring-ink-900' : 'opacity-60 hover:opacity-100'
+                className={`w-8 h-8 rounded-full mx-auto flex items-center justify-center transition-all ${COLOR_MAP[corKey].dot} ${
+                  icone === key ? 'ring-2 ring-offset-2 dark:ring-offset-ink-700 ring-ink-900 dark:ring-ink-50' : 'opacity-60 hover:opacity-100'
                 }`}
               >
                 <Icon size={15} strokeWidth={2.25} className="text-white" />
