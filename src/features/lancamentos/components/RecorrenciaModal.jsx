@@ -69,7 +69,7 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
           required
           value={form.descricao}
           onChange={(e) => update('descricao', e.target.value)}
-          className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm mb-3 focus:border-ledger-500 transition-colors"
+          className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm mb-3 focus:border-ledger-500 transition-colors"
         />
 
         <div className="grid grid-cols-2 gap-3 mb-3">
@@ -82,7 +82,7 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
               min="0"
               value={form.valor}
               onChange={(e) => update('valor', e.target.value)}
-              className="money w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+              className="money w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
             />
           </div>
           <div>
@@ -94,7 +94,7 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
               max="31"
               value={form.diaVencimento}
               onChange={(e) => update('diaVencimento', e.target.value)}
-              className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+              className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
             />
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
           value={form.observacoes}
           onChange={(e) => update('observacoes', e.target.value)}
           rows={2}
-          className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm mb-4 focus:border-ledger-500 transition-colors"
+          className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm mb-4 focus:border-ledger-500 transition-colors"
         />
 
         <div className="flex gap-2">

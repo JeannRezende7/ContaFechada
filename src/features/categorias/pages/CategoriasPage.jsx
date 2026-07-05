@@ -113,7 +113,7 @@ export default function CategoriasPage() {
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             placeholder="Ex: Papelaria"
-            className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+            className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
           />
 
           <p className="text-xs font-medium text-ink-300 -mb-1">Cor</p>

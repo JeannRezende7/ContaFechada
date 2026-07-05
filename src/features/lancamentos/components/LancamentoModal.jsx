@@ -182,7 +182,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
           required
           value={form.descricao}
           onChange={(e) => update('descricao', e.target.value)}
-          className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm mb-3 focus:border-ledger-500 transition-colors"
+          className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm mb-3 focus:border-ledger-500 transition-colors"
           placeholder="Ex: Aluguel"
         />
 
@@ -198,7 +198,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
               min="0"
               value={form.valor}
               onChange={(e) => update('valor', e.target.value)}
-              className="money w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+              className="money w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
               placeholder="0,00"
             />
           </div>
@@ -214,7 +214,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
                 max="31"
                 value={form.diaVencimento}
                 onChange={(e) => update('diaVencimento', e.target.value)}
-                className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+                className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
                 placeholder="Ex: 10"
               />
             ) : (
@@ -265,7 +265,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
                 max="60"
                 value={form.numParcelas}
                 onChange={(e) => update('numParcelas', e.target.value)}
-                className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+                className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
               />
             </div>
             <div className="flex items-end pb-2.5">
@@ -295,7 +295,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
           value={form.observacoes}
           onChange={(e) => update('observacoes', e.target.value)}
           rows={2}
-          className="w-full rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm mb-4 focus:border-ledger-500 transition-colors"
+          className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm mb-4 focus:border-ledger-500 transition-colors"
         />
 
         <div className="flex gap-2">
