@@ -32,6 +32,7 @@ import LancamentoModal from '../components/LancamentoModal.jsx';
 import RecorrenciaModal from '../components/RecorrenciaModal.jsx';
 import PeriodNav from '../../../components/ui/PeriodNav.jsx';
 import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
+import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 
 // Pulls in pdfjs-dist (~500kB) — deferred so it's only fetched when the user
@@ -56,6 +57,7 @@ export default function LancamentosPage() {
   const [editingRecorrencia, setEditingRecorrencia] = useState(null);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [busca, setBusca] = useState('');
+  const [carregado, setCarregado] = useState(false);
 
   const { gte, lte } = getRangeForPeriod(periodType, anchor, customRange);
 
@@ -78,6 +80,7 @@ export default function LancamentosPage() {
 
     setLancamentos(gerouAlgo ? await listLancamentosByRange(uid, gte, lte) : items);
     setRecorrencias(todasRecorrencias);
+    setCarregado(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, gte, lte]);
 
@@ -204,6 +207,15 @@ export default function LancamentosPage() {
   }
 
   const ativos = recorrencias.filter((r) => r.ativo && r.tipo === tab);
+
+  if (!carregado) {
+    return (
+      <>
+        <Topbar title="Lançamentos" icon={Receipt} />
+        <LoadingScreen />
+      </>
+    );
+  }
 
   return (
     <>

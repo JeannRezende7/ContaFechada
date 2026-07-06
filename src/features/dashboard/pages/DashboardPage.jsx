@@ -13,6 +13,7 @@ import {
 import { listCategorias } from '../../categorias/services/categoriasService.js';
 import { computeInsights } from '../utils/insights.js';
 import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
+import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import { getCurrentMonthKey, daysRemainingInMonth, daysInMonth, formatMonthShort } from '../../../utils/monthKey.js';
@@ -75,6 +76,15 @@ export default function DashboardPage() {
 
   const economiaAtual = indicators ? Math.max(0, indicators.saldoMes) : 0;
   const economiaPct = metaEconomia > 0 ? Math.min(100, Math.round((economiaAtual / metaEconomia) * 100)) : 0;
+
+  if (!indicators) {
+    return (
+      <>
+        <Topbar title="Início" icon={Home} />
+        <LoadingScreen />
+      </>
+    );
+  }
 
   return (
     <>
