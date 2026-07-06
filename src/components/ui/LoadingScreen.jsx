@@ -7,7 +7,6 @@ export default function LoadingScreen() {
       <div className="w-14 h-14 rounded-2xl bg-ledger-500 flex items-center justify-center animate-bounce">
         <PiggyBank size={28} className="text-white" strokeWidth={1.75} />
       </div>
-      <p className="text-sm text-ink-300 font-medium">Carregando...</p>
     </div>
   );
 }
