@@ -6,8 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import {
-  getDashboardIndicators,
-  getComparacaoMensal,
+  getDashboardData,
   getMetaEconomiaMensal,
   setMetaEconomiaMensal,
 } from '../services/dashboardService.js';
@@ -33,8 +32,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!uid) return;
-    getDashboardIndicators(uid, monthKey).then(setIndicators);
-    getComparacaoMensal(uid, monthKey).then(setComparacao);
+    getDashboardData(uid, monthKey).then(({ indicators, comparacao }) => {
+      setIndicators(indicators);
+      setComparacao(comparacao);
+    });
   }, [uid, monthKey]);
 
   useEffect(() => {

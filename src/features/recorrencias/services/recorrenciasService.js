@@ -51,13 +51,18 @@ export function deleteRecorrencia(uid, id) {
  * Accepts an optional pre-fetched `recorrencias` list so a caller checking
  * several months in the same pass (or that already needs the list itself)
  * doesn't pay for a repeat `listRecorrencias` round trip per month.
+ *
+ * Returns whether it actually created anything — lets a caller that already
+ * fired a `lancamentos` read in parallel (optimistically assuming nothing
+ * needed generating, the common case after the first visit of the month)
+ * know it must re-fetch instead of trusting stale results.
  */
 export async function ensureGeneratedForMonth(uid, monthKey, recorrenciasPreFetched) {
   const recorrencias = recorrenciasPreFetched ?? (await listRecorrencias(uid));
   const ativas = recorrencias.filter(
     (r) => r.ativo && (!r.createdAt || monthKey >= monthKeyFromTimestamp(r.createdAt))
   );
-  if (ativas.length === 0) return;
+  if (ativas.length === 0) return false;
 
   const jaGerados = await listUserDocsWhereEquals(uid, 'lancamentos', 'mesReferencia', monthKey);
   const idsGerados = new Set(jaGerados.map((d) => d.id));
@@ -82,5 +87,7 @@ export async function ensureGeneratedForMonth(uid, monthKey, recorrenciasPreFetc
     };
   }
 
-  if (Object.keys(novos).length > 0) await batchSetUserDocs(uid, 'lancamentos', novos);
+  if (Object.keys(novos).length === 0) return false;
+  await batchSetUserDocs(uid, 'lancamentos', novos);
+  return true;
 }

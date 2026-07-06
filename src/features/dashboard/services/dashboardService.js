@@ -1,22 +1,9 @@
 import { listLancamentosByMonth } from '../../lancamentos/services/lancamentosService.js';
-import { ensureGeneratedForMonth } from '../../recorrencias/services/recorrenciasService.js';
+import { listRecorrencias, ensureGeneratedForMonth } from '../../recorrencias/services/recorrenciasService.js';
 import { shiftMonthKey, getCurrentMonthKey } from '../../../utils/monthKey.js';
 import { getUserDoc, setUserDoc } from '../../../firebase/firestore.js';
 
-/**
- * Computes the headline indicators for the given 'YYYY-MM' month:
- * saldo do mês, total a pagar, total a receber.
- * `saldoMes` nets every lançamento regardless of status (same "receita total
- * - despesa total" the Lançamentos page shows) — pending items aren't yet
- * money that moved, but the user still needs to see where the month is
- * heading, not just what's already settled.
- * MVP version: works client-side over that month's lancamentos.
- * Move to a Cloud Function / aggregation query once volume grows.
- */
-export async function getDashboardIndicators(uid, monthKey) {
-  await ensureGeneratedForMonth(uid, monthKey);
-  const lancamentos = await listLancamentosByMonth(uid, monthKey);
-
+function computeIndicators(lancamentos, monthKey) {
   let saldoMes = 0;
   let totalAPagar = 0;
   let totalAReceber = 0;
@@ -69,26 +56,6 @@ export async function getDashboardIndicators(uid, monthKey) {
   };
 }
 
-/**
- * Total de despesas do mês anterior ao informado — usado só para a
- * comparação mês a mês, por isso não recalcula os outros indicadores.
- */
-export async function getDespesaMesAnterior(uid, monthKey) {
-  const anterior = shiftMonthKey(monthKey, -1);
-  await ensureGeneratedForMonth(uid, anterior);
-  const lancamentos = await listLancamentosByMonth(uid, anterior);
-  let despesaMes = 0;
-  const porCategoria = {};
-  for (const item of lancamentos) {
-    if (item.tipo !== 'despesa') continue;
-    const valor = Number(item.valor) || 0;
-    despesaMes += valor;
-    const chave = item.categoriaId ?? '_sem_categoria';
-    porCategoria[chave] = (porCategoria[chave] ?? 0) + valor;
-  }
-  return { despesaMes, porCategoria };
-}
-
 /** Soma de despesas do mês agrupada por categoria — usada nos insights automáticos. */
 export function agruparDespesaPorCategoria(lancamentos) {
   const porCategoria = {};
@@ -101,16 +68,51 @@ export function agruparDespesaPorCategoria(lancamentos) {
   return porCategoria;
 }
 
-/** Compara a despesa do mês com a do mês anterior, geral e por categoria. */
-export async function getComparacaoMensal(uid, monthKey) {
-  const lancamentosAtual = await listLancamentosByMonth(uid, monthKey);
+function computeComparacao(lancamentosAtual, lancamentosAnterior) {
   const porCategoriaAtual = agruparDespesaPorCategoria(lancamentosAtual);
   const despesaAtual = Object.values(porCategoriaAtual).reduce((a, b) => a + b, 0);
 
-  const { despesaMes: despesaAnterior, porCategoria: porCategoriaAnterior } = await getDespesaMesAnterior(uid, monthKey);
+  const porCategoriaAnterior = agruparDespesaPorCategoria(lancamentosAnterior);
+  const despesaAnterior = Object.values(porCategoriaAnterior).reduce((a, b) => a + b, 0);
+
   const percentual = despesaAnterior > 0 ? ((despesaAtual - despesaAnterior) / despesaAnterior) * 100 : null;
 
   return { despesaAtual, despesaAnterior, percentual, porCategoriaAtual, porCategoriaAnterior };
+}
+
+/**
+ * Everything the Início page needs, fetched with as few sequential round
+ * trips as possible: recorrências + both months' lançamentos fire in one
+ * parallel batch (sharing the recorrências list instead of each caller
+ * re-fetching it), and each month is only re-read if `ensureGeneratedForMonth`
+ * actually created something new — the common case (already generated)
+ * needs zero extra round trips.
+ * MVP version: works client-side over each month's lancamentos.
+ * Move to a Cloud Function / aggregation query once volume grows.
+ */
+export async function getDashboardData(uid, monthKey) {
+  const anterior = shiftMonthKey(monthKey, -1);
+
+  const [recorrencias, lancamentosAtual0, lancamentosAnterior0] = await Promise.all([
+    listRecorrencias(uid),
+    listLancamentosByMonth(uid, monthKey),
+    listLancamentosByMonth(uid, anterior),
+  ]);
+
+  const [gerouAtual, gerouAnterior] = await Promise.all([
+    ensureGeneratedForMonth(uid, monthKey, recorrencias),
+    ensureGeneratedForMonth(uid, anterior, recorrencias),
+  ]);
+
+  const [lancamentosAtual, lancamentosAnterior] = await Promise.all([
+    gerouAtual ? listLancamentosByMonth(uid, monthKey) : lancamentosAtual0,
+    gerouAnterior ? listLancamentosByMonth(uid, anterior) : lancamentosAnterior0,
+  ]);
+
+  return {
+    indicators: computeIndicators(lancamentosAtual, monthKey),
+    comparacao: computeComparacao(lancamentosAtual, lancamentosAnterior),
+  };
 }
 
 const CONFIG_COLLECTION = 'config';

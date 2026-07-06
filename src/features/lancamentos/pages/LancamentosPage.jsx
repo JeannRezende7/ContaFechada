@@ -62,10 +62,21 @@ export default function LancamentosPage() {
   const reload = useCallback(async () => {
     if (!uid) return;
     const meses = monthKeysInRange(gte, lte);
-    const todasRecorrencias = await listRecorrencias(uid);
-    await Promise.all(meses.map((mk) => ensureGeneratedForMonth(uid, mk, todasRecorrencias)));
-    const items = await listLancamentosByRange(uid, gte, lte);
-    setLancamentos(items);
+
+    // listLancamentosByRange doesn't depend on recorrencias, so fire it in
+    // true parallel instead of waiting on ensureGeneratedForMonth first —
+    // that only matters on the rare visit where a recorrência's instance for
+    // this month hasn't been generated yet (first visit of the month), in
+    // which case we re-fetch once more below.
+    const [todasRecorrencias, items] = await Promise.all([
+      listRecorrencias(uid),
+      listLancamentosByRange(uid, gte, lte),
+    ]);
+    const gerouAlgo = (
+      await Promise.all(meses.map((mk) => ensureGeneratedForMonth(uid, mk, todasRecorrencias)))
+    ).some(Boolean);
+
+    setLancamentos(gerouAlgo ? await listLancamentosByRange(uid, gte, lte) : items);
     setRecorrencias(todasRecorrencias);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, gte, lte]);
