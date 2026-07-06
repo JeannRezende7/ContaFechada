@@ -9,6 +9,7 @@ import LancamentosPage from '../features/lancamentos/pages/LancamentosPage.jsx';
 import CategoriasPage from '../features/categorias/pages/CategoriasPage.jsx';
 import RelatoriosPage from '../features/relatorios/pages/RelatoriosPage.jsx';
 import MetasPage from '../features/metas/pages/MetasPage.jsx';
+import GestorFinanceiroPage from '../features/gestor/pages/GestorFinanceiroPage.jsx';
 import OpcoesPage from '../features/opcoes/pages/OpcoesPage.jsx';
 
 export default function AppRoutes() {
@@ -30,6 +31,7 @@ export default function AppRoutes() {
         <Route path="/categorias" element={<CategoriasPage />} />
         <Route path="/relatorios" element={<RelatoriosPage />} />
         <Route path="/metas" element={<MetasPage />} />
+        <Route path="/gestor" element={<GestorFinanceiroPage />} />
         <Route path="/opcoes" element={<OpcoesPage />} />
       </Route>
 

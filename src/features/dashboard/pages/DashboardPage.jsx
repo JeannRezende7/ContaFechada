@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Wallet, ArrowDownCircle, ArrowUpCircle, PieChart, ChevronRight, Home, PiggyBank,
-  TrendingUp, TrendingDown, Flame, Clock, CalendarClock, Sparkles, Target, Pencil,
+  TrendingUp, TrendingDown, Flame, Clock, CalendarClock, Sparkles, Target, Pencil, Landmark,
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import {
@@ -286,6 +286,17 @@ export default function DashboardPage() {
             <PieChart size={16} strokeWidth={1.75} />
           </span>
           <span className="flex-1">Veja a distribuição de gastos por categoria e a evolução mês a mês</span>
+          <ChevronRight size={16} strokeWidth={1.75} className="shrink-0 text-ink-300" />
+        </Link>
+
+        <Link
+          to="/gestor"
+          className="mt-3 flex items-center gap-2.5 text-ink-500 text-sm bg-white dark:bg-ink-700 rounded-card shadow-card hover:shadow-card-hover p-4 transition-shadow"
+        >
+          <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <Landmark size={16} strokeWidth={1.75} />
+          </span>
+          <span className="flex-1">Veja quanto da sua renda está comprometida e o que está parcelado</span>
           <ChevronRight size={16} strokeWidth={1.75} className="shrink-0 text-ink-300" />
         </Link>
       </div>

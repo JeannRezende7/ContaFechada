@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Receipt, Tag, PieChart, PiggyBank, Target } from 'lucide-react';
+import { Home, Receipt, Tag, PieChart, PiggyBank, Target, Landmark } from 'lucide-react';
 
 const ITEMS = [
   { to: '/', label: 'Início', icon: Home },
@@ -7,6 +7,7 @@ const ITEMS = [
   { to: '/categorias', label: 'Categorias', icon: Tag },
   { to: '/relatorios', label: 'Relatórios', icon: PieChart },
   { to: '/metas', label: 'Metas', icon: Target },
+  { to: '/gestor', label: 'Gestor Financeiro', icon: Landmark },
 ];
 
 /** Visible on desktop only (>= md). Mobile uses <BottomNav /> instead. */

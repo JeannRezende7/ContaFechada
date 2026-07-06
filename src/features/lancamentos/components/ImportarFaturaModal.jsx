@@ -13,7 +13,7 @@ import { formatDateBR } from '../../../utils/formatDate.js';
  * assign a categoria before writing. Only Nubank's layout is supported today
  * — see parseFaturaNubank.js.
  */
-export default function ImportarFaturaModal({ open, uid, categorias = [], onClose, onImported }) {
+export default function ImportarFaturaModal({ open, uid, categorias = [], onClose, onImported, onImport = importLancamentos }) {
   const [status, setStatus] = useState('idle'); // idle | parsing | preview | importing | done | error
   const [itens, setItens] = useState([]);
   const [selecionados, setSelecionados] = useState(new Set());
@@ -67,7 +67,7 @@ export default function ImportarFaturaModal({ open, uid, categorias = [], onClos
   async function handleImportar() {
     setStatus('importing');
     const escolhidos = itens.filter((_, i) => selecionados.has(i));
-    const res = await importLancamentos(uid, escolhidos);
+    const res = await onImport(uid, escolhidos);
     setResultado(res);
     setStatus('done');
     onImported?.();

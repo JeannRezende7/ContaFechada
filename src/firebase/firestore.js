@@ -44,6 +44,15 @@ export async function setUserDoc(uid, subcollection, docId, data) {
 }
 
 /**
+ * Like `setUserDoc`, but merges instead of replacing — for a doc that holds
+ * several independent settings (e.g. `config/geral`), a plain `setDoc` would
+ * silently wipe out every other field whenever just one setting is saved.
+ */
+export async function setUserDocMerged(uid, subcollection, docId, data) {
+  await setDoc(userDoc(uid, subcollection, docId), { ...data, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+/**
  * Creates multiple docs with caller-chosen ids — used for idempotent
  * default-data seeding and bulk imports. Chunked to stay under Firestore's
  * 500-writes-per-batch limit (a large fatura import with many parcelamentos

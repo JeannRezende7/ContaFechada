@@ -1,7 +1,7 @@
 import { listLancamentosByMonth } from '../../lancamentos/services/lancamentosService.js';
 import { listRecorrencias, ensureGeneratedForMonth } from '../../recorrencias/services/recorrenciasService.js';
 import { shiftMonthKey, getCurrentMonthKey } from '../../../utils/monthKey.js';
-import { getUserDoc, setUserDoc } from '../../../firebase/firestore.js';
+import { getUserDoc, setUserDocMerged } from '../../../firebase/firestore.js';
 
 function computeIndicators(lancamentos, monthKey) {
   let saldoMes = 0;
@@ -125,5 +125,5 @@ export async function getMetaEconomiaMensal(uid) {
 }
 
 export async function setMetaEconomiaMensal(uid, valor) {
-  await setUserDoc(uid, CONFIG_COLLECTION, CONFIG_DOC, { metaEconomiaMensal: valor });
+  await setUserDocMerged(uid, CONFIG_COLLECTION, CONFIG_DOC, { metaEconomiaMensal: valor });
 }

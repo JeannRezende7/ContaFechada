@@ -38,6 +38,11 @@ export function listLancamentosByMonth(uid, monthKey) {
   return listUserDocsInRange(uid, COLLECTION, { field: 'dataVencimento', gte, lte });
 }
 
+/** Lists every lançamento regardless of date — used by the Gestor Financeiro's analysis and import picker. */
+export function listAllLancamentos(uid) {
+  return listUserDocs(uid, COLLECTION);
+}
+
 /** Lists lançamentos due within an arbitrary inclusive ['YYYY-MM-DD', 'YYYY-MM-DD'] range. */
 export function listLancamentosByRange(uid, gte, lte) {
   return listUserDocsInRange(uid, COLLECTION, { field: 'dataVencimento', gte, lte });
@@ -73,16 +78,15 @@ export function setLancamentoStatus(uid, id, status) {
 }
 
 /**
- * Materializes every installment of a parcelamento up front (unlike
- * recorrências, which generate lazily month by month — a parcelamento has a
- * known end, so there's nothing to defer). Splits `valorTotal` evenly across
- * `numParcelas`, folding the rounding remainder into the last installment so
- * the sum always matches the original purchase value exactly.
+ * Pure builder for a parcelamento's installments (unlike recorrências, which
+ * generate lazily month by month — a parcelamento has a known end, so there's
+ * nothing to defer). Splits `valorTotal` evenly across `numParcelas`, folding
+ * the rounding remainder into the last installment so the sum always matches
+ * the original purchase value exactly. Extracted so the Gestor Financeiro's
+ * own manual entry (a separate collection) can create a parcelamento the
+ * same way without duplicating the split math.
  */
-export async function createParcelamento(
-  uid,
-  { tipo, descricao, valorTotal, numParcelas, dataVencimento, categoriaId, observacoes }
-) {
+export function buildParcelamentoItems({ tipo, descricao, valorTotal, numParcelas, dataVencimento, categoriaId, observacoes }) {
   const parcelamentoId = crypto.randomUUID();
   const [ano, mes, dia] = dataVencimento.split('-').map(Number);
   const mesInicial = `${ano}-${String(mes).padStart(2, '0')}`;
@@ -109,6 +113,11 @@ export async function createParcelamento(
     };
   }
 
+  return { parcelamentoId, itemsById };
+}
+
+export async function createParcelamento(uid, dados) {
+  const { parcelamentoId, itemsById } = buildParcelamentoItems(dados);
   await batchSetUserDocs(uid, COLLECTION, itemsById);
   return parcelamentoId;
 }
@@ -124,19 +133,21 @@ function importDocId(item) {
 }
 
 /**
- * Bulk-creates parsed statement/fatura transactions, skipping any whose
- * deterministic id already exists — a fatura only shows the installment
- * due *this* period, so when a line carries parcela info (e.g. "2/10") the
- * remaining future installments (3/10 .. 10/10) are generated too, exactly
- * like the manual "Parcelado" flow. Every installment of the same purchase
- * shares one `${parcelamentoId}_${n}` id (derived from the description),
- * so re-importing this or a later fatura for the same purchase can't
+ * Pure doc-building step for a fatura/statement import — given the parsed
+ * items and the set of doc ids that already exist in the target collection,
+ * returns what still needs writing. Extracted so the Gestor Financeiro's own
+ * import (a separate collection) can reuse the exact same parcela-expansion
+ * rules instead of duplicating them.
+ *
+ * A fatura only shows the installment due *this* period, so when a line
+ * carries parcela info (e.g. "2/10") the remaining future installments
+ * (3/10 .. 10/10) are generated too, exactly like the manual "Parcelado"
+ * flow. Every installment of the same purchase shares one
+ * `${parcelamentoId}_${n}` id (derived from the description), so
+ * re-importing this or a later fatura for the same purchase can't
  * duplicate what's already there.
  */
-export async function importLancamentos(uid, itens) {
-  const existentes = await listUserDocs(uid, COLLECTION);
-  const idsExistentes = new Set(existentes.map((d) => d.id));
-
+export function buildImportPayload(itens, idsExistentes) {
   const novos = {};
   let totalConsiderados = 0;
 
@@ -185,6 +196,16 @@ export async function importLancamentos(uid, itens) {
       };
     }
   }
+
+  return { novos, totalConsiderados };
+}
+
+/** Bulk-creates parsed statement/fatura transactions in the main Movimento — see `buildImportPayload`. */
+export async function importLancamentos(uid, itens) {
+  const existentes = await listUserDocs(uid, COLLECTION);
+  const idsExistentes = new Set(existentes.map((d) => d.id));
+
+  const { novos, totalConsiderados } = buildImportPayload(itens, idsExistentes);
 
   const idsNovos = Object.keys(novos);
   if (idsNovos.length > 0) await batchSetUserDocs(uid, COLLECTION, novos);

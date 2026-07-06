@@ -30,7 +30,16 @@ const MODOS = [
  * instance (one-off or already generated from a recorrência) is always
  * edited as a single entry, the toggle only applies to brand new entries.
  */
-export default function LancamentoModal({ open, initialData, categorias = [], defaultTipo, onClose, onSave, onDelete }) {
+export default function LancamentoModal({
+  open,
+  initialData,
+  categorias = [],
+  defaultTipo,
+  permitirRecorrente = true,
+  onClose,
+  onSave,
+  onDelete,
+}) {
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
   const isNew = !initialData;
@@ -40,6 +49,11 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
   const categoriasDoTipo = useMemo(
     () => categorias.filter((c) => c.tipo === form.tipo),
     [categorias, form.tipo]
+  );
+
+  const modosDisponiveis = useMemo(
+    () => (permitirRecorrente ? MODOS : MODOS.filter((m) => m.key !== 'recorrente')),
+    [permitirRecorrente]
   );
 
   useEffect(() => {
@@ -165,7 +179,7 @@ export default function LancamentoModal({ open, initialData, categorias = [], de
 
         {isNew && (
           <div className="flex gap-1 mb-4 bg-ink-50 dark:bg-ink-900 rounded-pill p-1">
-            {MODOS.map((opt) => (
+            {modosDisponiveis.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
