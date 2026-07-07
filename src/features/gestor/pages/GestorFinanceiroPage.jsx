@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, lazy, Suspense } from 'react';
-import { Landmark, Layers, Sparkles, FileUp, ListPlus, Trash2, Repeat, Plus } from 'lucide-react';
+import { Landmark, Sparkles, FileUp, ListPlus, Trash2, Repeat, Plus } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import {
@@ -51,6 +51,7 @@ export default function GestorFinanceiroPage() {
   const [importarRecorrenciasOpen, setImportarRecorrenciasOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [abaDetalhe, setAbaDetalhe] = useState('compromissos'); // 'compromissos' | 'lancamentos'
 
   const reload = useCallback(async () => {
     if (!uid) return;
@@ -183,36 +184,70 @@ export default function GestorFinanceiroPage() {
         </div>
 
         <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-8 h-8 rounded-full bg-clay-500 text-white flex items-center justify-center shrink-0">
-              <Layers size={15} strokeWidth={1.75} />
-            </span>
-            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">
-              Parcelamentos e recorrências ativas ({analise.parcelamentosAtivos.length})
-            </p>
+          <div className="flex gap-1 mb-3 bg-ink-50 dark:bg-ink-900 rounded-pill p-1">
+            <button
+              onClick={() => setAbaDetalhe('compromissos')}
+              className={`flex-1 rounded-pill py-1.5 text-xs font-medium transition-colors ${
+                abaDetalhe === 'compromissos'
+                  ? 'bg-white dark:bg-ink-700 shadow-card text-ink-900 dark:text-ink-50'
+                  : 'text-ink-500'
+              }`}
+            >
+              Compromissos ({analise.parcelamentosAtivos.length})
+            </button>
+            <button
+              onClick={() => setAbaDetalhe('lancamentos')}
+              className={`flex-1 rounded-pill py-1.5 text-xs font-medium transition-colors ${
+                abaDetalhe === 'lancamentos'
+                  ? 'bg-white dark:bg-ink-700 shadow-card text-ink-900 dark:text-ink-50'
+                  : 'text-ink-500'
+              }`}
+            >
+              Lançamentos do mês ({lancamentosDoMes.length})
+            </button>
           </div>
-          {analise.parcelamentosAtivos.length === 0 ? (
-            <p className="text-sm text-ink-300">Nenhum compromisso ativo.</p>
-          ) : (
-            <div className="flex flex-col divide-y divide-ink-100 dark:divide-ink-900 -mx-4">
-              {analise.parcelamentosAtivos.map((p, i) => (
-                <div key={i} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                  <div className="min-w-0">
-                    <p className="text-sm text-ink-900 dark:text-ink-50 truncate">{p.descricao}</p>
-                    <p className="text-xs text-ink-300">
-                      {p.tipo === 'recorrente'
-                        ? `Recorrente · ${formatCurrency(p.valorParcela)}/mês`
-                        : `Parcela ${p.parcelaAtual}/${p.totalParcelas} · ${formatCurrency(p.valorParcela)}/mês`}
-                    </p>
+
+          {abaDetalhe === 'compromissos' ? (
+            analise.parcelamentosAtivos.length === 0 ? (
+              <p className="text-sm text-ink-300">Nenhum compromisso ativo neste mês.</p>
+            ) : (
+              <div className="flex flex-col divide-y divide-ink-100 dark:divide-ink-900 -mx-4">
+                {analise.parcelamentosAtivos.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <div className="min-w-0">
+                      <p className="text-sm text-ink-900 dark:text-ink-50 truncate">{p.descricao}</p>
+                      <p className="text-xs text-ink-300">
+                        {p.tipo === 'recorrente'
+                          ? `Recorrente · ${formatCurrency(p.valorParcela)}/mês`
+                          : `Parcela ${p.parcelaAtual}/${p.totalParcelas} · ${formatCurrency(p.valorParcela)}/mês`}
+                      </p>
+                    </div>
+                    {p.tipo === 'recorrente' ? (
+                      <span className="text-xs text-ink-300 shrink-0">contínuo</span>
+                    ) : (
+                      <span className="money text-sm font-semibold text-ink-900 dark:text-ink-50 shrink-0">
+                        {formatCurrency(p.valorRestante)} restante
+                      </span>
+                    )}
                   </div>
-                  {p.tipo === 'recorrente' ? (
-                    <span className="text-xs text-ink-300 shrink-0">contínuo</span>
-                  ) : (
-                    <span className="money text-sm font-semibold text-ink-900 dark:text-ink-50 shrink-0">
-                      {formatCurrency(p.valorRestante)} restante
-                    </span>
-                  )}
-                </div>
+                ))}
+              </div>
+            )
+          ) : lancamentosDoMes.length === 0 ? (
+            <p className="text-sm text-ink-300">Nenhum lançamento neste mês.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {lancamentosDoMes.map((l) => (
+                <LancamentoRow
+                  key={l.id}
+                  lancamento={l}
+                  categoria={categoriasById[l.categoriaId]}
+                  onStatusChange={handleStatusChange}
+                  onClick={(item) => {
+                    setEditing(item);
+                    setModalOpen(true);
+                  }}
+                />
               ))}
             </div>
           )}
@@ -235,30 +270,6 @@ export default function GestorFinanceiroPage() {
             </ul>
           </div>
         )}
-
-        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 mb-4">
-          <p className="text-sm font-medium text-ink-900 dark:text-ink-50 mb-3">
-            Lançamentos do mês ({lancamentosDoMes.length})
-          </p>
-          {lancamentosDoMes.length === 0 ? (
-            <p className="text-sm text-ink-300">Nenhum lançamento neste mês.</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {lancamentosDoMes.map((l) => (
-                <LancamentoRow
-                  key={l.id}
-                  lancamento={l}
-                  categoria={categoriasById[l.categoriaId]}
-                  onStatusChange={handleStatusChange}
-                  onClick={(item) => {
-                    setEditing(item);
-                    setModalOpen(true);
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
 
         {usaMovimento ? (
           <p className="text-xs text-ink-300 text-center">

@@ -1,9 +1,11 @@
 /**
  * Pure analysis over a full lançamentos list (Movimento or the Gestor's own
  * snapshot — the shape is the same either way): committed income for the
- * given month, every active commitment (installment plans, whose remaining
- * balance is computed across all months, plus recurring bills still active
- * this month), and a few heuristic suggestions.
+ * given month, every commitment active *in that month* (an installment plan
+ * only shows up in the months it actually has a parcela due, with that
+ * parcela's number and the balance remaining from it onward; a recurring
+ * bill only shows up in months it's actually billed), and a few heuristic
+ * suggestions.
  *
  * "Comprometida" (committed) means despesas tied to a parcelamento or a
  * recorrência — structurally identifiable via `parcelamentoId` /
@@ -37,6 +39,10 @@ export function analisarFinancas(todosLancamentos, monthKey) {
   }
   const percentualComprometido = rendaMes > 0 ? (despesaComprometida / rendaMes) * 100 : null;
 
+  // Um parcelamento só aparece no mês em que tem uma parcela vencendo nele —
+  // navegar de mês muda qual parcela é mostrada, e ele some assim que passa
+  // da última parcela (antes disso era fixo na primeira parcela pendente,
+  // não importava qual mês estivesse sendo visto).
   const porParcelamento = {};
   for (const l of todosLancamentos) {
     if (!l.parcelamentoId) continue;
@@ -45,19 +51,24 @@ export function analisarFinancas(todosLancamentos, monthKey) {
 
   const parcelamentosAtivos = Object.values(porParcelamento)
     .map((parcelas) => {
-      const pendentes = parcelas
-        .filter((p) => p.status !== 'pago' && p.status !== 'recebido')
-        .sort((a, b) => (a.parcelaAtual ?? 0) - (b.parcelaAtual ?? 0));
-      if (pendentes.length === 0) return null;
+      const desteMonth = parcelas.find((p) => p.dataVencimento?.startsWith(monthKey));
+      if (!desteMonth) return null;
 
-      const proxima = pendentes[0];
-      const valorRestante = pendentes.reduce((soma, p) => soma + (Number(p.valor) || 0), 0);
+      const valorRestante = parcelas
+        .filter(
+          (p) =>
+            (p.parcelaAtual ?? 0) >= (desteMonth.parcelaAtual ?? 0) &&
+            p.status !== 'pago' &&
+            p.status !== 'recebido'
+        )
+        .reduce((soma, p) => soma + (Number(p.valor) || 0), 0);
+
       return {
         tipo: 'parcelamento',
-        descricao: (proxima.descricao ?? '').replace(/\s*\(\d+\/\d+\)\s*$/, ''),
-        parcelaAtual: proxima.parcelaAtual,
-        totalParcelas: proxima.totalParcelas,
-        valorParcela: Number(proxima.valor) || 0,
+        descricao: (desteMonth.descricao ?? '').replace(/\s*\(\d+\/\d+\)\s*$/, ''),
+        parcelaAtual: desteMonth.parcelaAtual,
+        totalParcelas: desteMonth.totalParcelas,
+        valorParcela: Number(desteMonth.valor) || 0,
         valorRestante,
       };
     })
