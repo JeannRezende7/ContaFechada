@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Receipt, Tag, PieChart, Target } from 'lucide-react';
+import { Home, Receipt, Tag, PieChart, Target, Landmark } from 'lucide-react';
 
 const ITEMS = [
   { to: '/', label: 'Início', icon: Home },
@@ -7,6 +7,7 @@ const ITEMS = [
   { to: '/categorias', label: 'Categorias', icon: Tag },
   { to: '/relatorios', label: 'Relatórios', icon: PieChart },
   { to: '/metas', label: 'Metas', icon: Target },
+  { to: '/gestor', label: 'Gestor', icon: Landmark },
 ];
 
 /** Visible on mobile only (< md). Desktop uses <Sidebar /> instead. */
@@ -24,7 +25,7 @@ export default function BottomNav() {
             to={item.to}
             end={item.to === '/'}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 py-2.5 px-2 text-[11px] font-medium ${
+              `flex flex-col items-center gap-1 py-2.5 px-1 text-[10px] font-medium ${
                 isActive ? 'text-ledger-600' : 'text-ink-300'
               }`
             }
