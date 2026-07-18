@@ -11,5 +11,62 @@ service cloud.firestore {
     match /users/{uid}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
+
+    // Assinatura (ROADMAP_MONETIZACAO.txt, Fase 2): guardada fora do padrao
+    // "dono le/escreve tudo" acima porque plano e status nao podem ser
+    // decididos pelo proprio cliente. Esta regra e mais especifica que a
+    // match /{document=**} de cima, entao o Firestore usa esta para
+    // qualquer request em users/{uid}/private/subscription.
+    //
+    // - create: só permitido no estado inicial gratuito — é o que permite o
+    //   app criar o documento no primeiro login sem precisar de backend.
+    // - update/delete: nunca pelo cliente. Só Admin SDK (Cloud
+    //   Functions/scripts com service account, que ignoram estas regras)
+    //   pode promover, renovar, cancelar ou expirar uma assinatura — ver
+    //   scripts/grant-premium.mjs para concessao manual de teste/parceiros.
+    match /users/{uid}/private/subscription {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.plan == 'free'
+        && request.resource.data.subscriptionStatus == 'none';
+
+      // Teste Premium (Fase 7): única exceção de `update` que o cliente
+      // recebe — a transição exata "none" -> "trialing", e só uma vez.
+      // `resource.data.trialStartedAt == null` é o que impede repetir: depois
+      // do primeiro sucesso esse campo nunca mais volta a ser null (nada aqui
+      // permite desfazer o trial), então tentar de novo sempre falha nessa
+      // condição. `trialEndsAt` é limitado a uma janela de 13–15 dias a
+      // partir de request.time em vez de exigir igualdade exata, porque
+      // comparar um timestamp calculado no cliente com request.time bit a
+      // bit quebraria por qualquer diferença de relógio/latência de rede.
+      allow update: if request.auth != null && request.auth.uid == uid
+        && resource.data.subscriptionStatus == 'none'
+        && resource.data.trialStartedAt == null
+        && request.resource.data.plan == 'premium'
+        && request.resource.data.subscriptionStatus == 'trialing'
+        && request.resource.data.subscriptionProvider == 'web'
+        && request.resource.data.subscriptionId == null
+        && request.resource.data.cancelAtPeriodEnd == false
+        && request.resource.data.currentPeriodEnd == resource.data.currentPeriodEnd
+        && request.resource.data.founder == resource.data.founder
+        && request.resource.data.trialStartedAt == request.time
+        && request.resource.data.trialEndsAt > request.time + duration.value(13, 'd')
+        && request.resource.data.trialEndsAt < request.time + duration.value(15, 'd');
+
+      // Exclusão de conta (Fase 11): o dono pode apagar o próprio registro de
+      // assinatura como parte de apagar a conta inteira — perder o histórico
+      // de plano não é um risco de seguranca (ele só volta a existir, do
+      // zero, no proximo login, via ensureSubscriptionDoc). Qualquer outra
+      // alteração continua bloqueada.
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Histórico de alterações de assinatura (Fase 11) — só o Admin SDK
+    // escreve (webhook do MercadoPago, scripts/grant-premium.mjs); o dono
+    // pode ler o próprio histórico, mas não forjar entradas nele.
+    match /users/{uid}/private/subscription/subscription_log/{logId} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
   }
 }

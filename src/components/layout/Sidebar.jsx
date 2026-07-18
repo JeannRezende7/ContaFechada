@@ -1,5 +1,9 @@
+import { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Receipt, Tag, PieChart, PiggyBank, Target, Landmark } from 'lucide-react';
+import { Home, Receipt, Tag, PieChart, PiggyBank, Target, Landmark, Crown } from 'lucide-react';
+import { usePremium } from '../../contexts/PremiumContext.jsx';
+import { PREMIUM_ENFORCED } from '../../config/premium.js';
+import { track, EVENTS } from '../../utils/analytics.js';
 
 const ITEMS = [
   { to: '/', label: 'Início', icon: Home },
@@ -12,6 +16,14 @@ const ITEMS = [
 
 /** Visible on desktop only (>= md). Mobile uses <BottomNav /> instead. */
 export default function Sidebar() {
+  const { isPremium } = usePremium();
+  const showPremiumCard = PREMIUM_ENFORCED && !isPremium;
+
+  useEffect(() => {
+    if (showPremiumCard) track(EVENTS.PREMIUM_CARD_VIEWED, { placement: 'sidebar' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPremiumCard]);
+
   return (
     <aside className="hidden md:flex md:w-64 lg:w-72 md:flex-col md:shrink-0 bg-ink-900 text-paper min-h-screen px-4 lg:px-5 py-6 lg:py-8">
       <div className="flex items-center gap-2.5 mb-8 px-2">
@@ -40,6 +52,17 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {showPremiumCard && (
+        <NavLink
+          to="/opcoes/meu-plano"
+          onClick={() => track(EVENTS.PREMIUM_CARD_CLICKED, { placement: 'sidebar' })}
+          className="mt-auto flex items-center gap-2.5 rounded-pill bg-ink-700 px-3.5 py-2.5 text-sm font-medium text-gold-50 hover:bg-ink-700/70 transition-colors"
+        >
+          <Crown size={16} strokeWidth={1.75} />
+          Conhecer o Premium
+        </NavLink>
+      )}
     </aside>
   );
 }

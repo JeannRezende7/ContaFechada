@@ -2,6 +2,18 @@
   command = "npm run build"
   publish = "dist"
 
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# API primeiro — redirects são avaliados em ordem, e o catch-all do SPA logo
+# abaixo (/* -> index.html) capturaria essas rotas antes das functions se
+# viesse primeiro.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, useCallback, lazy, Suspense } from 'react';
-import { Plus, Sprout, Repeat, X, ArrowUpCircle, ArrowDownCircle, Wallet, FileUp, Trash2, Receipt, Search, Download } from 'lucide-react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { Plus, Sprout, Repeat, X, ArrowUpCircle, ArrowDownCircle, Wallet, Trash2, Receipt, Search, Download } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import {
   listLancamentosByRange,
@@ -21,8 +21,10 @@ import {
 import { ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
-import { FEATURES } from '../../../config/premium.js';
+import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
+import UsageIndicator from '../../premium/components/UsageIndicator.jsx';
 import { getTodayISODate } from '../../../utils/formatDate.js';
+import { getCurrentMonthKey, shiftMonthKey } from '../../../utils/monthKey.js';
 import { getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { buildLancamentoMatcher } from '../utils/searchLancamentos.js';
@@ -35,19 +37,53 @@ import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 
-// Pulls in pdfjs-dist (~500kB) — deferred so it's only fetched when the user
-// actually opens the import flow, not on every visit to Lançamentos.
-const ImportarFaturaModal = lazy(() => import('../components/ImportarFaturaModal.jsx'));
+// A importação de fatura em PDF foi desativada (ROADMAP_MONETIZACAO.txt,
+// item 2) — o componente, o parser e o pdf.worker continuam no repositório
+// para retomada futura, só não são mais referenciados por nenhuma página, o
+// que já basta para o Rollup excluí-los do build de produção.
 
 export default function LancamentosPage() {
   const { user } = useAuth();
   const uid = user?.uid;
   const confirm = useConfirm();
-  const { guardFeature } = usePremium();
+  const { guardFeature, isPremium, openPaywall, getLimit } = usePremium();
   const [tab, setTab] = useState('despesa');
   const [periodType, setPeriodType] = useState('mes');
   const [anchor, setAnchor] = useState(getTodayISODate());
   const [customRange, setCustomRange] = useState({ de: '', ate: '' });
+
+  // Histórico (ROADMAP_MONETIZACAO.txt, Fase 6): free vê só o mês atual e os
+  // 2 anteriores. `oldestAllowedDate` vira o piso mínimo de qualquer
+  // navegação de período — funciona igual para dia/semana/mês/ano porque
+  // comparamos direto a data inicial do intervalo resultante, sem precisar
+  // de lógica separada por granularidade.
+  const oldestAllowedMonthKey = getOldestAllowedMonthKey({
+    isPremium,
+    currentMonthKey: getCurrentMonthKey(),
+    shiftMonthKey,
+  });
+  const oldestAllowedDate = oldestAllowedMonthKey ? `${oldestAllowedMonthKey}-01` : null;
+
+  function tryChangeAnchor(nextAnchor) {
+    if (oldestAllowedDate) {
+      const { gte } = getRangeForPeriod(periodType, nextAnchor, customRange);
+      if (gte < oldestAllowedDate) {
+        openPaywall({ feature: FEATURES.HISTORICO, reason: 'limit_reached', limit: getLimit(FEATURES.HISTORICO) });
+        return;
+      }
+    }
+    setAnchor(nextAnchor);
+  }
+
+  // 'Período' (customRange) não passa pelo anchor — validamos direto a data
+  // "De" contra o piso do histórico gratuito, sem travar edição do "Até".
+  function tryChangeCustomRange(next) {
+    if (oldestAllowedDate && next?.de && next.de < oldestAllowedDate) {
+      openPaywall({ feature: FEATURES.HISTORICO, reason: 'limit_reached', limit: getLimit(FEATURES.HISTORICO) });
+      return;
+    }
+    setCustomRange(next);
+  }
   const [lancamentos, setLancamentos] = useState([]);
   const [recorrencias, setRecorrencias] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -55,7 +91,6 @@ export default function LancamentosPage() {
   const [editing, setEditing] = useState(null);
   const [recorrenciaModalOpen, setRecorrenciaModalOpen] = useState(false);
   const [editingRecorrencia, setEditingRecorrencia] = useState(null);
-  const [importModalOpen, setImportModalOpen] = useState(false);
   const [busca, setBusca] = useState('');
   const [carregado, setCarregado] = useState(false);
 
@@ -174,6 +209,12 @@ export default function LancamentosPage() {
   }
 
   function handleExportCsv() {
+    // Exportação (Fase 6): grátis só exporta o mês atual — qualquer outro
+    // período/granularidade (dia, semana, ano, período customizado, ou um
+    // mês diferente do atual) é "exportação avançada".
+    const isExportacaoDoMesAtual = periodType === 'mes' && anchor.slice(0, 7) === getCurrentMonthKey();
+    if (!isExportacaoDoMesAtual && !guardFeature(FEATURES.EXPORTACAO_AVANCADA)) return;
+
     const label = formatPeriodLabel(periodType, anchor, customRange);
     const csv = buildCsv(lancamentosFiltrados, [
       { label: 'Data', value: (l) => l.dataVencimento },
@@ -207,6 +248,7 @@ export default function LancamentosPage() {
   }
 
   const ativos = recorrencias.filter((r) => r.ativo && r.tipo === tab);
+  const recorrenciasAtivasCount = recorrencias.filter((r) => r.ativo).length;
 
   if (!carregado) {
     return (
@@ -248,8 +290,8 @@ export default function LancamentosPage() {
             setPeriodType(next);
             setAnchor(getTodayISODate());
           }}
-          onChangeAnchor={setAnchor}
-          onChangeCustomRange={setCustomRange}
+          onChangeAnchor={tryChangeAnchor}
+          onChangeCustomRange={tryChangeCustomRange}
         />
 
         <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4">
@@ -296,16 +338,6 @@ export default function LancamentosPage() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                if (!guardFeature(FEATURES.IMPORTAR_PDF)) return;
-                setImportModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 rounded-pill bg-ink-50 dark:bg-ink-900 text-ink-500 pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ink-100 transition-colors"
-            >
-              <FileUp size={16} strokeWidth={2.25} />
-              <span className="hidden sm:inline">Importar PDF</span>
-            </button>
             <button
               onClick={() => {
                 setEditing(null);
@@ -357,6 +389,8 @@ export default function LancamentosPage() {
             </p>
           )}
         </div>
+
+        <UsageIndicator feature={FEATURES.RECORRENCIAS} count={recorrenciasAtivasCount} label="recorrências ativas" />
 
         {ativos.length > 0 && (
           <details className="mt-8 group">
@@ -424,18 +458,6 @@ export default function LancamentosPage() {
         onSave={handleSaveRecorrencia}
         onDelete={handleDeleteRecorrencia}
       />
-
-      {importModalOpen && (
-        <Suspense fallback={null}>
-          <ImportarFaturaModal
-            open={importModalOpen}
-            uid={uid}
-            categorias={categorias}
-            onClose={() => setImportModalOpen(false)}
-            onImported={reload}
-          />
-        </Suspense>
-      )}
     </>
   );
 }

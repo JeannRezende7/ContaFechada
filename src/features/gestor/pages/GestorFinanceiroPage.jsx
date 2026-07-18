@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, lazy, Suspense } from 'react';
-import { Landmark, Sparkles, FileUp, ListPlus, Trash2, Repeat, Plus } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Landmark, Sparkles, ListPlus, Trash2, Repeat, Plus } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
+import { usePremium } from '../../../contexts/PremiumContext.jsx';
+import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
+import PremiumBadge from '../../premium/components/PremiumBadge.jsx';
 import {
   listAllLancamentos,
   createLancamento,
@@ -15,7 +18,6 @@ import {
   getGestorUsaMovimento,
   listGestorLancamentos,
   deleteAllGestorLancamentos,
-  importarFaturaParaGestor,
   createGestorLancamento,
   updateGestorLancamento,
   deleteGestorLancamento,
@@ -27,27 +29,27 @@ import MonthNav from '../../../components/ui/MonthNav.jsx';
 import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
-import { getCurrentMonthKey } from '../../../utils/monthKey.js';
+import { getCurrentMonthKey, shiftMonthKey } from '../../../utils/monthKey.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import ImportarDoMovimentoModal from '../components/ImportarDoMovimentoModal.jsx';
 import ImportarRecorrenciasModal from '../components/ImportarRecorrenciasModal.jsx';
 import LancamentoRow from '../../lancamentos/components/LancamentoRow.jsx';
 import LancamentoModal from '../../lancamentos/components/LancamentoModal.jsx';
 
-// Pulls in pdfjs-dist (~500kB) — deferred like on the Lançamentos page, only
-// fetched when the user actually opens the import flow.
-const ImportarFaturaModal = lazy(() => import('../../lancamentos/components/ImportarFaturaModal.jsx'));
+// A importação de fatura em PDF foi desativada (ROADMAP_MONETIZACAO.txt,
+// item 2) — mantida no repositório para retomada futura, só não é mais
+// referenciada por nenhuma página.
 
 export default function GestorFinanceiroPage() {
   const { user } = useAuth();
   const uid = user?.uid;
   const confirm = useConfirm();
+  const { canUse, isPremium, openPaywall, getLimit } = usePremium();
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey());
   const [usaMovimento, setUsaMovimento] = useState(null);
   const [lancamentos, setLancamentos] = useState(null);
   const [categorias, setCategorias] = useState([]);
   const [importarMovimentoOpen, setImportarMovimentoOpen] = useState(false);
-  const [importarPdfOpen, setImportarPdfOpen] = useState(false);
   const [importarRecorrenciasOpen, setImportarRecorrenciasOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -79,6 +81,24 @@ export default function GestorFinanceiroPage() {
     if (!lancamentos) return null;
     return analisarFinancas(lancamentos, monthKey);
   }, [lancamentos, monthKey]);
+
+  // Histórico (Fase 6): free vê só o mês atual e os 2 anteriores.
+  const oldestAllowedMonthKey = getOldestAllowedMonthKey({
+    isPremium,
+    currentMonthKey: getCurrentMonthKey(),
+    shiftMonthKey,
+  });
+
+  function tryChangeMonth(nextMonthKey) {
+    if (oldestAllowedMonthKey && nextMonthKey < oldestAllowedMonthKey) {
+      openPaywall({ feature: FEATURES.HISTORICO, reason: 'limit_reached', limit: getLimit(FEATURES.HISTORICO) });
+      return;
+    }
+    setMonthKey(nextMonthKey);
+  }
+
+  // Indicadores básicos do mês são grátis; sugestões (insights) são Premium.
+  const podeVerSugestoes = canUse(FEATURES.INSIGHTS_AVANCADOS);
 
   async function handleLimparGestor() {
     if (!(await confirm('Limpar todos os lançamentos do Gestor Financeiro? Essa ação não pode ser desfeita.'))) return;
@@ -154,7 +174,7 @@ export default function GestorFinanceiroPage() {
     <>
       <Topbar title="Gestor Financeiro" icon={Landmark} />
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
-        <MonthNav monthKey={monthKey} onChange={setMonthKey} />
+        <MonthNav monthKey={monthKey} onChange={tryChangeMonth} />
 
         <div className="flex justify-end mb-4">
           <button
@@ -260,14 +280,27 @@ export default function GestorFinanceiroPage() {
                 <Sparkles size={15} strokeWidth={1.75} />
               </span>
               <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Sugestões</p>
+              <PremiumBadge />
             </div>
-            <ul className="flex flex-col gap-1.5">
-              {analise.sugestoes.map((s, i) => (
-                <li key={i} className="text-sm text-ink-500 pl-2">
-                  • {s}
-                </li>
-              ))}
-            </ul>
+            {podeVerSugestoes ? (
+              <ul className="flex flex-col gap-1.5">
+                {analise.sugestoes.map((s, i) => (
+                  <li key={i} className="text-sm text-ink-500 pl-2">
+                    • {s}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm text-ink-300">Insights financeiros avançados são um recurso Premium.</p>
+                <button
+                  onClick={() => openPaywall({ feature: FEATURES.INSIGHTS_AVANCADOS })}
+                  className="text-sm font-medium text-ledger-600 hover:underline shrink-0"
+                >
+                  Conhecer
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -305,13 +338,6 @@ export default function GestorFinanceiroPage() {
                 <Repeat size={16} strokeWidth={2.25} />
                 Recorrências
               </button>
-              <button
-                onClick={() => setImportarPdfOpen(true)}
-                className="flex-1 min-w-[45%] flex items-center justify-center gap-1.5 rounded-pill bg-ink-50 dark:bg-ink-900 text-ink-500 px-3 py-2.5 text-sm font-medium hover:bg-ink-100 transition-colors"
-              >
-                <FileUp size={16} strokeWidth={2.25} />
-                Importar PDF
-              </button>
             </div>
           </div>
         )}
@@ -342,19 +368,6 @@ export default function GestorFinanceiroPage() {
         onClose={() => setImportarRecorrenciasOpen(false)}
         onImported={reload}
       />
-
-      {importarPdfOpen && (
-        <Suspense fallback={null}>
-          <ImportarFaturaModal
-            open={importarPdfOpen}
-            uid={uid}
-            categorias={categorias}
-            onImport={importarFaturaParaGestor}
-            onClose={() => setImportarPdfOpen(false)}
-            onImported={reload}
-          />
-        </Suspense>
-      )}
     </>
   );
 }

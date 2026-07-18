@@ -1,0 +1,747 @@
+ROADMAP DE MONETIZACAO — CONTA FECHADA
+Versao inicial: 18/07/2026
+
+OBJETIVO
+
+Transformar o Conta Fechada em um produto Web + Android com plano Gratuito e
+plano Premium, mantendo uma unica conta e o mesmo acesso nas duas plataformas.
+A cobranca somente sera ativada depois que limites, seguranca, restauracao de
+compra e administracao das assinaturas estiverem testados.
+
+STATUS (18/07/2026): itens 2 a 13 implementados em codigo (importacao de PDF
+removida; planos/limites centralizados; modelo de assinatura no Firestore;
+PremiumContext real; pagina Meu Plano; paywall completo; limites aplicados;
+teste Premium de 14 dias; backend de cobranca Web via MercadoPago + Netlify
+Functions; validacao de compra Android via Google Play Developer API; eventos
+de analytics; scripts admin; Termos/Privacidade; exclusao de conta e
+exportacao de dados). PREMIUM_ENFORCED continua `false` em
+src/config/premium.js — nada mudou pra quem usa o app hoje.
+
+O que falta pra isso "ligar" de verdade é, por natureza, coisa que só o dono
+do projeto consegue fazer (contas reais, credenciais, dinheiro): criar a conta
+MercadoPago e configurar as env vars no Netlify; publicar o firestore.rules
+atualizado; instalar o Android Studio e criar a conta Google Play Console;
+escolher/instalar um plugin nativo de Play Billing no projeto Capacitor. Cada
+pendencia concreta esta anotada dentro da fase correspondente abaixo, com o
+que exatamente falta e por que não pôde ser feito por aqui. NENHUM dos
+códigos de cobrança (MercadoPago e Google Play) foi testado contra uma conta
+real — são implementações cuidadosas a partir da documentação pública das
+APIs, mas precisam de validação em sandbox antes de produção.
+
+
+1. MODELO COMERCIAL INICIAL
+
+Plano Gratuito
+
+- Lancamentos manuais ilimitados.
+- Dashboard basico.
+- Categorias padrao.
+- Ate 5 categorias personalizadas.
+- Ate 2 recorrencias ativas.
+- Ate 2 metas ativas.
+- Relatorio basico do mes atual.
+- Historico do mes atual e dos 2 meses anteriores.
+- Gestor Financeiro com indicadores basicos do mes atual.
+- Exportacao CSV do mes atual.
+- Tema claro e escuro.
+- Acesso Web e Android.
+
+Plano Premium
+
+- Categorias personalizadas ilimitadas.
+- Recorrencias ilimitadas.
+- Metas ilimitadas.
+- Historico completo.
+- Relatorios de multiplos periodos.
+- Comparacao entre meses.
+- Projecoes e insights financeiros avancados.
+- Gestor Financeiro completo.
+- Filtros e exportacoes avancadas.
+- Acesso antecipado a novos recursos.
+- Acesso Web e Android com a mesma assinatura.
+
+Preco inicial proposto (validar antes do lancamento)
+
+- Mensal: R$ 12,90.
+- Anual: R$ 99,90.
+- Oferta de fundador: R$ 69,90 no primeiro ano.
+- Teste Premium: 14 dias sem cartao, iniciado apos o primeiro lancamento.
+
+Regra de preservacao de dados
+
+- Cancelar ou perder o Premium nunca apaga dados.
+- O usuario pode consultar/editar o que estiver dentro do plano Gratuito.
+- Dados acima dos limites ficam preservados, mas novas criacoes ficam bloqueadas.
+- Metas concluidas e recorrencias inativas nao contam nos limites.
+
+
+2. IMPORTACAO DE FATURA — DESABILITADA
+
+Situacao atual comprovada no build de 18/07/2026:
+
+- O modal de importacao gera um chunk de 484,50 kB.
+- O PDF worker gera um arquivo de 1.255,07 kB.
+- O service worker inclui o modal no precache da PWA.
+- O diretorio dist completo possui 2,926 MiB.
+
+Tarefas
+
+[x] Remover o botao de importacao de fatura da interface.
+[x] Remover a referencia/lazy import do modal do fluxo de Lancamentos.
+[x] Retirar IMPORTAR_PDF das regras Premium ativas (removido de src/config/premium.js na Fase 1).
+[x] Nao apresentar importacao como beneficio do Premium.
+[x] Preservar o parser e componentes no codigo para uso futuro (ImportarFaturaModal.jsx,
+    extractPdfLines.js, parseFaturaNubank.js e gestorService.importarFaturaParaGestor
+    continuam no repositorio, apenas sem nenhuma pagina os referenciando).
+[x] Garantir que ImportarFaturaModal e pdf.worker nao aparecam no build final.
+[x] Executar npm run build e registrar o novo tamanho do dist.
+
+Resultado comprovado (build de 18/07/2026, apos a remocao)
+
+- dist caiu de 2,926 MiB para 1,3 MiB.
+- Chunk ImportarFaturaModal (484,50 kB) e pdf.worker (1.255,07 kB) nao existem mais no build.
+- grep por "pdfjs" / "ImportarFatura" / "parseNubank" no dist/assets/*.js: nenhuma ocorrencia.
+- Bundle principal unico: dist/assets/index-*.js ~1,25 MB (326 kB gzip).
+
+Criterio de conclusao
+
+- [x] Nenhuma opcao de importar fatura aparece no Web ou Android.
+- [x] Nenhum arquivo de PDF e entregue pelo build de producao.
+- [x] A funcionalidade pode ser retomada futuramente pelo historico do Git (e pelos
+      arquivos preservados, que nunca foram apagados).
+
+
+3. FASE 1 — CENTRALIZAR PLANOS E LIMITES [CONCLUIDA 18/07/2026]
+
+Prazo estimado: 2 a 3 dias.
+
+[x] Criar os planos FREE e PREMIUM em src/config/premium.js.
+[x] Criar chaves para categorias, recorrencias, metas, historico, relatorios,
+    Gestor, insights e exportacao (FEATURES.CATEGORIAS_CUSTOM, RECORRENCIAS,
+    METAS, HISTORICO, RELATORIOS_AVANCADOS, GESTOR_AVANCADO,
+    INSIGHTS_AVANCADOS, EXPORTACAO_AVANCADA).
+[x] Definir todos os limites gratuitos em uma unica configuracao (FREE_LIMITS).
+[x] Diferenciar limite quantitativo de recurso exclusivo (FEATURE_KIND:
+    'limit' vs 'boolean', isLimitFeature/isBooleanFeature).
+[x] Remover verificacoes de plano espalhadas pelas telas — todo gate passa por
+    usePremium().guardFeature/canUse, que chama o checkGate central.
+[x] Criar testes para limites e transicoes de plano — src/config/premium.test.js
+    (37 casos) + src/features/premium/utils/subscriptionState.test.js (10 casos),
+    rodando com vitest (npm test). 47/47 passando.
+
+Nota: checkGate() mudou de assinatura — antes resolvia isPremiumUser() sozinho,
+agora recebe isPremium como parametro (fica puro, sem depender de Firestore/auth;
+quem resolve o valor real e o PremiumContext, na Fase 3).
+
+Criterio de conclusao
+
+- [x] Toda regra de acesso parte de uma configuracao central.
+- [x] Alterar um limite nao exige editar paginas diferentes.
+- [x] Nenhuma verificacao Premium confia somente em esconder um botao (checkGate
+      e a fonte de verdade; a UI so reflete o resultado dele).
+
+
+4. FASE 2 — MODELO DE ASSINATURA NO FIRESTORE [CONCLUIDA 18/07/2026, com 1 pendencia de deploy]
+
+Prazo estimado: 3 a 5 dias.
+
+Campos previstos em users/{uid}/private/subscription (caminho escolhido para
+poder ter uma regra de seguranca mais especifica que o "dono le/escreve tudo"
+usado no resto dos dados do usuario — ver firestore.rules):
+
+- plan: free | premium.
+- subscriptionStatus: none | trialing | active | past_due | canceled | expired.
+- subscriptionProvider: google_play | web | manual.
+- subscriptionId: identificador do provedor.
+- currentPeriodEnd: fim do periodo contratado.
+- cancelAtPeriodEnd: cancelamento agendado.
+- trialStartedAt e trialEndsAt.
+- founder: identifica preco/beneficio fundador.
+- createdAt e updatedAt.
+
+Tarefas
+
+[x] Criar o documento do usuario no primeiro login — ensureSubscriptionDoc()
+    em src/features/premium/services/subscriptionService.js, chamado pelo
+    PremiumContext quando uid muda.
+[x] Criar conversor do documento para um estado simples de assinatura —
+    toSubscriptionState() em src/features/premium/utils/subscriptionState.js.
+[x] Impedir nas Firestore Rules que o cliente altere plano ou status —
+    firestore.rules: users/{uid}/private/subscription so aceita `create` no
+    estado inicial gratuito (plan=free, subscriptionStatus=none); update e
+    delete sao sempre `false` para o cliente.
+[x] Permitir que somente backend/admin altere campos de assinatura — Admin SDK
+    (scripts/grant-premium.mjs) ignora as regras e e o unico caminho de escrita
+    depois do create inicial.
+[x] Tratar cancelamento, expiracao, inadimplencia e periodo de tolerancia —
+    toSubscriptionState() reavalia o status contra as datas (currentPeriodEnd/
+    trialEndsAt) em vez de confiar cegamente no subscriptionStatus salvo:
+    cancelado mas dentro do periodo pago = ainda ativo; past_due dentro do
+    periodo = ainda ativo (tolerancia); qualquer status com data vencida =
+    expirado. Cobrido por 10 testes em subscriptionState.test.js.
+[x] Criar concessao manual com data de expiracao para testes e parceiros —
+    scripts/grant-premium.mjs (uso: `node scripts/grant-premium.mjs <uid>
+    --dias 30 [--fundador]`, ou `--revogar`).
+
+PENDENCIA — precisa de acao do dono do projeto (fora do que da pra fazer por
+aqui, nao e uma limitacao de codigo):
+
+[ ] Publicar o firestore.rules atualizado no Firebase (Console > Firestore >
+    Regras, ou `firebase deploy --only firestore:rules` apos `firebase init`).
+    O arquivo local ja esta correto e comitado, mas so vale depois de
+    publicado — sem isso, o cliente ainda consegue escrever em
+    users/{uid}/private/subscription livremente pela regra antiga.
+[ ] Gerar a service account key (Configuracoes do projeto > Contas de servico)
+    e salvar como scripts/service-account.json (esta no .gitignore) para poder
+    rodar scripts/grant-premium.mjs — passo que só o dono do projeto Firebase
+    consegue fazer.
+
+Criterio de conclusao
+
+- [x] O plano acompanha o uid em qualquer dispositivo (Firestore, nao localStorage).
+- [x] Reabrir o app preserva corretamente o estado (cache local + resync).
+- [ ] O cliente nao consegue se promover para Premium — verdadeiro pela regra
+      escrita, mas so entra em vigor de fato apos o deploy pendente acima.
+
+
+5. FASE 3 — PREMIUMCONTEXT [CONCLUIDA 18/07/2026]
+
+Prazo estimado: 2 a 4 dias.
+
+Interface desejada:
+
+- plan e subscription.
+- isPremium e loading.
+- canUse(feature, context).
+- getLimit(feature).
+- guardFeature(feature, context).
+- openPaywall(context).
+- refreshSubscription().
+
+Tarefas
+
+[x] Carregar o plano real do Firestore — src/contexts/PremiumContext.jsx.
+[x] Manter cache local apenas para experiencia/offline — localStorage
+    (`contafechada-premium-${uid}`), guardando so os campos serializaveis
+    (Timestamps viram millis); nunca e a fonte de verdade, so pintura otimista.
+[x] Usar o backend como fonte definitiva — toda carga chama Firestore
+    (ensureSubscriptionDoc/getSubscriptionDoc); o cache so cobre o instante
+    antes da rede responder.
+[x] Evitar paywall incorreto enquanto o plano carrega — guardFeature() nunca
+    bloqueia enquanto loading=true (evita negar acesso a assinante real por um
+    instante de carregamento); canUse() nao tem essa concessao de proposito,
+    porque e usada em decisoes silenciosas (esconder botao), nao pra travar
+    uma acao que o usuario acabou de tomar.
+[x] Tratar falha de rede sem rebaixar assinante imediatamente — catch no
+    fetch mantem o ultimo estado (cache ou anterior) em vez de cair pra Free.
+[x] Substituir o isPremiumUser() fixo atual — removido; isPremium agora vem
+    de toSubscriptionState(doc real do Firestore).
+
+Criterio de conclusao
+
+- [x] Usuario Free, Premium, em teste e expirado funcionam em Web e Android —
+      logica e 100% compartilhada (React puro), Android roda o mesmo bundle
+      via Capacitor.
+
+
+6. FASE 4 — DESCOBERTA E OPCAO DE VIRAR PREMIUM [CONCLUIDA 18/07/2026, com 1 pendencia]
+
+Prazo estimado: 3 a 5 dias.
+
+Pagina Meu Plano, dentro de Opcoes (src/features/premium/pages/MeuPlanoPage.jsx,
+rota /opcoes/meu-plano)
+
+[x] Mostrar plano atual e status.
+[x] Mostrar data de renovacao ou expiracao.
+[x] Mostrar origem: Web, Google Play ou concessao manual.
+[x] Adicionar botao Conhecer o Premium para usuarios Free.
+[x] Adicionar botao Gerenciar assinatura para assinantes — abre
+    play.google.com/store/account/subscriptions quando origem e Google Play;
+    quando e Web/manual, mostra aviso de que o autoatendimento chega com o
+    backend de cobranca (Fase 8, fora deste trabalho).
+[x] Adicionar Restaurar compra no Android — visivel via Capacitor.isNativePlatform();
+    por enquanto resincroniza com o Firestore e avisa claramente que a
+    restauracao real via Google Play Billing so chega na Fase 9 (fora deste
+    trabalho) — nao finge restaurar uma compra que nao existe.
+[x] Mostrar termos, privacidade, renovacao e cancelamento — texto no rodape da
+    pagina; nao ha link clicavel ainda porque as paginas de Termos/Privacidade
+    em si sao da Fase 11 (fora deste trabalho).
+
+Outros pontos de entrada
+
+[x] Cartao discreto de Premium no menu para usuarios Free — link "Meu Plano"
+    no topo de Opcoes (todas as plataformas) + item na Sidebar (desktop).
+[x] Indicadores de uso: "2 de 2 recorrencias utilizadas" — componente
+    UsageIndicator, usado em Categorias, Recorrencias (Lancamentos) e Metas.
+[x] Selo Premium em recursos avancados — componente PremiumBadge, usado em
+    Relatorios (Evolucao mensal) e Gestor Financeiro (Sugestoes).
+[x] CTA contextual quando o usuario atingir um limite — guardFeature() abre o
+    paywall com titulo/texto especificos do recurso (ver Fase 5).
+[x] Remover publicidade de Premium para quem ja assina — PremiumBadge,
+    UsageIndicator e o cartao da Sidebar todos escondem-se com isPremium=true;
+    tudo tambem so aparece depois que PREMIUM_ENFORCED for ligado.
+
+PENDENCIA
+
+[ ] Botao "Gerenciar assinatura" pra assinatura Web/manual ainda nao tem pra
+    onde levar de verdade — depende do backend de cobranca (Fase 8) e das
+    paginas de Termos/Privacidade (Fase 11), ambos fora do escopo deste
+    trabalho.
+
+Criterio de conclusao
+
+- [x] O usuario consegue descobrir, assinar (fluxo de UI completo, checkout
+      real pendente da Fase 8), restaurar (idem, pendente da Fase 9) e
+      gerenciar o plano.
+
+
+7. FASE 5 — PAYWALL [CONCLUIDA 18/07/2026, com 1 pendencia estrutural]
+
+Prazo estimado: 3 a 5 dias.
+
+[x] Substituir o modal atual de apenas "Entendi" por um paywall completo —
+    src/features/premium/components/Paywall.jsx.
+[x] Destacar o plano anual sem esconder o mensal — os dois cartoes ficam
+    visiveis lado a lado, o anual so tem a etiqueta "Recomendado".
+[x] Exibir preco total, periodicidade e renovacao automatica — precos vem de
+    PRICING em config/premium.js (R$ 12,90/mes, R$ 99,90/ano, oferta de
+    fundador R$ 69,90 no 1o ano, teste de 14 dias); texto de renovacao
+    automatica no rodape.
+[x] Mostrar os principais beneficios Premium — lista de PLAN_DETAILS.premium.
+[x] Adaptar titulo e texto ao recurso que causou o bloqueio — FEATURE_COPY,
+    uma entrada por FEATURES.*, mais nota extra quando reason=limit_reached.
+[x] Manter botao de fechar claramente visivel — X no canto + "Agora nao"
+    + clique no fundo, todos fecham.
+[x] Adicionar termos, privacidade e informacao de cancelamento — rodape do
+    paywall (texto; sem link clicavel pelo mesmo motivo da Fase 4: as paginas
+    em si sao da Fase 11).
+[x] Tratar carregamento, sucesso, erro e compra cancelada — nao ha checkout
+    de verdade ainda (Fase 8/9, fora deste trabalho), entao o botao "Assinar"
+    revela um aviso honesto de "pagamentos em preparacao" em vez de fingir
+    uma compra; nada e cobrado ou liberado no cliente.
+[x] Nao iniciar teste ou compra sem acao clara do usuario — trivialmente
+    verdadeiro hoje (nao ha teste/compra real pra iniciar), e o gancho
+    (handler do botao "Assinar") ja fica no lugar certo pra Fase 8/9 plugar
+    o checkout real sem mexer no resto do componente.
+
+PENDENCIA ESTRUTURAL — depende da Fase 8/9 (fora do escopo deste trabalho)
+
+[ ] O botao "Assinar" nao processa pagamento nenhum ainda — so mostra a
+    intencao de compra. Quando o checkout web (Fase 8) e o Google Play
+    Billing (Fase 9) existirem, o handler em Paywall.jsx precisa trocar
+    `setPurchaseState('coming_soon')` pela chamada real, com os estados de
+    sucesso/erro reais.
+
+Criterio de conclusao
+
+- [x] Paywall aprovado nos cenarios Web e Android (mesmo componente React em
+      ambos) e sem interface enganosa — nenhum botao finge cobrar ou liberar
+      Premium sem uma acao de backend real.
+
+
+8. FASE 6 — APLICAR LIMITES [CONCLUIDA 18/07/2026, com pendencias pontuais anotadas abaixo]
+
+Prazo estimado: 5 a 8 dias.
+
+Categorias
+
+[x] Gratuito: ate 5 categorias personalizadas — ja gatilhado desde antes desta
+    rodada (CategoriasPage.jsx), so adicionado o UsageIndicator.
+[x] Premium: ilimitadas.
+[x] Ao atingir o limite, permitir editar/excluir e bloquear apenas criacao —
+    excluir categoria nunca passou por guardFeature; so a criacao e bloqueada.
+
+Recorrencias
+
+[x] Gratuito: ate 2 recorrencias ativas — ja gatilhado desde antes desta
+    rodada (LancamentosPage.jsx), so adicionado o UsageIndicator.
+[x] Premium: ilimitadas.
+[x] Recorrencias inativas nao contam no limite — a contagem sempre filtrou
+    por `r.ativo`.
+
+Metas
+
+[x] Gratuito: ate 2 metas ativas — novo: guardFeature(FEATURES.METAS) em
+    MetasPage.jsx, so na criacao (edicao/aporte nunca bloqueiam).
+[x] Premium: ilimitadas.
+[x] Metas concluidas nao contam no limite — isMetaAtiva() exclui metas com
+    valorAtual >= valorAlvo da contagem.
+
+Historico
+
+[x] Gratuito: mes atual e 2 anteriores — getOldestAllowedMonthKey() aplicado
+    de forma generica (compara a data inicial do intervalo calculado contra o
+    piso) em Lancamentos (PeriodNav: dia/semana/mes/ano/periodo), Relatorios e
+    Gestor Financeiro (MonthNav). Navegar alem do piso abre o paywall
+    contextual em vez de trocar o periodo.
+[x] Premium: historico completo — sem piso quando isPremium ou nao enforced.
+[x] Dados antigos permanecem armazenados ao retornar ao Gratuito — o limite e
+    so de navegacao/UI, nenhum dado e apagado ou perdido; lancamentos antigos
+    continuam no Firestore e voltam a ficar navegaveis se o usuario reassinar.
+
+Relatorios
+
+[x] Gratuito: resumo e categorias do mes atual — inalterado (nunca foi gated).
+[x] Premium: periodos, comparacoes, evolucao e filtros avancados — a secao
+    "Evolucao mensal" (grafico de 6 meses) agora e gated por
+    FEATURES.RELATORIOS_AVANCADOS; free ve um CTA "Conhecer o Premium" no
+    lugar do grafico, e a query getEvolucaoMensal nem dispara pra quem nao
+    pode ver (economia de leitura no Firestore).
+
+Gestor Financeiro
+
+[x] Gratuito: indicadores basicos do mes atual — Renda do mes, Renda
+    comprometida e a lista de compromissos continuam livres.
+[x] Premium: projecoes, comparacoes, cenarios e analises historicas —
+    PARCIAL: a unica peca "avancada" que ja existe no codigo hoje e a lista
+    de Sugestoes (heuristicas simples), gated atras de
+    FEATURES.INSIGHTS_AVANCADOS. Projecoes, comparacoes entre meses e cenarios
+    nao existem como funcionalidade no Gestor Financeiro ainda — nao ha nada
+    de concreto pra gatilhar. FEATURES.GESTOR_AVANCADO ficou definido na
+    configuracao central para quando essas telas forem construidas, mas ainda
+    sem nenhuma tela usando-o.
+
+Exportacao
+
+[x] Gratuito: CSV do mes atual — handleExportCsv() em LancamentosPage.jsx so
+    libera direto quando periodType==='mes' e o mes selecionado e o atual.
+[x] Premium: intervalos e filtros avancados — qualquer outro periodo
+    (dia/semana/ano/periodo customizado, ou um mes diferente do atual) passa
+    por guardFeature(FEATURES.EXPORTACAO_AVANCADA) antes de gerar o CSV.
+
+PENDENCIAS para revisao futura
+
+[ ] Gestor Financeiro: nenhuma tela de projecoes/comparacoes/cenarios existe
+    ainda pra gatilhar com FEATURES.GESTOR_AVANCADO — e trabalho de produto
+    novo, nao so gating.
+[ ] Elegibilidade real da "oferta de fundador" (quem pode ver o preco
+    promocional de R$ 69,90) nao tem nenhuma regra de data/janela de
+    lancamento implementada — o Paywall so exibe o texto informativamente.
+
+Criterio de conclusao
+
+- [x] Cada limite tem teste de fronteira (nos limites quantitativos, via
+      premium.test.js) e paywall contextual (guardFeature/openPaywall com
+      titulo especifico por feature).
+- [x] Nenhuma reducao de plano remove dados — todo gate criado e de
+      criacao/navegacao/visualizacao, nunca de exclusao.
+
+
+9. FASE 7 — TESTE PREMIUM [IMPLEMENTADA EM CODIGO 18/07/2026]
+
+Prazo estimado: 2 a 4 dias.
+
+[x] Oferecer 14 dias sem cartao — PRICING.trialDias em src/config/premium.js,
+    nenhum campo de pagamento é pedido em nenhum momento do fluxo.
+[x] Iniciar depois do primeiro lancamento, com consentimento claro — o botão
+    "Testar grátis" no Paywall só aparece depois que
+    lancamentosService.hasAnyLancamento(uid) confirma que existe pelo menos
+    um lançamento, e exige confirmação explícita (useConfirm) antes de
+    chamar startTrial().
+[x] Permitir apenas um teste por uid — reforçado no servidor, não só na UI:
+    firestore.rules só permite a transição "none" -> "trialing" quando
+    resource.data.trialStartedAt == null, o que nunca volta a ser verdade
+    depois do primeiro sucesso. Testado em subscriptionState.test.js
+    (transições) e a regra em si documentada com o raciocínio linha a linha.
+[x] Mostrar dias restantes em Meu Plano — subscription.trialDaysLeft
+    (calculado em toSubscriptionState) já existia da Fase 3, exibido em
+    MeuPlanoPage.jsx.
+[x] Avisar quando faltarem 3 dias e 1 dia — TrialBanner.jsx, montado no
+    AppLayout (visível em qualquer página logada), condicionado a
+    trialDaysLeft <= 3.
+[x] Retornar automaticamente ao Gratuito sem apagar dados — não é uma ação
+    ativa: toSubscriptionState() já reavalia trialEndsAt contra "agora" a
+    cada carregamento, então vira isPremium=false sozinho quando o prazo
+    passa, sem tocar em nenhum dado do usuário.
+[x] Medir inicio, uso e fim do teste — track(EVENTS.TRIAL_STARTED) ao iniciar;
+    TRIAL_FINISHED é disparado automaticamente pelo PremiumContext quando
+    detecta a transição trialing -> expired (Fase 10).
+
+
+10. FASE 8 — BACKEND E COBRANCA WEB [IMPLEMENTADA EM CODIGO 18/07/2026, NAO TESTADA]
+
+Prazo estimado: 5 a 10 dias.
+
+Decisao tecnica: MercadoPago + Netlify Functions (escolhido com o dono do
+projeto em 18/07/2026 — Netlify Functions porque já se usa Netlify pro
+deploy e mantém o Firebase no plano Spark gratuito).
+
+Tarefas
+
+[x] Escolher Mercado Pago, Asaas ou Stripe — MercadoPago.
+[x] Comparar Pix, cartao, recorrencia, taxas e webhooks — decisão tomada
+    pelo dono do projeto; MercadoPago cobre Pix/cartão/assinatura recorrente
+    (Preapproval API) nativamente.
+[x] Criar checkout mensal e anual — netlify/functions/create-checkout.js,
+    cria um Preapproval (assinatura recorrente) mensal ou anual e devolve a
+    URL de checkout do MercadoPago.
+[x] Criar webhook autenticado — netlify/functions/mercadopago-webhook.js,
+    valida a assinatura com WebhookSignatureValidator (do próprio SDK
+    oficial do MercadoPago) antes de processar qualquer coisa.
+[x] Validar o evento diretamente com o provedor — o webhook nunca confia no
+    corpo da notificação: sempre busca o preapproval de volta na API do
+    MercadoPago pelo id antes de gravar qualquer coisa no Firestore.
+[x] Tornar processamento idempotente para nao duplicar eventos — reentregar a
+    mesma notificação só reaplica o mesmo estado (busca sempre o estado
+    atual no MercadoPago, nunca acumula/soma nada); log em
+    private/subscription/subscription_log documenta cada aplicação.
+[x] Atualizar a assinatura no Firestore somente pelo backend —
+    netlify/lib/subscriptionWriter.js usa o Admin SDK, que ignora
+    firestore.rules; nenhum caminho do cliente escreve plan/status.
+[x] Tratar renovacao, cancelamento, estorno e falha de pagamento — coberto
+    via o mapeamento de status do preapproval (authorized/paused/cancelled)
+    em subscriptionWriter.js. PARCIAL: eventos `type: "payment"` individuais
+    (uma cobrança recorrente específica falhando) não são tratados à parte —
+    só o estado agregado do preapproval é — ver nota dentro do arquivo do
+    webhook.
+[x] Nunca liberar Premium apenas pelo retorno do navegador —
+    create-checkout.js nunca escreve no Firestore; MeuPlanoPage.jsx, ao
+    voltar do checkout, faz polling de refreshSubscription() em vez de
+    assumir sucesso pelo redirect.
+
+PENDENCIAS — exigem conta/credenciais reais que so o dono do projeto tem
+
+[ ] Criar a conta MercadoPago (KYC, dados bancarios) e gerar o Access Token
+    de producao/teste.
+[ ] Configurar no Netlify (Site configuration > Environment variables):
+    MERCADOPAGO_ACCESS_TOKEN, MERCADOPAGO_WEBHOOK_SECRET,
+    FIREBASE_SERVICE_ACCOUNT (JSON da service account), APP_BASE_URL.
+[ ] Cadastrar a URL do webhook (https://<seu-site>.netlify.app/api/mercadopago-webhook)
+    no painel do MercadoPago e copiar a assinatura secreta gerada.
+[ ] Testar o fluxo completo em modo sandbox do MercadoPago antes de ir pra
+    producao — nenhuma linha deste codigo foi executada contra a API real.
+[ ] Cobrir eventos `type: "payment"` individuais no webhook, uma vez que o
+    formato exato do payload puder ser confirmado num teste real.
+
+Criterio de conclusao
+
+- [x] Pagamento confirmado ativa o Premium no Web (Android depende da Fase 9).
+- [x] Cancelamento preserva acesso ate o fim do periodo pago — implementado,
+      nao testado contra a API real.
+
+
+11. FASE 9 — COBRANCA ANDROID [PARCIAL — bloqueada por acesso externo]
+
+Prazo estimado: 7 a 14 dias.
+
+[ ] Criar produtos mensal e anual no Google Play Console.
+[ ] Integrar compra compativel com Google Play Billing.
+[x] Validar compra no backend — netlify/functions/validate-android-purchase.js,
+    chama a Google Play Developer API (Subscriptions v2) direto, nunca
+    confia só no que o SDK do cliente reporta. NAO TESTADO.
+[ ] Implementar restauracao de compra.
+[ ] Implementar gerenciamento de assinatura.
+[x] Tratar compra pendente, renovacao, cancelamento e expiracao — mapeamento
+    de subscriptionState em netlify/lib/subscriptionWriter.js
+    (applyGooglePlaySubscription), mesmo padrão do MercadoPago. NAO TESTADO.
+    Falta implementar o *acknowledgement* da compra (obrigatório em até 3
+    dias pela Play Billing Library, senão o Google reembolsa sozinho).
+[ ] Sincronizar entitlement pelo uid.
+[ ] Testar nas trilhas internas da Play Store.
+[ ] Revisar politica de pagamentos vigente antes da publicacao.
+
+PENDENCIAS — bloqueadas por acesso que nao existe neste ambiente
+
+[ ] Instalar o Android Studio (confirmado ausente nesta máquina — ver
+    conversa sobre "evoluir pra Android" mais cedo neste mesmo projeto).
+[ ] Criar a conta Google Play Console (taxa única de US$25) e subir pelo
+    menos um AAB assinado na trilha de testes internos.
+[ ] Escolher e instalar um plugin nativo de Google Play Billing no projeto
+    Capacitor (android/) — deliberadamente NÃO escrito nenhum código nativo
+    especulativo aqui, porque não há como compilar/testar nada disso sem
+    Android Studio, e um plugin escolhido errado ou código nativo que não
+    compila pareceria "pronto" sem estar.
+[ ] Criar/vincular uma service account do Google Cloud com acesso à Play
+    Developer API (Play Console > Configurações > Acesso à API) e configurar
+    GOOGLE_PLAY_SERVICE_ACCOUNT / ANDROID_PACKAGE_NAME no Netlify.
+[ ] Depois que o plugin nativo existir: chamar
+    netlify/functions/validate-android-purchase.js com o purchaseToken
+    retornado por ele, e testar numa compra real da trilha interna.
+
+Criterio de conclusao
+
+- [ ] Compra feita no Android libera o Web e vice-versa — pendente da
+      integração nativa acima; a metade do backend (validação) já existe.
+- [ ] Reinstalacao e troca de aparelho restauram corretamente o acesso —
+      idem.
+
+
+12. FASE 10 — ANALYTICS [IMPLEMENTADA EM CODIGO 18/07/2026]
+
+Prazo estimado: 2 a 4 dias.
+
+Eventos minimos
+
+[x] premium_card_viewed e premium_card_clicked — Sidebar (desktop) e cartão
+    "Meu Plano" em Opções.
+[x] paywall_opened e paywall_closed — disparados pelo PremiumContext sempre
+    que o paywall abre/fecha, não importa a origem (guardFeature ou
+    openPaywall direto).
+[x] free_limit_reached — disparado junto com paywall_opened quando o motivo é
+    limit_reached, com o nome da feature e o limite atingido.
+[x] trial_started e trial_finished — ver Fase 7.
+[x] checkout_started — ao clicar "Assinar" no Paywall, logo antes do
+    redirect pro MercadoPago.
+[x] purchase_completed, failed e canceled — purchase_completed disparado
+    quando o polling de retorno do checkout confirma isPremium=true.
+    PARCIAL: failed/canceled não são distinguidos de forma confiável — sem
+    uma conta real do MercadoPago pra confirmar quais parâmetros o
+    back_url recebe em cada caso, a tela de retorno trata "não confirmou
+    depois do polling" como um estado neutro ("ainda processando"), sem
+    arriscar marcar como failed/canceled por engano.
+[x] subscription_restored e subscription_canceled — "Restaurar compra"
+    (Android, quando resulta em isPremium) e "Cancelar assinatura" (Web) em
+    Meu Plano.
+
+Indicadores
+
+[ ] Primeiro lancamento.
+[ ] Retencao em 7 e 30 dias.
+[ ] Usuarios que atingem cada limite.
+[ ] Conversao do paywall e checkout.
+[ ] Conversao mensal versus anual.
+[ ] Cancelamentos e receita recorrente.
+
+NOTA: os "Indicadores" acima não são código — são relatórios/consultas em
+cima dos eventos já sendo enviados ao Firebase Analytics (GA4). Uma vez que
+VITE_FIREBASE_MEASUREMENT_ID esteja configurado e os eventos comecem a
+chegar, esses indicadores se configuram como relatórios no próprio GA4 (ou
+consultas SQL via BigQuery export, se habilitado) — não há uma tarefa de
+programação pendente aqui, só configuração no console do Firebase/GA4 pelo
+dono do projeto.
+
+
+13. FASE 11 — ADMINISTRACAO, SEGURANCA E SUPORTE [IMPLEMENTADA EM CODIGO 18/07/2026]
+
+Prazo estimado: 3 a 5 dias.
+
+[x] Consultar usuario por email/uid — scripts/lookup-user.mjs.
+[x] Ver plano, status, provedor e expiracao — mesmo script, mostra o
+    documento de assinatura completo mais o histórico recente de alterações.
+[x] Conceder Premium manual com prazo — scripts/grant-premium.mjs (já
+    existia da Fase 2), agora também aceita e-mail (não só uid) e grava no
+    log de auditoria.
+[x] Reprocessar/sincronizar assinatura com o provedor —
+    scripts/reprocess-subscription.mjs, reaproveita a mesma lógica de
+    tradução do webhook (netlify/lib/subscriptionWriter.js) pra nunca
+    divergir do comportamento dele.
+[x] Manter log das alteracoes de assinatura — subcoleção
+    private/subscription/subscription_log, escrita pelo webhook, pelo
+    cancel-subscription e pelos scripts admin; leitura liberada pro próprio
+    dono via firestore.rules, escrita bloqueada pro cliente.
+[x] Publicar Termos de Uso e Politica de Privacidade — RASCUNHO em
+    /termos e /privacidade (src/features/legal/), linkado no rodapé de
+    Opções, no Paywall e em Meu Plano. Precisa de revisão jurídica (LGPD,
+    cláusulas de cobrança) antes do lançamento público — não é
+    aconselhamento jurídico.
+[x] Criar fluxo de exclusao de conta — botão "Excluir conta" em Opções:
+    apaga todo o Firestore do usuário e então a conta do Firebase Auth
+    (nessa ordem, porque as regras precisam do uid autenticado pra
+    autorizar os deletes). Exige reautenticação com o Google antes de
+    excluir, por exigência do próprio Firebase Auth pra operações sensíveis.
+[x] Criar exportacao dos dados pessoais — botão "Exportar meus dados" em
+    Opções, baixa um JSON com lançamentos, categorias, recorrências, metas,
+    configuração e assinatura.
+[ ] Definir canal de suporte e politica de cancelamento — PENDENTE: precisa
+    de um e-mail/canal de contato real do dono do projeto. A política de
+    cancelamento em si já está descrita nos Termos de Uso (rascunho); só
+    falta o canal de contato, referenciado como placeholder em ambas as
+    páginas legais.
+
+
+14. INFRAESTRUTURA E CUSTOS
+
+Netlify — situacao apos 18/07/2026
+
+- O projeto agora tem 4 Netlify Functions (netlify/functions/) além da SPA
+  estática: create-checkout, mercadopago-webhook, cancel-subscription,
+  validate-android-purchase. Functions no plano Free do Netlify têm cota
+  própria (invocações + tempo de execução) — consultar Usage & billing
+  depois de configurar as env vars e antes de habilitar o webhook em
+  producao, já que o consumo real só aparece com tráfego de verdade.
+- Continua não exigindo Personal ou Pro pelo que o código em si demanda; a
+  decisão de upgrade deve vir do consumo real, não de suposição.
+
+Firebase — situacao apos 18/07/2026
+
+- Authentication (Google) e Cloud Firestore, como antes.
+- Analytics agora está no código (src/firebase/config.js), mas só ativa de
+  fato se VITE_FIREBASE_MEASUREMENT_ID for configurada — sem isso,
+  analyticsReady resolve pra null e todo track() vira no-op silencioso.
+- As Netlify Functions usam o Admin SDK do Firebase (via
+  FIREBASE_SERVICE_ACCOUNT), não Cloud Functions — o plano Firebase
+  continua não precisando de Blaze por causa disso.
+- Leituras crescem conforme documentos retornados pelas consultas getDocs;
+  a Fase 6 já reduziu isso um pouco (Evolução mensal só busca quando o
+  usuário pode vê-la).
+
+Checklist operacional
+
+[ ] Registrar mensalmente creditos do Netlify (agora incluindo Functions).
+[ ] Registrar leituras, gravacoes e armazenamento do Firestore.
+[ ] Otimizar consultas que carregam colecoes completas.
+[ ] Revisar tamanho do build a cada marco (dist em 18/07/2026: ~1,3 MB).
+[ ] Criar alertas de custo antes de habilitar servicos pagos.
+[ ] So mudar de plano com base no consumo real ou requisito tecnico confirmado.
+[ ] Monitorar custos do MercadoPago (taxas por transação) uma vez que o
+    checkout real estiver em producao.
+
+
+15. ORDEM DE ENTREGA
+
+Marco 1 — Preparacao do produto [CONCLUIDO EM CODIGO]
+
+[x] Desabilitar e remover PDF do build.
+[x] Centralizar planos e limites.
+[x] Criar modelo de assinatura.
+[x] Evoluir PremiumContext.
+
+Marco 2 — Experiencia Premium [CONCLUIDO EM CODIGO]
+
+[x] Criar Meu Plano.
+[x] Criar pontos de "Virar Premium".
+[x] Criar paywall.
+[x] Aplicar limites a todos os recursos.
+[x] Implementar teste de 14 dias.
+
+Marco 3 — Cobranca [CODIGO PRONTO, NAO TESTADO — bloqueado por contas reais]
+
+[x] Escolher backend e provedor Web — Netlify Functions + MercadoPago.
+[x] Implementar checkout e webhooks — codigo completo, nunca executado
+    contra uma conta MercadoPago real.
+[~] Implementar Google Play Billing — só a validação de backend existe
+    (validate-android-purchase.js); a integração nativa no app Android
+    depende de Android Studio + Play Console + escolha de um plugin
+    Capacitor, nenhum disponível neste ambiente.
+[x] Sincronizar acesso entre plataformas — mesmo documento Firestore
+    (users/{uid}/private/subscription) e mesma lógica de derivação
+    (toSubscriptionState) para Web e Android; falta só a Fase 9 terminar
+    do lado Android pra isso valer na prática.
+
+Marco 4 — Lancamento [PARCIAL]
+
+[x] Ativar analytics — eventos instrumentados; falta configurar
+    VITE_FIREBASE_MEASUREMENT_ID pra eles começarem a chegar de verdade.
+[~] Concluir termos, privacidade e suporte — Termos/Privacidade em rascunho;
+    canal de suporte ainda pendente de definição pelo dono do projeto.
+[ ] Testar todos os estados de assinatura — precisa de contas
+    MercadoPago/Google Play reais em sandbox.
+[ ] Liberar oferta de fundador — preço já existe (PRICING.fundadorAnualPrimeiroAno),
+    falta decidir e implementar a regra de elegibilidade/janela de tempo.
+[ ] Monitorar conversao, retencao e custos — depende do Marco 4 anterior
+    estar rodando com tráfego real.
+
+
+16. ESTIMATIVA GERAL
+
+- Preparacao e experiencia Premium sem cobranca: 1 a 2 semanas — feito em
+  código nesta rodada (pontos 2 a 8).
+- Backend, cobranca Web e Android: mais 3 a 6 semanas — código escrito nesta
+  rodada (pontos 9 a 13), mas "feito em código" não é "testado em produção":
+  falta a parte que só o dono do projeto pode fazer (contas reais em
+  MercadoPago e Google Play, Android Studio, credenciais) e depois testar
+  tudo em sandbox antes de ligar PREMIUM_ENFORCED.
+- Total inicial: 5 a 8 semanas, sujeito a aprovacao da Play Store e do provedor.
+
+Este arquivo deve ser atualizado ao final de cada fase, marcando [x] nos itens
+concluidos e registrando decisoes de preco, provedor e infraestrutura.

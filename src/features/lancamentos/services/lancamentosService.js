@@ -9,6 +9,7 @@ import {
   listUserDocsInRange,
   listUserDocsWhereEquals,
   batchSetUserDocs,
+  hasAnyUserDoc,
 } from '../../../firebase/firestore.js';
 import { monthRangeBounds, shiftMonthKey, clampDayToMonth } from '../../../utils/monthKey.js';
 import { slugify } from '../../../utils/slugify.js';
@@ -41,6 +42,11 @@ export function listLancamentosByMonth(uid, monthKey) {
 /** Lists every lançamento regardless of date — used by the Gestor Financeiro's analysis and import picker. */
 export function listAllLancamentos(uid) {
   return listUserDocs(uid, COLLECTION);
+}
+
+/** True as soon as the user has created at least one lançamento — gates the Premium trial offer (Fase 7). */
+export function hasAnyLancamento(uid) {
+  return hasAnyUserDoc(uid, COLLECTION);
 }
 
 /** Lists lançamentos due within an arbitrary inclusive ['YYYY-MM-DD', 'YYYY-MM-DD'] range. */

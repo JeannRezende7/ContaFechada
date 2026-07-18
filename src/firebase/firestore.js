@@ -10,6 +10,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   serverTimestamp,
   writeBatch,
 } from 'firebase/firestore';
@@ -134,6 +135,12 @@ export async function listUserDocsWhereEquals(uid, subcollection, field, value) 
   const q = query(col, where(field, '==', value));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/** Cheapest possible existence check — fetches at most 1 doc instead of the whole subcollection. */
+export async function hasAnyUserDoc(uid, subcollection) {
+  const snap = await getDocs(query(userCollection(uid, subcollection), limit(1)));
+  return !snap.empty;
 }
 
 export { where, query, orderBy };

@@ -6,6 +6,7 @@ import { COLOR_MAP, getColor } from '../colorMap.js';
 import { ICON_MAP, getIcon } from '../iconMap.js';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
+import UsageIndicator from '../../premium/components/UsageIndicator.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 
 export default function CategoriasPage() {
@@ -41,10 +42,11 @@ export default function CategoriasPage() {
     [categorias, tab]
   );
 
+  const customCount = useMemo(() => categorias.filter((c) => !c.padrao).length, [categorias]);
+
   async function handleAdd(e) {
     e.preventDefault();
     if (!nome.trim()) return;
-    const customCount = categorias.filter((c) => !c.padrao).length;
     if (!guardFeature(FEATURES.CATEGORIAS_CUSTOM, { count: customCount })) return;
     await createCategoria(uid, { nome: nome.trim(), tipo: tab, corKey, icone, ordem: Date.now() });
     setNome('');
@@ -107,7 +109,10 @@ export default function CategoriasPage() {
         </div>
 
         <form onSubmit={handleAdd} className="mt-8 bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex flex-col gap-3">
-          <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Nova categoria de {tab === 'despesa' ? 'despesa' : 'receita'}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Nova categoria de {tab === 'despesa' ? 'despesa' : 'receita'}</p>
+            <UsageIndicator feature={FEATURES.CATEGORIAS_CUSTOM} count={customCount} label="categorias personalizadas" />
+          </div>
 
           <input
             value={nome}

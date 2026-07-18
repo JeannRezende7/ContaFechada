@@ -11,6 +11,9 @@ import RelatoriosPage from '../features/relatorios/pages/RelatoriosPage.jsx';
 import MetasPage from '../features/metas/pages/MetasPage.jsx';
 import GestorFinanceiroPage from '../features/gestor/pages/GestorFinanceiroPage.jsx';
 import OpcoesPage from '../features/opcoes/pages/OpcoesPage.jsx';
+import MeuPlanoPage from '../features/premium/pages/MeuPlanoPage.jsx';
+import TermosPage from '../features/legal/pages/TermosPage.jsx';
+import PrivacidadePage from '../features/legal/pages/PrivacidadePage.jsx';
 
 export default function AppRoutes() {
   return (
@@ -18,6 +21,10 @@ export default function AppRoutes() {
       <Route element={<AuthLayout />}>
         <Route path="/entrar" element={<LoginPage />} />
       </Route>
+
+      {/* Públicas — precisam ser legíveis por quem ainda nem tem conta. */}
+      <Route path="/termos" element={<TermosPage />} />
+      <Route path="/privacidade" element={<PrivacidadePage />} />
 
       <Route
         element={
@@ -33,6 +40,7 @@ export default function AppRoutes() {
         <Route path="/metas" element={<MetasPage />} />
         <Route path="/gestor" element={<GestorFinanceiroPage />} />
         <Route path="/opcoes" element={<OpcoesPage />} />
+        <Route path="/opcoes/meu-plano" element={<MeuPlanoPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/entrar" replace />} />

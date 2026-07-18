@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar.jsx';
 import BottomNav from '../components/layout/BottomNav.jsx';
+import TrialBanner from '../features/premium/components/TrialBanner.jsx';
 
 /** Mobile-first: bottom nav + stacked content. From md breakpoint up: sidebar layout. */
 export default function AppLayout() {
@@ -16,6 +17,7 @@ export default function AppLayout() {
         </span>
       </div>
       <div className="flex-1 min-w-0 pb-16 md:pb-0">
+        <TrialBanner />
         <Outlet />
       </div>
       <BottomNav />

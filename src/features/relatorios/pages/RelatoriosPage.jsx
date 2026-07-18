@@ -14,9 +14,12 @@ import {
   Legend,
 } from 'recharts';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { usePremium } from '../../../contexts/PremiumContext.jsx';
+import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
+import PremiumBadge from '../../premium/components/PremiumBadge.jsx';
 import { getGastosPorCategoria, getEvolucaoMensal } from '../services/relatoriosService.js';
 import { getColor } from '../../categorias/colorMap.js';
-import { getCurrentMonthKey } from '../../../utils/monthKey.js';
+import { getCurrentMonthKey, shiftMonthKey } from '../../../utils/monthKey.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
@@ -49,10 +52,32 @@ function EvolucaoTooltip({ active, payload, label }) {
 export default function RelatoriosPage() {
   const { user } = useAuth();
   const uid = user?.uid;
+  const { canUse, isPremium, openPaywall, getLimit } = usePremium();
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey());
   const [tipo, setTipo] = useState('despesa');
   const [categoriaData, setCategoriaData] = useState({ items: [], totalGeral: 0 });
   const [evolucao, setEvolucao] = useState([]);
+
+  // Histórico (Fase 6): free vê só o mês atual e os 2 anteriores.
+  const oldestAllowedMonthKey = getOldestAllowedMonthKey({
+    isPremium,
+    currentMonthKey: getCurrentMonthKey(),
+    shiftMonthKey,
+  });
+
+  function tryChangeMonth(nextMonthKey) {
+    if (oldestAllowedMonthKey && nextMonthKey < oldestAllowedMonthKey) {
+      openPaywall({ feature: FEATURES.HISTORICO, reason: 'limit_reached', limit: getLimit(FEATURES.HISTORICO) });
+      return;
+    }
+    setMonthKey(nextMonthKey);
+  }
+
+  // Relatório básico (categorias do mês) é grátis; evolução/comparação
+  // entre meses é Premium (Fase 6) — `canUse` volta `true` pra todo mundo
+  // enquanto PREMIUM_ENFORCED estiver desligado, então isso não muda nada
+  // até o plano pago ser lançado de fato.
+  const podeVerEvolucao = canUse(FEATURES.RELATORIOS_AVANCADOS);
 
   useEffect(() => {
     if (!uid) return;
@@ -60,9 +85,9 @@ export default function RelatoriosPage() {
   }, [uid, monthKey, tipo]);
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || !podeVerEvolucao) return;
     getEvolucaoMensal(uid, monthKey, 6).then(setEvolucao);
-  }, [uid, monthKey]);
+  }, [uid, monthKey, podeVerEvolucao]);
 
   const chartData = useMemo(
     () => categoriaData.items.map((item) => ({ ...item, color: getColor(item.corKey).hex })),
@@ -75,7 +100,7 @@ export default function RelatoriosPage() {
     <>
       <Topbar title="Relatórios" icon={PieChartIcon} />
       <div className="p-4 md:p-8 max-w-4xl mx-auto flex flex-col gap-8">
-        <MonthNav monthKey={monthKey} onChange={setMonthKey} />
+        <MonthNav monthKey={monthKey} onChange={tryChangeMonth} />
 
         <section className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 md:p-6">
           <div className="flex items-center justify-between mb-4">
@@ -159,9 +184,22 @@ export default function RelatoriosPage() {
           <h2 className="flex items-center gap-2 font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-4">
             <TrendingUp size={18} className="text-clay-500" strokeWidth={1.75} />
             Evolução mensal
+            <PremiumBadge />
           </h2>
 
-          {!temMovimentacaoEvolucao ? (
+          {!podeVerEvolucao ? (
+            <div className="flex flex-col items-center gap-2 text-center py-10 px-4">
+              <p className="text-sm text-ink-300 max-w-[280px]">
+                Compare a evolução dos últimos meses com o Premium.
+              </p>
+              <button
+                onClick={() => openPaywall({ feature: FEATURES.RELATORIOS_AVANCADOS })}
+                className="text-sm font-medium text-ledger-600 hover:underline"
+              >
+                Conhecer o Premium
+              </button>
+            </div>
+          ) : !temMovimentacaoEvolucao ? (
             <p className="text-sm text-ink-300 text-center py-10">
               Sem lançamentos nos últimos meses.
             </p>

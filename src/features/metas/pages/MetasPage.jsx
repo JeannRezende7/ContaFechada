@@ -1,21 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Target, Plus, PiggyBank } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { listMetas, createMeta, updateMeta, deleteMeta, aportarNaMeta } from '../services/metasService.js';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
+import { usePremium } from '../../../contexts/PremiumContext.jsx';
+import { FEATURES } from '../../../config/premium.js';
+import UsageIndicator from '../../premium/components/UsageIndicator.jsx';
 import { COLOR_MAP } from '../../categorias/colorMap.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import MetaModal from '../components/MetaModal.jsx';
 
+/** Uma meta já atingida não conta no limite (metas concluídas não contam, ROADMAP_MONETIZACAO.txt Fase 6). */
+function isMetaAtiva(meta) {
+  const alvo = Number(meta.valorAlvo) || 0;
+  const atual = Number(meta.valorAtual) || 0;
+  return !(alvo > 0 && atual >= alvo);
+}
+
 export default function MetasPage() {
   const { user } = useAuth();
   const uid = user?.uid;
   const confirm = useConfirm();
+  const { guardFeature } = usePremium();
   const [metas, setMetas] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [aportes, setAportes] = useState({});
+
+  const metasAtivasCount = useMemo(() => metas.filter(isMetaAtiva).length, [metas]);
 
   async function reload() {
     if (!uid) return;
@@ -28,8 +41,12 @@ export default function MetasPage() {
   }, [uid]);
 
   async function handleSave(id, data) {
-    if (id) await updateMeta(uid, id, data);
-    else await createMeta(uid, data);
+    if (id) {
+      await updateMeta(uid, id, data);
+    } else {
+      if (!guardFeature(FEATURES.METAS, { count: metasAtivasCount })) return;
+      await createMeta(uid, data);
+    }
     setModalOpen(false);
     reload();
   }
@@ -53,13 +70,14 @@ export default function MetasPage() {
     <>
       <Topbar title="Metas" icon={Target} />
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
-        <div className="flex justify-end mb-4">
+        <div className="flex items-center mb-4 gap-2">
+          <UsageIndicator feature={FEATURES.METAS} count={metasAtivasCount} label="metas ativas" />
           <button
             onClick={() => {
               setEditing(null);
               setModalOpen(true);
             }}
-            className="flex items-center gap-1.5 rounded-pill bg-ledger-500 text-white pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
+            className="ml-auto flex items-center gap-1.5 rounded-pill bg-ledger-500 text-white pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
           >
             <Plus size={16} strokeWidth={2.25} />
             Nova meta

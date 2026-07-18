@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { isSupported, getAnalytics } from 'firebase/analytics';
 import {
   initializeFirestore,
   getFirestore,
@@ -15,10 +16,26 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+/**
+ * Analytics (ROADMAP_MONETIZACAO.txt, Fase 10) — resolves to the real
+ * instance or `null`, never throws. Three things can make it unavailable:
+ * no VITE_FIREBASE_MEASUREMENT_ID configured, a browser without the
+ * storage/cookie APIs it needs (some private-browsing modes), or the
+ * Capacitor Android WebView (no Google Analytics cookie support there
+ * either). `src/utils/analytics.js` awaits this and no-ops when it's null,
+ * so every `logEvent` call site stays unconditional.
+ */
+export const analyticsReady = firebaseConfig.measurementId
+  ? isSupported()
+      .then((supported) => (supported ? getAnalytics(app) : null))
+      .catch(() => null)
+  : Promise.resolve(null);
 
 /**
  * IndexedDB-backed local cache: reads fall back to the last-synced data and
