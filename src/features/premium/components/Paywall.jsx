@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { X, Sparkles, Check, Crown, Gift } from 'lucide-react';
-import { FEATURES, PLAN_DETAILS, PLAN, PRICING } from '../../../config/premium.js';
+import { X, Sparkles, Crown, Gift } from 'lucide-react';
+import { FEATURES, PRICING } from '../../../config/premium.js';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { hasAnyLancamento } from '../../lancamentos/services/lancamentosService.js';
 import { createCheckout } from '../services/checkoutService.js';
 import { track, EVENTS } from '../../../utils/analytics.js';
+import PlanComparisonTable from './PlanComparisonTable.jsx';
 
 /**
  * Contextual title/description per gated feature — the paywall adapts its
@@ -170,13 +171,8 @@ export default function Paywall({ open, context, onClose }) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 mb-5">
-          {PLAN_DETAILS[PLAN.PREMIUM].beneficios.map((beneficio) => (
-            <div key={beneficio} className="flex items-center gap-2.5">
-              <Check size={15} strokeWidth={2.5} className="text-ledger-500 shrink-0" />
-              <span className="text-sm text-ink-700 dark:text-ink-100">{beneficio}</span>
-            </div>
-          ))}
+        <div className="rounded-xl bg-ink-50/60 dark:bg-ink-900/60 p-3 mb-5">
+          <PlanComparisonTable currentPlan="free" />
         </div>
 
         <div className="grid grid-cols-2 gap-2.5 mb-3">

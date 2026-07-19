@@ -8,6 +8,7 @@ import { PLAN, PLAN_DETAILS } from '../../../config/premium.js';
 import { cancelWebSubscription } from '../services/checkoutService.js';
 import { track, EVENTS } from '../../../utils/analytics.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
+import PlanComparisonTable from '../components/PlanComparisonTable.jsx';
 
 const STATUS_LABEL = {
   none: 'Sem assinatura',
@@ -243,15 +244,18 @@ export default function MeuPlanoPage() {
         <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-5">
           <div className="flex items-center gap-2 mb-3">
             <ShieldCheck size={16} className="text-ledger-500" strokeWidth={1.75} />
-            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">O que muda no Premium</p>
+            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Gratuito vs. Premium</p>
           </div>
-          <ul className="flex flex-col gap-1.5">
-            {PLAN_DETAILS[PLAN.PREMIUM].beneficios.map((beneficio) => (
-              <li key={beneficio} className="text-sm text-ink-500 pl-2">
-                • {beneficio}
-              </li>
-            ))}
-          </ul>
+          <PlanComparisonTable currentPlan={isPremium ? 'premium' : 'free'} />
+          {!isPremium && (
+            <button
+              onClick={() => openPaywall({})}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-ledger-500 text-white py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all mt-4"
+            >
+              <Crown size={16} strokeWidth={2.25} />
+              Conhecer o Premium
+            </button>
+          )}
         </div>
 
         <button

@@ -95,6 +95,23 @@ export const PLAN_DETAILS = {
   },
 };
 
+/**
+ * Linha a linha, Gratuito vs Premium — usado pela tabela comparativa em
+ * "Meu Plano" e no paywall. Os números vêm de FREE_LIMITS pra nunca
+ * dessincronizar do que é de fato aplicado.
+ */
+export const PLAN_COMPARISON = [
+  { label: 'Lançamentos manuais', free: 'Ilimitados', premium: 'Ilimitados' },
+  { label: 'Categorias personalizadas', free: `Até ${FREE_LIMITS[FEATURES.CATEGORIAS_CUSTOM]}`, premium: 'Ilimitadas' },
+  { label: 'Recorrências ativas', free: `Até ${FREE_LIMITS[FEATURES.RECORRENCIAS]}`, premium: 'Ilimitadas' },
+  { label: 'Metas ativas', free: `Até ${FREE_LIMITS[FEATURES.METAS]}`, premium: 'Ilimitadas' },
+  { label: 'Histórico acessível', free: `Mês atual + ${FREE_LIMITS[FEATURES.HISTORICO]} meses`, premium: 'Completo' },
+  { label: 'Relatórios', free: 'Básico do mês atual', premium: 'Múltiplos períodos e comparação' },
+  { label: 'Gestor Financeiro', free: 'Indicadores básicos do mês atual', premium: 'Completo, com projeções' },
+  { label: 'Insights e sugestões', free: 'Não incluído', premium: 'Avançados' },
+  { label: 'Exportação', free: 'CSV do mês atual', premium: 'Avançada, múltiplos períodos' },
+];
+
 /** Preços propostos — validar antes do lançamento (ROADMAP_MONETIZACAO.txt, secao 1). */
 export const PRICING = {
   mensal: 12.9,

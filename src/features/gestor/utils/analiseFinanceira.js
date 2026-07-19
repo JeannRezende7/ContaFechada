@@ -7,12 +7,12 @@
  * bill only shows up in months it's actually billed), and a few heuristic
  * suggestions.
  *
- * "Comprometida" (committed) means despesas tied to a parcelamento or a
- * recorrência — structurally identifiable via `parcelamentoId` /
- * `origemRecorrenciaId` on the lançamento itself, so this works the same
- * whether the source is the live Movimento or a manually imported subset.
- * `parcelamentosAtivos` in the return value actually mixes both kinds —
- * distinguish with the `tipo` field ('parcelamento' | 'recorrente').
+ * "Comprometida" (committed) is every despesa of the month, avulsa or not —
+ * it's meant to read as "quanto da renda já saiu", so any lançamento counts
+ * once it's dated (or an imported recorrência) in this month. The separate
+ * `parcelamentosAtivos` list is only the structured subset (tied to a
+ * `parcelamentoId` / `origemRecorrenciaId`) — distinguish with the `tipo`
+ * field ('parcelamento' | 'recorrente').
  *
  * A recorrência imported directly (via `recorrenciaImportada: true`, from
  * the Gestor's "Importar recorrências" flow) has no `dataVencimento` at all
@@ -27,16 +27,14 @@ export function analisarFinancas(todosLancamentos, monthKey) {
 
   let rendaMes = 0;
   let despesaMes = 0;
-  let despesaComprometida = 0;
   for (const l of doMesComRecorrentes) {
     const valor = Number(l.valor) || 0;
-    if (l.tipo === 'receita') {
-      rendaMes += valor;
-    } else {
-      despesaMes += valor;
-      if (l.parcelamentoId || l.origemRecorrenciaId) despesaComprometida += valor;
-    }
+    if (l.tipo === 'receita') rendaMes += valor;
+    else despesaMes += valor;
   }
+  // "Comprometida" é toda despesa do mês, avulsa ou não — a aba
+  // "Compromissos" já separa o que é parcela/recorrência estruturada.
+  const despesaComprometida = despesaMes;
   const percentualComprometido = rendaMes > 0 ? (despesaComprometida / rendaMes) * 100 : null;
 
   // Um parcelamento só aparece no mês em que tem uma parcela vencendo nele —

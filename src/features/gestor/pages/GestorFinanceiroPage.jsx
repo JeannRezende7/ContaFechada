@@ -203,6 +203,37 @@ export default function GestorFinanceiroPage() {
           />
         </div>
 
+        {analise.sugestoes.length > 0 && (
+          <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0">
+                <Sparkles size={15} strokeWidth={1.75} />
+              </span>
+              <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Sugestões</p>
+              <PremiumBadge />
+            </div>
+            {podeVerSugestoes ? (
+              <ul className="flex flex-col gap-1.5">
+                {analise.sugestoes.map((s, i) => (
+                  <li key={i} className="text-sm text-ink-500 pl-2">
+                    • {s}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm text-ink-300">Insights financeiros avançados são um recurso Premium.</p>
+                <button
+                  onClick={() => openPaywall({ feature: FEATURES.INSIGHTS_AVANCADOS })}
+                  className="text-sm font-medium text-ledger-600 hover:underline shrink-0"
+                >
+                  Conhecer
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 mb-4">
           <div className="flex gap-1 mb-3 bg-ink-50 dark:bg-ink-900 rounded-pill p-1">
             <button
@@ -272,37 +303,6 @@ export default function GestorFinanceiroPage() {
             </div>
           )}
         </div>
-
-        {analise.sugestoes.length > 0 && (
-          <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0">
-                <Sparkles size={15} strokeWidth={1.75} />
-              </span>
-              <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Sugestões</p>
-              <PremiumBadge />
-            </div>
-            {podeVerSugestoes ? (
-              <ul className="flex flex-col gap-1.5">
-                {analise.sugestoes.map((s, i) => (
-                  <li key={i} className="text-sm text-ink-500 pl-2">
-                    • {s}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm text-ink-300">Insights financeiros avançados são um recurso Premium.</p>
-                <button
-                  onClick={() => openPaywall({ feature: FEATURES.INSIGHTS_AVANCADOS })}
-                  className="text-sm font-medium text-ledger-600 hover:underline shrink-0"
-                >
-                  Conhecer
-                </button>
-              </div>
-            )}
-          </div>
-        )}
 
         {usaMovimento ? (
           <p className="text-xs text-ink-300 text-center">
