@@ -120,6 +120,25 @@ export const PRICING = {
   trialDias: 14,
 };
 
+/**
+ * Janela de elegibilidade da "oferta de fundador" (ROADMAP_MONETIZACAO.txt,
+ * Marco 4: "decidir e implementar a regra de elegibilidade/janela de
+ * tempo"). Só quem nunca teve nenhuma assinatura (nunca iniciou teste nem
+ * compra) e está dentro do prazo abaixo vê o preço promocional — ajuste a
+ * data quando decidir a janela real de lançamento, um único ponto de
+ * configuração, sem tocar em nenhuma tela.
+ */
+export const FOUNDER_OFFER_DEADLINE = '2026-10-15T23:59:59-03:00';
+
+export function isFounderOfferActive(now = new Date()) {
+  return now.getTime() < new Date(FOUNDER_OFFER_DEADLINE).getTime();
+}
+
+/** @param {{ subscriptionStatus?: string, now?: Date }} [ctx] */
+export function isFounderEligible({ subscriptionStatus, now } = {}) {
+  return isFounderOfferActive(now) && (subscriptionStatus == null || subscriptionStatus === 'none');
+}
+
 /** @returns {number|null} the free-tier cap for `feature`, or null if it isn't a 'limit' feature. */
 export function getLimit(feature) {
   return FEATURE_KIND[feature] === 'limit' ? (FREE_LIMITS[feature] ?? null) : null;

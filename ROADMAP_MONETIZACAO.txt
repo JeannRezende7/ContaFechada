@@ -17,6 +17,19 @@ de analytics; scripts admin; Termos/Privacidade; exclusao de conta e
 exportacao de dados). PREMIUM_ENFORCED continua `false` em
 src/config/premium.js — nada mudou pra quem usa o app hoje.
 
+ATUALIZACAO (18/07/2026, rodada 2): mais 2 pendencias de codigo puro
+fechadas — webhook do MercadoPago agora trata eventos `type: "payment"`
+individuais (Fase 8), e a "oferta de fundador" ganhou regra real de
+elegibilidade/janela de tempo (Fase 6/Marco 4). Tambem auditadas e
+documentadas (sem mudanca de codigo, por risco/falta de conta real pra
+testar): otimizacao de consultas Firestore, e o botao "Gerenciar
+assinatura" pra Web/manual continua bloqueado pelas mesmas pendencias
+externas de sempre. O restante dos itens em aberto (~30) depende de
+contas/credenciais/hardware que só o dono do projeto tem — criar conta
+MercadoPago, configurar env vars no Netlify, publicar firestore.rules,
+instalar Android Studio, criar conta Google Play Console, testar em
+sandbox — nenhum é trabalho de codigo que falte escrever.
+
 O que falta pra isso "ligar" de verdade é, por natureza, coisa que só o dono
 do projeto consegue fazer (contas reais, credenciais, dinheiro): criar a conta
 MercadoPago e configurar as env vars no Netlify; publicar o firestore.rules
@@ -414,9 +427,18 @@ PENDENCIAS para revisao futura
 [ ] Gestor Financeiro: nenhuma tela de projecoes/comparacoes/cenarios existe
     ainda pra gatilhar com FEATURES.GESTOR_AVANCADO — e trabalho de produto
     novo, nao so gating.
-[ ] Elegibilidade real da "oferta de fundador" (quem pode ver o preco
-    promocional de R$ 69,90) nao tem nenhuma regra de data/janela de
-    lancamento implementada — o Paywall so exibe o texto informativamente.
+[x] Elegibilidade real da "oferta de fundador" — FOUNDER_OFFER_DEADLINE e
+    isFounderEligible() em src/config/premium.js: só quem nunca teve
+    nenhuma assinatura (subscriptionStatus === 'none') e está dentro do
+    prazo (padrão 15/10/2026, ajustável num único ponto) vê o preço
+    promocional no Paywall. NOTA: isso só controla a *visibilidade* do
+    preço — o checkout real (create-checkout.js) ainda cobra sempre
+    PRICING.anual; aplicar o valor promocional à cobrança de fato (e
+    garantir que ela some ao preço cheio depois do primeiro ano, já que
+    Preapproval cobra o mesmo valor todo ciclo) precisa de conta MercadoPago
+    real pra decidir/testar a abordagem — deliberadamente não implementado
+    às cegas aqui, pelo mesmo motivo que a Fase 9 evita código nativo
+    especulativo: um valor de cobrança recorrente errado sai caro.
 
 Criterio de conclusao
 
@@ -490,10 +512,15 @@ Tarefas
     firestore.rules; nenhum caminho do cliente escreve plan/status.
 [x] Tratar renovacao, cancelamento, estorno e falha de pagamento — coberto
     via o mapeamento de status do preapproval (authorized/paused/cancelled)
-    em subscriptionWriter.js. PARCIAL: eventos `type: "payment"` individuais
-    (uma cobrança recorrente específica falhando) não são tratados à parte —
-    só o estado agregado do preapproval é — ver nota dentro do arquivo do
-    webhook.
+    em subscriptionWriter.js. Eventos `type: "payment"` individuais (uma
+    cobrança recorrente específica) agora também são tratados em
+    mercadopago-webhook.js: busca o pagamento na API, extrai o uid via
+    `external_reference` (herdado do preapproval que o originou) e grava em
+    subscription_log (approved/rejected/refunded/etc.) — só para
+    visibilidade/auditoria mais rápida de uma falha específica; plan/status
+    continuam vindo exclusivamente do preapproval agregado, nunca de um
+    pagamento isolado. NÃO TESTADO contra o payload real (mesma ressalva do
+    resto desta fase).
 [x] Nunca liberar Premium apenas pelo retorno do navegador —
     create-checkout.js nunca escreve no Firestore; MeuPlanoPage.jsx, ao
     voltar do checkout, faz polling de refreshSubscription() em vez de
@@ -510,8 +537,6 @@ PENDENCIAS — exigem conta/credenciais reais que so o dono do projeto tem
     no painel do MercadoPago e copiar a assinatura secreta gerada.
 [ ] Testar o fluxo completo em modo sandbox do MercadoPago antes de ir pra
     producao — nenhuma linha deste codigo foi executada contra a API real.
-[ ] Cobrir eventos `type: "payment"` individuais no webhook, uma vez que o
-    formato exato do payload puder ser confirmado num teste real.
 
 Criterio de conclusao
 
@@ -679,8 +704,26 @@ Checklist operacional
 
 [ ] Registrar mensalmente creditos do Netlify (agora incluindo Functions).
 [ ] Registrar leituras, gravacoes e armazenamento do Firestore.
-[ ] Otimizar consultas que carregam colecoes completas.
-[ ] Revisar tamanho do build a cada marco (dist em 18/07/2026: ~1,3 MB).
+[ ] Otimizar consultas que carregam colecoes completas — AUDITADO em
+    18/07/2026: a única coleção sem limite natural de tamanho é
+    `lancamentos` (cresce indefinidamente com o uso real). Ela já usa
+    consultas por intervalo de data (listLancamentosByMonth/ByRange) em
+    Lançamentos, Relatórios e Dashboard. A única leitura que ainda carrega
+    a coleção inteira é listAllLancamentos(), usada só pelo Gestor
+    Financeiro e pelo modal "Importar do Movimento" — e isso é proposital,
+    não descuido: uma versão anterior do Gestor buscava só o mês da tela e
+    causou o bug corrigido em "Fix Gestor Financeiro: parcelas weren't
+    reacting to month navigation" (parcelas somem/reaparecem errado ao
+    navegar de mês, porque o "valorRestante" de um parcelamento depende de
+    parcelas em meses futuros). Trocar isso por nova busca por página
+    reintroduziria essa classe de bug sem uma base de dados real pra testar
+    contra — deixado como está por ora; as demais coleções (categorias,
+    recorrências, metas) são pequenas por natureza (limitadas pelo próprio
+    plano) e não precisam de otimização.
+[ ] Revisar tamanho do build a cada marco — último registro 18/07/2026
+    (mesmo dia da versão inicial deste arquivo): dist ~1,4 MB total,
+    dist/assets/index-*.js 1.330,27 kB (346,95 kB gzip), sem variação
+    relevante em relação à medição anterior (~1,3 MB).
 [ ] Criar alertas de custo antes de habilitar servicos pagos.
 [ ] So mudar de plano com base no consumo real ou requisito tecnico confirmado.
 [ ] Monitorar custos do MercadoPago (taxas por transação) uma vez que o
@@ -726,8 +769,10 @@ Marco 4 — Lancamento [PARCIAL]
     canal de suporte ainda pendente de definição pelo dono do projeto.
 [ ] Testar todos os estados de assinatura — precisa de contas
     MercadoPago/Google Play reais em sandbox.
-[ ] Liberar oferta de fundador — preço já existe (PRICING.fundadorAnualPrimeiroAno),
-    falta decidir e implementar a regra de elegibilidade/janela de tempo.
+[~] Liberar oferta de fundador — regra de elegibilidade/janela de tempo
+    implementada (isFounderEligible() em src/config/premium.js, ver Fase 6);
+    falta só aplicar o valor promocional à cobrança real, que depende de
+    conta MercadoPago pra decidir a abordagem (ver nota na Fase 6).
 [ ] Monitorar conversao, retencao e custos — depende do Marco 4 anterior
     estar rodando com tráfego real.
 

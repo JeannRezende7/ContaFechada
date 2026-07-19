@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X, Sparkles, Crown, Gift } from 'lucide-react';
-import { FEATURES, PRICING } from '../../../config/premium.js';
+import { FEATURES, PRICING, isFounderEligible } from '../../../config/premium.js';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
@@ -105,6 +105,7 @@ export default function Paywall({ open, context, onClose }) {
   // vira 'trialing' pra sempre (o Firestore Rule impede reverter isso) — e só
   // depois do primeiro lançamento criado.
   const elegivelParaTeste = subscription.status === 'none' && jaTemLancamento;
+  const elegivelParaFundador = isFounderEligible({ subscriptionStatus: subscription.status });
 
   async function handleStartTrial() {
     const confirmado = await confirm(
@@ -213,7 +214,8 @@ export default function Paywall({ open, context, onClose }) {
         </div>
 
         <p className="text-[11px] text-ink-300 text-center mb-4">
-          Oferta de fundador: {formatBRL(PRICING.fundadorAnualPrimeiroAno)} no primeiro ano do plano anual.
+          {elegivelParaFundador &&
+            `Oferta de fundador: ${formatBRL(PRICING.fundadorAnualPrimeiroAno)} no primeiro ano do plano anual. `}
           Teste grátis de {PRICING.trialDias} dias, sem cartão de crédito.
         </p>
 
