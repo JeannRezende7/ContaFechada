@@ -4,10 +4,7 @@ import { Search } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
-import { listAllLancamentos } from '../../lancamentos/services/lancamentosService.js';
-import { ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
-import { listMetas } from '../../metas/services/metasService.js';
-import { listRecorrencias } from '../../recorrencias/services/recorrenciasService.js';
+import { repositories } from '../../../repositories/index.js';
 import { filtrarBuscaGlobal } from '../utils/buscaGlobal.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
@@ -30,10 +27,10 @@ export default function BuscaGlobalPage() {
       return;
     }
     Promise.all([
-      listAllLancamentos(user.uid),
-      ensureDefaultCategorias(user.uid),
-      listMetas(user.uid),
-      listRecorrencias(user.uid),
+      repositories.lancamentos.listAll(user.uid),
+      repositories.categorias.ensureDefaults(user.uid),
+      repositories.metas.list(user.uid),
+      repositories.recorrencias.list(user.uid),
     ]).then(([lancamentos, categorias, metas, recorrencias]) => {
       setData({ lancamentos, categorias, metas, recorrencias });
       setLoading(false);

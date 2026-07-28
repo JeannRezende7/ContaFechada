@@ -7,10 +7,8 @@ import {
   getDashboardData,
   getDashboardMemoryCache,
   syncDashboardRecorrencias,
-  getMetaEconomiaMensal,
-  setMetaEconomiaMensal,
 } from '../services/dashboardService.js';
-import { listCategorias } from '../../categorias/services/categoriasService.js';
+import { repositories } from '../../../repositories/index.js';
 import { computeInsights } from '../utils/insights.js';
 import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
@@ -28,9 +26,7 @@ import {
 } from '../components/DashboardSections.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
-import { getDistribuicaoMensal } from '../../valor-livre/services/valorLivreService.js';
 import { calcularValorLivre } from '../../valor-livre/utils/valorLivre.js';
-import { listMetas } from '../../metas/services/metasService.js';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -65,6 +61,10 @@ export default function DashboardPage() {
       setIndicators(memory.indicators);
       setComparacao(memory.comparacao);
       setDashboardItems({ atual: memory.lancamentosAtual || [], anterior: memory.lancamentosAnterior || [] });
+      setRefreshing(false);
+      return () => {
+        cancelled = true;
+      };
     } else {
       setIndicators(null);
       setComparacao(null);
@@ -147,8 +147,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!uid) return;
-    listCategorias(uid).then(setCategorias);
-    getMetaEconomiaMensal(uid).then((valor) => setMetaEconomia(valor));
+    repositories.categorias.list(uid).then(setCategorias);
+    repositories.configuracoes.getMetaEconomiaMensal(uid).then((valor) => setMetaEconomia(valor));
   }, [uid]);
 
   useEffect(() => {
@@ -156,7 +156,7 @@ export default function DashboardPage() {
     let cancelled = false;
     setDistribuicaoValorLivre([]);
     setMetasValorLivre([]);
-    Promise.all([getDistribuicaoMensal(uid, monthKey), listMetas(uid)])
+    Promise.all([repositories.valorLivre.getDistribuicaoMensal(uid, monthKey), repositories.metas.list(uid)])
       .then(([items, goalItems]) => {
         if (!cancelled) {
           setDistribuicaoValorLivre(items);
@@ -198,7 +198,7 @@ export default function DashboardPage() {
   async function handleSalvarMeta() {
     const valor = Number(metaInput);
     if (!valor) return;
-    await setMetaEconomiaMensal(uid, valor);
+    await repositories.configuracoes.setMetaEconomiaMensal(uid, valor);
     setMetaEconomia(valor);
     setEditandoMeta(false);
   }

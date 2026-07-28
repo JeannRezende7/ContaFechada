@@ -58,7 +58,9 @@ export function buildDueNotifications(lancamentos, { hour = 9, now = new Date(),
       id: notificationId(`due-${item.id}-${item.dataVencimento}`),
       title: isIncome ? 'Receita prevista amanhã' : 'Conta vence amanhã',
       body: item.descricao,
-      schedule: { at: scheduleAt, allowWhileIdle: true },
+      // Inexact scheduling avoids Android's restricted exact-alarm
+      // permission, which is unnecessary for a financial reminder.
+      schedule: { at: scheduleAt },
       channelId: CHANNEL_ID,
       extra: { route: '/lancamentos', itemId: item.id },
     });
@@ -70,7 +72,7 @@ export function buildDueNotifications(lancamentos, { hour = 9, now = new Date(),
       id: notificationId(`closing-${closingAt.toISOString().slice(0, 7)}`),
       title: 'Hora de fechar o mês',
       body: 'Revise as pendências e confira o saldo real.',
-      schedule: { at: closingAt, allowWhileIdle: true },
+      schedule: { at: closingAt },
       channelId: CHANNEL_ID,
       extra: { route: '/planejamento' },
     });

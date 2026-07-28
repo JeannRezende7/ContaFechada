@@ -5,6 +5,7 @@ import {
   getFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
+  CACHE_SIZE_UNLIMITED,
 } from 'firebase/firestore';
 
 // All values come from .env (see .env.example). Never commit real keys.
@@ -61,7 +62,13 @@ export function getAnalyticsReady() {
 export let db;
 try {
   db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    // Financial histories are small and valuable offline. Keeping the cache
+    // avoids paying to download old months again after Firestore's normal
+    // cache garbage collection. Users can clear it from Opções at any time.
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager(),
+      cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+    }),
     experimentalAutoDetectLongPolling: true,
   });
 } catch {

@@ -5,13 +5,10 @@ import Topbar from '../../../components/layout/Topbar.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
-import { ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
-import { listLancamentosByMonth } from '../../lancamentos/services/lancamentosService.js';
+import { repositories } from '../../../repositories/index.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { getCurrentMonthKey } from '../../../utils/monthKey.js';
-import { getDistribuicaoMensal, setDistribuicaoMensal } from '../services/valorLivreService.js';
 import { calcularValorLivre, criarSugestao } from '../utils/valorLivre.js';
-import { listMetas } from '../../metas/services/metasService.js';
 
 export default function ValorLivrePage() {
   const { user } = useAuth();
@@ -30,10 +27,10 @@ export default function ValorLivrePage() {
     let cancelled = false;
     setLoading(true);
     Promise.all([
-      listLancamentosByMonth(uid, monthKey),
-      ensureDefaultCategorias(uid),
-      getDistribuicaoMensal(uid, monthKey),
-      listMetas(uid),
+      repositories.lancamentos.listByMonth(uid, monthKey),
+      repositories.categorias.ensureDefaults(uid),
+      repositories.valorLivre.getDistribuicaoMensal(uid, monthKey),
+      repositories.metas.list(uid),
     ]).then(([items, categoryItems, saved, goalItems]) => {
       if (cancelled) return;
       setLancamentos(items);
@@ -83,7 +80,7 @@ export default function ValorLivrePage() {
     setSaving(true);
     setFeedback('');
     try {
-      await setDistribuicaoMensal(uid, monthKey, distribuicoes);
+      await repositories.valorLivre.setDistribuicaoMensal(uid, monthKey, distribuicoes);
       setFeedback('Distribuição salva para este mês.');
     } catch {
       setFeedback('Não foi possível salvar. Tente novamente.');

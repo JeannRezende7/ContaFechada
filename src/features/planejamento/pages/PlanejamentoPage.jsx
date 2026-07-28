@@ -6,17 +6,7 @@ import Topbar from '../../../components/layout/Topbar.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import { clampDayToMonth, getCurrentMonthKey } from '../../../utils/monthKey.js';
-import { ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
-import { createLancamento, createParcelamento, listAllLancamentos, listLancamentosByMonth } from '../../lancamentos/services/lancamentosService.js';
-import {
-  ensureGeneratedForMonth,
-  listRecorrencias,
-} from '../../recorrencias/services/recorrenciasService.js';
-import {
-  getPlanejamentoMensal,
-  setOrcamentoCategoria,
-  setSaldoInicial,
-} from '../services/planejamentoService.js';
+import { repositories } from '../../../repositories/index.js';
 import {
   calcularOrcamentos,
   calcularPendencias,
@@ -31,7 +21,6 @@ import {
   InstallmentSimulatorSection,
 } from '../components/PlanejamentoSections.jsx';
 import { calcularFechamento } from '../utils/fechamento.js';
-import { fecharMes, getFechamento } from '../services/fechamentoService.js';
 import {
   disableNotifications,
   enableAndScheduleNotifications,
@@ -85,14 +74,14 @@ export default function PlanejamentoPage() {
     setLoading(true);
 
     Promise.all([
-      advancedPlanning ? listAllLancamentos(uid) : listLancamentosByMonth(uid, monthKey),
-      listRecorrencias(uid),
-      ensureDefaultCategorias(uid),
-      getPlanejamentoMensal(uid, monthKey),
-      getFechamento(uid, monthKey),
+      advancedPlanning ? repositories.lancamentos.listAll(uid) : repositories.lancamentos.listByMonth(uid, monthKey),
+      repositories.recorrencias.list(uid),
+      repositories.categorias.ensureDefaults(uid),
+      repositories.planejamento.getMensal(uid, monthKey),
+      repositories.fechamentos.get(uid, monthKey),
     ]).then(async ([allItems, recurrenceItems, categoryItems, monthlyPlan, monthlyClosing]) => {
-      const generated = await ensureGeneratedForMonth(uid, monthKey, recurrenceItems);
-      const finalItems = generated ? await listAllLancamentos(uid) : allItems;
+      const generated = await repositories.recorrencias.ensureGeneratedForMonth(uid, monthKey, recurrenceItems);
+      const finalItems = generated ? await repositories.lancamentos.listAll(uid) : allItems;
       if (cancelled) return;
       setLancamentos(finalItems);
       setRecorrencias(recurrenceItems);
@@ -144,7 +133,7 @@ export default function PlanejamentoPage() {
     setSaving('saldo');
     try {
       const value = Number(saldoInput) || 0;
-      await setSaldoInicial(uid, monthKey, value);
+      await repositories.planejamento.setSaldoInicial(uid, monthKey, value);
       setPlanejamento((current) => ({ ...current, saldoInicial: value }));
     } finally {
       setSaving(null);
@@ -154,7 +143,7 @@ export default function PlanejamentoPage() {
   async function handleSaveBudget(categoryId, value) {
     setSaving(categoryId);
     try {
-      const orcamentos = await setOrcamentoCategoria(
+      const orcamentos = await repositories.planejamento.setOrcamentoCategoria(
         uid,
         monthKey,
         categoryId,
@@ -170,9 +159,9 @@ export default function PlanejamentoPage() {
   async function handleCloseMonth() {
     setSaving('fechamento');
     try {
-      const saved = await fecharMes(uid, monthKey, closingSummary, Number(saldoReal), closingNotes, carryPending);
+      const saved = await repositories.fechamentos.fechar(uid, monthKey, closingSummary, Number(saldoReal), closingNotes, carryPending);
       setFechamento(saved);
-      if (carryPending) setLancamentos(await listAllLancamentos(uid));
+      if (carryPending) setLancamentos(await repositories.lancamentos.listAll(uid));
     } finally {
       setSaving(null);
     }
@@ -208,7 +197,7 @@ export default function PlanejamentoPage() {
       const entry = Math.min(total, Math.max(0, Number(simulator.entrada) || 0));
       const categoryId = simulator.categoriaId || null;
       if (entry > 0) {
-        await createLancamento(uid, {
+        await repositories.lancamentos.create(uid, {
           tipo: 'despesa',
           descricao: `${simulator.descricao} (entrada)`,
           valor: entry,
@@ -221,7 +210,7 @@ export default function PlanejamentoPage() {
       }
       if (total - entry > 0) {
         const day = clampDayToMonth(monthKey, Number(simulator.diaVencimento) || 1);
-        await createParcelamento(uid, {
+        await repositories.lancamentos.createParcelamento(uid, {
           tipo: 'despesa',
           descricao: simulator.descricao,
           valorTotal: total - entry,
@@ -231,7 +220,7 @@ export default function PlanejamentoPage() {
           observacoes: 'Criado pelo simulador de parcelamento.',
         });
       }
-      setLancamentos(await listAllLancamentos(uid));
+      setLancamentos(await repositories.lancamentos.listAll(uid));
       setSimulator((current) => ({ ...current, descricao: '', valor: '', entrada: '0' }));
     } finally {
       setSaving(null);

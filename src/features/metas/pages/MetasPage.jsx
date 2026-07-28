@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Target, Plus, PiggyBank } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
-import {
-  listMetas, createMeta, updateMeta, deleteMeta, aportarNaMeta,
-  calcularAporteAutomatico, preverConclusaoMeta, processarAportesAutomaticos,
-} from '../services/metasService.js';
+import { repositories } from '../../../repositories/index.js';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
@@ -13,8 +10,6 @@ import { COLOR_MAP } from '../../categorias/colorMap.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import MetaModal from '../components/MetaModal.jsx';
-import { listAllLancamentos } from '../../lancamentos/services/lancamentosService.js';
-import { getFechamento } from '../../planejamento/services/fechamentoService.js';
 import { formatMonthLabel, getCurrentMonthKey } from '../../../utils/monthKey.js';
 
 /** Uma meta já atingida não conta no limite (metas concluídas não contam, ROADMAP_MONETIZACAO.txt Fase 6). */
@@ -42,23 +37,23 @@ export default function MetasPage() {
 
   async function reload() {
     if (!uid) return;
-    setMetas(await listMetas(uid));
+    setMetas(await repositories.metas.list(uid));
   }
 
   useEffect(() => {
     if (!uid) return;
     const automationData = automaticGoalsAllowed
-      ? Promise.all([listAllLancamentos(uid), getFechamento(uid, monthKey)])
+      ? Promise.all([repositories.lancamentos.listAll(uid), repositories.fechamentos.get(uid, monthKey)])
       : Promise.resolve([[], null]);
-    Promise.all([listMetas(uid), automationData])
+    Promise.all([repositories.metas.list(uid), automationData])
       .then(async ([goalItems, [launches, closing]]) => {
         const currentItems = launches.filter((item) => item.dataVencimento?.slice(0, 7) === monthKey);
         if (automaticGoalsAllowed) {
-          await processarAportesAutomaticos(uid, goalItems, currentItems, closing, monthKey);
+          await repositories.metas.processarAportesAutomaticos(uid, goalItems, currentItems, closing, monthKey);
         }
         setMonthItems(currentItems);
         setCurrentClosing(closing);
-        setMetas(await listMetas(uid));
+        setMetas(await repositories.metas.list(uid));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, automaticGoalsAllowed]);
@@ -66,10 +61,10 @@ export default function MetasPage() {
   async function handleSave(id, data) {
     if (data.aporteAutomatico?.tipo !== 'nenhum' && !guardFeature(FEATURES.METAS_AUTOMATICAS)) return;
     if (id) {
-      await updateMeta(uid, id, data);
+      await repositories.metas.update(uid, id, data);
     } else {
       if (!guardFeature(FEATURES.METAS, { count: metasAtivasCount })) return;
-      await createMeta(uid, data);
+      await repositories.metas.create(uid, data);
     }
     setModalOpen(false);
     reload();
@@ -77,7 +72,7 @@ export default function MetasPage() {
 
   async function handleDelete(id) {
     if (!(await confirm('Excluir esta meta? O progresso guardado será perdido.'))) return;
-    await deleteMeta(uid, id);
+    await repositories.metas.remove(uid, id);
     setModalOpen(false);
     reload();
   }
@@ -85,7 +80,7 @@ export default function MetasPage() {
   async function handleAportar(meta) {
     const valor = Number(aportes[meta.id]);
     if (!valor) return;
-    await aportarNaMeta(uid, meta, valor);
+    await repositories.metas.aportar(uid, meta, valor);
     setAportes((prev) => ({ ...prev, [meta.id]: '' }));
     reload();
   }
@@ -115,8 +110,8 @@ export default function MetasPage() {
             const atual = Number(meta.valorAtual) || 0;
             const pct = alvo > 0 ? Math.min(100, Math.round((atual / alvo) * 100)) : 0;
             const atingida = alvo > 0 && atual >= alvo;
-            const aporteEstimado = calcularAporteAutomatico(meta, monthItems, currentClosing);
-            const previsao = preverConclusaoMeta(meta, aporteEstimado, monthKey);
+            const aporteEstimado = repositories.metas.calcularAporteAutomatico(meta, monthItems, currentClosing);
+            const previsao = repositories.metas.preverConclusao(meta, aporteEstimado, monthKey);
 
             return (
               <div key={meta.id} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 md:p-5">

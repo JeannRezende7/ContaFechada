@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, ArrowDownRight, Search, Layers } from 'lucide-react';
-import { listAllLancamentos } from '../../lancamentos/services/lancamentosService.js';
+import { repositories } from '../../../repositories/index.js';
 import { buildLancamentoMatcher } from '../../lancamentos/utils/searchLancamentos.js';
-import { importarDoMovimento } from '../services/gestorService.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
 
@@ -17,7 +16,7 @@ export default function ImportarDoMovimentoModal({ open, uid, categoriasById = {
   useEffect(() => {
     if (!open || !uid) return;
     setStatus('loading');
-    listAllLancamentos(uid).then((lista) => {
+    repositories.lancamentos.listAll(uid).then((lista) => {
       const ordenada = [...lista].sort((a, b) => (b.dataVencimento || '').localeCompare(a.dataVencimento || ''));
       setItens(ordenada);
       setSelecionados(new Set());
@@ -44,7 +43,7 @@ export default function ImportarDoMovimentoModal({ open, uid, categoriasById = {
   async function handleImportar() {
     setStatus('importing');
     const escolhidos = itens.filter((l) => selecionados.has(l.id));
-    const res = await importarDoMovimento(uid, escolhidos);
+    const res = await repositories.gestor.importarDoMovimento(uid, escolhidos);
     setResultado(res);
     setStatus('done');
     onImported?.();

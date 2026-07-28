@@ -19,7 +19,9 @@ const COLLECTIONS = ['lancamentos', 'categorias', 'regrasCategorizacao', 'recorr
  */
 export async function exportUserData(uid) {
   const [collections, config, subscription] = await Promise.all([
-    Promise.all(COLLECTIONS.map((name) => listUserDocs(uid, name))),
+    // Export must be an authoritative snapshot, not a possibly older
+    // in-memory result used to make ordinary navigation cheaper.
+    Promise.all(COLLECTIONS.map((name) => listUserDocs(uid, name, { source: 'server' }))),
     getUserDoc(uid, 'config', 'geral'),
     getUserDoc(uid, 'private', 'subscription'),
   ]);

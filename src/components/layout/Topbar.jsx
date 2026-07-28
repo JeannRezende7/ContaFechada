@@ -1,22 +1,36 @@
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, LogOut, Search, Settings, Sun, Moon } from 'lucide-react';
+import { Eye, EyeOff, LogOut, Menu, Search, Settings, Sun, Moon } from 'lucide-react';
 import { signOutUser } from '../../firebase/auth.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useTheme } from '../../contexts/ThemeContext.jsx';
 import { usePrivacy } from '../../contexts/PrivacyContext.jsx';
+import ConnectionStatus from '../ui/ConnectionStatus.jsx';
+import { useMobileMenu } from '../../contexts/MobileMenuContext.jsx';
 
 export default function Topbar({ title, icon: Icon }) {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const privacy = usePrivacy();
+  const { openMenu } = useMobileMenu();
 
   return (
     <header className="flex items-center justify-between px-4 py-3 md:px-8 md:py-5 border-b border-ink-100 dark:border-ink-700 bg-paper/95 dark:bg-ink-900/95 backdrop-blur sticky top-0 z-10">
-      <h1 className="flex items-center gap-2 font-display text-lg md:text-2xl font-semibold text-ink-900 dark:text-ink-50">
-        {Icon && <Icon size={20} strokeWidth={1.75} className="text-ledger-500 shrink-0 md:w-6 md:h-6" />}
-        {title}
-      </h1>
+      <div className="flex min-w-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={openMenu}
+          aria-label="Abrir menu principal"
+          className="flex shrink-0 items-center rounded-full p-1.5 text-ink-500 hover:bg-ink-50 hover:text-ledger-600 dark:text-ink-100 dark:hover:bg-ink-700 md:hidden"
+        >
+          <Menu size={21} />
+        </button>
+        <h1 className="flex min-w-0 items-center gap-2 truncate font-display text-lg font-semibold text-ink-900 dark:text-ink-50 md:text-2xl">
+          {Icon && <Icon size={20} strokeWidth={1.75} className="hidden shrink-0 text-ledger-500 sm:block md:h-6 md:w-6" />}
+          <span className="truncate">{title}</span>
+        </h1>
+      </div>
       <div className="flex items-center gap-3 md:gap-4">
+        <ConnectionStatus />
         <Link to="/buscar" aria-label="Busca global" className="flex items-center text-ink-300 hover:text-ledger-600">
           <Search size={18} />
         </Link>

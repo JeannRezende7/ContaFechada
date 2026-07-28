@@ -35,6 +35,7 @@ describe('dataPortabilityService', () => {
     expect(data.subscription).toEqual({ plan: 'free' });
     for (const collection of COLLECTIONS) {
       expect(data[collection]).toEqual([{ id: `${collection}-1` }]);
+      expect(firestore.listUserDocs).toHaveBeenCalledWith('u1', collection, { source: 'server' });
     }
     expect(firestore.listUserDocs).toHaveBeenCalledTimes(COLLECTIONS.length);
   });

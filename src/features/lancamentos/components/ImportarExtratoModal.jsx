@@ -3,7 +3,7 @@ import { ArrowDownRight, ArrowUpRight, FileUp, Loader2 } from 'lucide-react';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
-import { importLancamentos } from '../services/lancamentosService.js';
+import { repositories } from '../../../repositories/index.js';
 import { parseExtrato } from '../utils/parseExtrato.js';
 
 export default function ImportarExtratoModal({ open, uid, categorias, onClose, onImported }) {
@@ -62,7 +62,7 @@ export default function ImportarExtratoModal({ open, uid, categorias, onClose, o
   async function importItems() {
     setStatus('importing');
     try {
-      const response = await importLancamentos(uid, items.filter((_, index) => selected.has(index)));
+      const response = await repositories.lancamentos.importLancamentos(uid, items.filter((_, index) => selected.has(index)));
       setResult({ ...response, ignorados: ignored + items.length - selected.size });
       setStatus('done');
       onImported?.();

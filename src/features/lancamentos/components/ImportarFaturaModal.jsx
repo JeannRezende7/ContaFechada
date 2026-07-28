@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Upload, Loader2, ArrowUpRight, ArrowDownRight, Layers } from 'lucide-react';
 import { extractPdfLines } from '../utils/extractPdfLines.js';
 import { extractFaturaContext, parseNubankTransacoes } from '../utils/parseFaturaNubank.js';
-import { importLancamentos } from '../services/lancamentosService.js';
+import { repositories } from '../../../repositories/index.js';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
@@ -13,7 +13,7 @@ import { formatDateBR } from '../../../utils/formatDate.js';
  * assign a categoria before writing. Only Nubank's layout is supported today
  * — see parseFaturaNubank.js.
  */
-export default function ImportarFaturaModal({ open, uid, categorias = [], onClose, onImported, onImport = importLancamentos }) {
+export default function ImportarFaturaModal({ open, uid, categorias = [], onClose, onImported, onImport = repositories.lancamentos.importLancamentos }) {
   const [status, setStatus] = useState('idle'); // idle | parsing | preview | importing | done | error
   const [itens, setItens] = useState([]);
   const [selecionados, setSelecionados] = useState(new Set());

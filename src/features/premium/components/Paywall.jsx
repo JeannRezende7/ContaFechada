@@ -4,7 +4,7 @@ import { FEATURES, PRICING, isFounderEligible } from '../../../config/premium.js
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
-import { hasAnyLancamento } from '../../lancamentos/services/lancamentosService.js';
+import { repositories } from '../../../repositories/index.js';
 import { createCheckout } from '../services/checkoutService.js';
 import { track, EVENTS } from '../../../utils/analytics.js';
 import PlanComparisonTable from './PlanComparisonTable.jsx';
@@ -114,7 +114,7 @@ export default function Paywall({ open, context, onClose }) {
   useEffect(() => {
     if (!open || !user?.uid || subscription.status !== 'none') return;
     let cancelled = false;
-    hasAnyLancamento(user.uid).then((tem) => {
+    repositories.lancamentos.hasAny(user.uid).then((tem) => {
       if (!cancelled) setJaTemLancamento(tem);
     });
     return () => {

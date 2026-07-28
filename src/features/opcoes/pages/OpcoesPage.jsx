@@ -4,13 +4,7 @@ import { Eye, EyeOff, ListRestart, Trash2, Tag, Settings, Landmark, Crown, Chevr
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
-import { deleteAllLancamentos } from '../../lancamentos/services/lancamentosService.js';
-import { deleteAllCategorias } from '../../categorias/services/categoriasService.js';
-import {
-  getGestorUsaMovimento,
-  setGestorUsaMovimento,
-  deleteAllGestorLancamentos,
-} from '../../gestor/services/gestorService.js';
+import { repositories } from '../../../repositories/index.js';
 import { exportUserData, deleteAllUserData, downloadJson } from '../services/dataPortabilityService.js';
 import { deleteAccount, signOutUser } from '../../../firebase/auth.js';
 import { clearDeviceData } from '../../../utils/deviceCache.js';
@@ -28,7 +22,7 @@ export default function OpcoesPage() {
 
   useEffect(() => {
     if (!user) return;
-    getGestorUsaMovimento(user.uid).then(setGestorUsaMovimentoState);
+    repositories.gestor.getUsaMovimento(user.uid).then(setGestorUsaMovimentoState);
   }, [user]);
 
   useEffect(() => {
@@ -41,30 +35,30 @@ export default function OpcoesPage() {
       const limpar = await confirm(
         'A partir de agora o Gestor Financeiro vai usar um controle separado, importado manualmente. Deseja limpar os lançamentos que ele já tiver importado antes?'
       );
-      if (limpar) await deleteAllGestorLancamentos(user.uid);
+      if (limpar) await repositories.gestor.removeAll(user.uid);
     }
-    await setGestorUsaMovimento(user.uid, novoValor);
+    await repositories.gestor.setUsaMovimento(user.uid, novoValor);
     setGestorUsaMovimentoState(novoValor);
   }
 
   async function handleZerarLancamentos() {
     if (!(await confirm('Excluir TODOS os lançamentos? Essa ação não pode ser desfeita.'))) return;
     setLoading('lancamentos');
-    await deleteAllLancamentos(user.uid);
+    await repositories.lancamentos.removeAll(user.uid);
     window.location.reload();
   }
 
   async function handleZerarCategorias() {
     if (!(await confirm('Excluir TODAS as categorias? As categorias padrão voltam na próxima visita. Essa ação não pode ser desfeita.'))) return;
     setLoading('categorias');
-    await deleteAllCategorias(user.uid);
+    await repositories.categorias.removeAll(user.uid);
     window.location.reload();
   }
 
   async function handleZerarGestor() {
     if (!(await confirm('Excluir todos os lançamentos do Gestor Financeiro? Essa ação não pode ser desfeita.'))) return;
     setLoading('gestor');
-    await deleteAllGestorLancamentos(user.uid);
+    await repositories.gestor.removeAll(user.uid);
     window.location.reload();
   }
 

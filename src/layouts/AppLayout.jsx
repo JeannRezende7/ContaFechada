@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar.jsx';
-import BottomNav from '../components/layout/BottomNav.jsx';
+import MobileDrawer from '../components/layout/MobileDrawer.jsx';
 import TrialBanner from '../features/premium/components/TrialBanner.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import OnboardingWizard from '../features/onboarding/components/OnboardingWizard.jsx';
 import { getOnboardingState } from '../features/onboarding/services/onboardingService.js';
+import { MobileMenuProvider } from '../contexts/MobileMenuContext.jsx';
 
 /** Mobile-first: bottom nav + stacked content. From md breakpoint up: sidebar layout. */
 export default function AppLayout() {
   const { user } = useAuth();
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -20,6 +22,7 @@ export default function AppLayout() {
     return () => window.removeEventListener('contafechada:open-onboarding', open);
   }, [user]);
   return (
+    <MobileMenuProvider openMenu={() => setMobileMenuOpen(true)}>
     <div className="flex min-h-screen bg-paper dark:bg-ink-900">
       <Sidebar />
       <div
@@ -30,12 +33,13 @@ export default function AppLayout() {
           Conta Fechada
         </span>
       </div>
-      <div className="flex-1 min-w-0 pb-16 md:pb-0">
+      <div className="flex-1 min-w-0">
         <TrialBanner />
         <Outlet />
       </div>
-      <BottomNav />
+      <MobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       <OnboardingWizard uid={user?.uid} open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
     </div>
+    </MobileMenuProvider>
   );
 }

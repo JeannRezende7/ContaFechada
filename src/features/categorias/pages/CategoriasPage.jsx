@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, X, Tag } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
-import { listCategorias, createCategoria, deleteCategoria, ensureDefaultCategorias } from '../services/categoriasService.js';
+import { repositories } from '../../../repositories/index.js';
 import { getColor } from '../colorMap.js';
 import { getIcon } from '../iconMap.js';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -20,13 +20,13 @@ export default function CategoriasPage() {
 
   const reload = async () => {
     if (!uid) return;
-    setCategorias(await listCategorias(uid));
+    setCategorias(await repositories.categorias.list(uid));
   };
 
   useEffect(() => {
     if (!uid) return;
     (async () => {
-      await ensureDefaultCategorias(uid);
+      await repositories.categorias.ensureDefaults(uid);
       await reload();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -41,13 +41,13 @@ export default function CategoriasPage() {
 
   async function handleAdd(dados) {
     if (!guardFeature(FEATURES.CATEGORIAS_CUSTOM, { count: customCount })) return;
-    await createCategoria(uid, { ...dados, ordem: Date.now() });
+    await repositories.categorias.create(uid, { ...dados, ordem: Date.now() });
     setModalOpen(false);
     reload();
   }
 
   async function handleDelete(id) {
-    await deleteCategoria(uid, id);
+    await repositories.categorias.remove(uid, id);
     reload();
   }
 

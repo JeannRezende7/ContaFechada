@@ -2,27 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowUpCircle, ArrowDownCircle, Wallet, Receipt } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
-import {
-  listLancamentosByRange,
-  createLancamento,
-  updateLancamento,
-  deleteLancamento,
-  deleteLancamentosByIds,
-  deleteGeneratedFromRecorrencia,
-  setLancamentoStatus,
-  createParcelamento,
-  updateGeneratedFromRecorrencia,
-  updateLancamentosEmMassa,
-} from '../services/lancamentosService.js';
-import {
-  listRecorrencias,
-  createRecorrencia,
-  updateRecorrencia,
-  deleteRecorrencia,
-  ensureGeneratedForMonths,
-} from '../../recorrencias/services/recorrenciasService.js';
-import { ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
-import { createRegraCategorizacao } from '../../categorias/services/regrasCategorizacaoService.js';
+import { repositories } from '../../../repositories/index.js';
 import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
@@ -134,12 +114,12 @@ export default function LancamentosPage() {
     // this month hasn't been generated yet (first visit of the month), in
     // which case we re-fetch once more below.
     const [todasRecorrencias, items] = await Promise.all([
-      listRecorrencias(uid),
-      listLancamentosByRange(uid, gte, lte),
+      repositories.recorrencias.list(uid),
+      repositories.lancamentos.listByRange(uid, gte, lte),
     ]);
-    const gerouAlgo = await ensureGeneratedForMonths(uid, meses, todasRecorrencias);
+    const gerouAlgo = await repositories.recorrencias.ensureGeneratedForMonths(uid, meses, todasRecorrencias);
 
-    setLancamentos(gerouAlgo ? await listLancamentosByRange(uid, gte, lte) : items);
+    setLancamentos(gerouAlgo ? await repositories.lancamentos.listByRange(uid, gte, lte) : items);
     setRecorrencias(todasRecorrencias);
     setCarregado(true);
   }, [uid, gte, lte]);
@@ -151,7 +131,7 @@ export default function LancamentosPage() {
   // Categorias don't depend on the selected period — loaded once per user.
   useEffect(() => {
     if (!uid) return;
-    ensureDefaultCategorias(uid).then(setCategorias);
+    repositories.categorias.ensureDefaults(uid).then(setCategorias);
   }, [uid]);
 
   const categoriasById = useMemo(
@@ -205,15 +185,15 @@ export default function LancamentosPage() {
     if (recorrente) {
       const ativasCount = recorrencias.filter((r) => r.ativo).length;
       if (!guardFeature(FEATURES.RECORRENCIAS, { count: ativasCount })) return;
-      await createRecorrencia(uid, rest);
+      await repositories.recorrencias.create(uid, rest);
     } else if (parcelado) {
-      await createParcelamento(uid, rest);
+      await repositories.lancamentos.createParcelamento(uid, rest);
     } else if (editing && !duplicating) {
-      await updateLancamento(uid, editing.id, rest);
+      await repositories.lancamentos.update(uid, editing.id, rest);
       if (rest.categoriaId && rest.categoriaId !== editing.categoriaId) {
         const createRule = await confirm(`Criar uma regra para categorizar descrições contendo “${rest.descricao}” desta mesma forma nas próximas vezes?`);
         if (createRule) {
-          await createRegraCategorizacao(uid, {
+          await repositories.regrasCategorizacao.create(uid, {
             termo: rest.descricao.trim(),
             tipo: rest.tipo,
             categoriaId: rest.categoriaId,
@@ -222,7 +202,7 @@ export default function LancamentosPage() {
         }
       }
     } else {
-      await createLancamento(uid, rest);
+      await repositories.lancamentos.create(uid, rest);
     }
     setModalOpen(false);
     setDuplicating(false);
@@ -235,16 +215,16 @@ export default function LancamentosPage() {
       for (let n = item.parcelaAtual; n <= item.totalParcelas; n++) {
         ids.push(`${item.parcelamentoId}_${n}`);
       }
-      await deleteLancamentosByIds(uid, ids);
+      await repositories.lancamentos.removeByIds(uid, ids);
     } else if ((futureRecorrencia || allRecorrencia) && item.origemRecorrenciaId) {
-      await deleteGeneratedFromRecorrencia(
+      await repositories.lancamentos.removeGeneratedFromRecorrencia(
         uid,
         item.origemRecorrenciaId,
         futureRecorrencia ? { fromMonthKey: item.mesReferencia } : {}
       );
-      if (allRecorrencia) await deleteRecorrencia(uid, item.origemRecorrenciaId);
+      if (allRecorrencia) await repositories.recorrencias.remove(uid, item.origemRecorrenciaId);
     } else {
-      await deleteLancamento(uid, item.id);
+      await repositories.lancamentos.remove(uid, item.id);
     }
     setModalOpen(false);
     reload();
@@ -254,7 +234,7 @@ export default function LancamentosPage() {
     const label = formatPeriodLabel(periodType, anchor, customRange);
     const tipoLabel = tab === 'despesa' ? 'despesas' : 'receitas';
     if (!(await confirm(`Excluir ${lancamentosDoTipo.length} ${tipoLabel} de "${label}"? Essa ação não pode ser desfeita.`))) return;
-    await deleteLancamentosByIds(uid, lancamentosDoTipo.map((l) => l.id));
+    await repositories.lancamentos.removeByIds(uid, lancamentosDoTipo.map((l) => l.id));
     reload();
   }
 
@@ -304,7 +284,7 @@ export default function LancamentosPage() {
         : value || null;
       return [id, { [action]: nextValue }];
     }));
-    await updateLancamentosEmMassa(uid, updates);
+    await repositories.lancamentos.updateEmMassa(uid, updates);
     setBulkModalOpen(false);
     setSelectedIds(new Set());
     setSelecting(false);
@@ -313,29 +293,29 @@ export default function LancamentosPage() {
 
   async function deleteSelected() {
     if (!await confirm(`Excluir ${selectedIds.size} lançamento(s) selecionado(s)?`)) return;
-    await deleteLancamentosByIds(uid, [...selectedIds]);
+    await repositories.lancamentos.removeByIds(uid, [...selectedIds]);
     setSelectedIds(new Set());
     setSelecting(false);
     reload();
   }
 
   async function handleStatusChange(id, status) {
-    await setLancamentoStatus(uid, id, status);
+    await repositories.lancamentos.setStatus(uid, id, status);
     reload();
   }
 
   async function handleSaveRecorrencia(id, data, { updateGeneratedFromMonth = null } = {}) {
-    await updateRecorrencia(uid, id, data);
+    await repositories.recorrencias.update(uid, id, data);
     if (updateGeneratedFromMonth) {
-      await updateGeneratedFromRecorrencia(uid, id, data, updateGeneratedFromMonth);
+      await repositories.lancamentos.updateGeneratedFromRecorrencia(uid, id, data, updateGeneratedFromMonth);
     }
     setRecorrenciaModalOpen(false);
     reload();
   }
 
   async function handleDeleteRecorrencia(id, { deleteGerados = false } = {}) {
-    if (deleteGerados) await deleteGeneratedFromRecorrencia(uid, id);
-    await deleteRecorrencia(uid, id);
+    if (deleteGerados) await repositories.lancamentos.removeGeneratedFromRecorrencia(uid, id);
+    await repositories.recorrencias.remove(uid, id);
     setRecorrenciaModalOpen(false);
     reload();
   }

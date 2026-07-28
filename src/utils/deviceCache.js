@@ -1,11 +1,13 @@
 import { clearDashboardMemoryCache } from '../features/dashboard/services/dashboardService.js';
 import { clearSubscriptionCache } from '../features/premium/services/subscriptionCache.js';
 import { db } from '../firebase/config.js';
+import { clearFirestoreMemoryCache } from '../firebase/firestore.js';
 
 /** Removes fast-path caches that should never cross an authentication session. */
 export function clearSessionCaches(uid) {
   clearDashboardMemoryCache(uid);
   clearSubscriptionCache(uid);
+  clearFirestoreMemoryCache(uid);
 }
 
 /**

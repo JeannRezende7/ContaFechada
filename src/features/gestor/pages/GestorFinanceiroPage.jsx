@@ -5,25 +5,7 @@ import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
 import PremiumBadge from '../../premium/components/PremiumBadge.jsx';
-import {
-  listAllLancamentos,
-  createLancamento,
-  updateLancamento,
-  deleteLancamento,
-  deleteLancamentosByIds,
-  createParcelamento,
-} from '../../lancamentos/services/lancamentosService.js';
-import { listCategorias } from '../../categorias/services/categoriasService.js';
-import {
-  getGestorUsaMovimento,
-  listGestorLancamentos,
-  deleteAllGestorLancamentos,
-  createGestorLancamento,
-  updateGestorLancamento,
-  deleteGestorLancamento,
-  deleteGestorLancamentosByIds,
-  createParcelamentoGestor,
-} from '../services/gestorService.js';
+import { repositories } from '../../../repositories/index.js';
 import { analisarFinancas } from '../utils/analiseFinanceira.js';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
@@ -57,9 +39,9 @@ export default function GestorFinanceiroPage() {
 
   const reload = useCallback(async () => {
     if (!uid) return;
-    const usa = await getGestorUsaMovimento(uid);
+    const usa = await repositories.gestor.getUsaMovimento(uid);
     setUsaMovimento(usa);
-    const lista = usa ? await listAllLancamentos(uid) : await listGestorLancamentos(uid);
+    const lista = usa ? await repositories.lancamentos.listAll(uid) : await repositories.gestor.list(uid);
     setLancamentos(lista);
   }, [uid]);
 
@@ -69,7 +51,7 @@ export default function GestorFinanceiroPage() {
 
   useEffect(() => {
     if (!uid) return;
-    listCategorias(uid).then(setCategorias);
+    repositories.categorias.list(uid).then(setCategorias);
   }, [uid]);
 
   const categoriasById = useMemo(
@@ -102,7 +84,7 @@ export default function GestorFinanceiroPage() {
 
   async function handleLimparGestor() {
     if (!(await confirm('Limpar todos os lançamentos do Gestor Financeiro? Essa ação não pode ser desfeita.'))) return;
-    await deleteAllGestorLancamentos(uid);
+    await repositories.gestor.removeAll(uid);
     reload();
   }
 
@@ -115,15 +97,15 @@ export default function GestorFinanceiroPage() {
   async function handleSave(data) {
     const { recorrente: _recorrente, parcelado, ...rest } = data;
     if (usaMovimento) {
-      if (parcelado) await createParcelamento(uid, rest);
-      else if (editing) await updateLancamento(uid, editing.id, rest);
-      else await createLancamento(uid, rest);
+      if (parcelado) await repositories.lancamentos.createParcelamento(uid, rest);
+      else if (editing) await repositories.lancamentos.update(uid, editing.id, rest);
+      else await repositories.lancamentos.create(uid, rest);
     } else if (parcelado) {
-      await createParcelamentoGestor(uid, rest);
+      await repositories.gestor.createParcelamento(uid, rest);
     } else if (editing) {
-      await updateGestorLancamento(uid, editing.id, rest);
+      await repositories.gestor.update(uid, editing.id, rest);
     } else {
-      await createGestorLancamento(uid, rest);
+      await repositories.gestor.create(uid, rest);
     }
     setModalOpen(false);
     reload();
@@ -133,20 +115,20 @@ export default function GestorFinanceiroPage() {
     if (futureInstallments && item.parcelamentoId && item.totalParcelas) {
       const ids = [];
       for (let n = item.parcelaAtual; n <= item.totalParcelas; n++) ids.push(`${item.parcelamentoId}_${n}`);
-      if (usaMovimento) await deleteLancamentosByIds(uid, ids);
-      else await deleteGestorLancamentosByIds(uid, ids);
+      if (usaMovimento) await repositories.lancamentos.removeByIds(uid, ids);
+      else await repositories.gestor.removeByIds(uid, ids);
     } else if (usaMovimento) {
-      await deleteLancamento(uid, item.id);
+      await repositories.lancamentos.remove(uid, item.id);
     } else {
-      await deleteGestorLancamento(uid, item.id);
+      await repositories.gestor.remove(uid, item.id);
     }
     setModalOpen(false);
     reload();
   }
 
   async function handleStatusChange(id, status) {
-    if (usaMovimento) await updateLancamento(uid, id, { status });
-    else await updateGestorLancamento(uid, id, { status });
+    if (usaMovimento) await repositories.lancamentos.update(uid, id, { status });
+    else await repositories.gestor.update(uid, id, { status });
     reload();
   }
 

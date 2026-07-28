@@ -12,6 +12,7 @@ vi.mock('../../recorrencias/services/recorrenciasService.js', () => ({
 vi.mock('../../../firebase/firestore.js', () => ({
   getUserDoc: vi.fn(),
   setUserDocMerged: vi.fn(),
+  getCollectionRevision: vi.fn(() => 0),
 }));
 
 import { listLancamentosByMonth } from '../../lancamentos/services/lancamentosService.js';

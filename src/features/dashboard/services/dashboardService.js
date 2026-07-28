@@ -1,7 +1,7 @@
 import { listLancamentosByMonth } from '../../lancamentos/services/lancamentosService.js';
 import { listRecorrencias, ensureGeneratedForMonths } from '../../recorrencias/services/recorrenciasService.js';
 import { shiftMonthKey, getCurrentMonthKey } from '../../../utils/monthKey.js';
-import { getUserDoc, setUserDocMerged } from '../../../firebase/firestore.js';
+import { getUserDoc, setUserDocMerged, getCollectionRevision } from '../../../firebase/firestore.js';
 
 const dashboardMemory = new Map();
 
@@ -10,11 +10,19 @@ function dashboardCacheKey(uid, monthKey) {
 }
 
 export function getDashboardMemoryCache(uid, monthKey) {
-  return dashboardMemory.get(dashboardCacheKey(uid, monthKey)) ?? null;
+  const entry = dashboardMemory.get(dashboardCacheKey(uid, monthKey)) ?? null;
+  if (!entry) return null;
+  const sameRevision = entry.lancamentosRevision === getCollectionRevision(uid, 'lancamentos');
+  const fresh = Date.now() - entry.cachedAt < 5 * 60 * 1000;
+  return sameRevision && fresh ? entry.data : null;
 }
 
 export function setDashboardMemoryCache(uid, monthKey, data) {
-  dashboardMemory.set(dashboardCacheKey(uid, monthKey), data);
+  dashboardMemory.set(dashboardCacheKey(uid, monthKey), {
+    data,
+    cachedAt: Date.now(),
+    lancamentosRevision: getCollectionRevision(uid, 'lancamentos'),
+  });
 }
 
 export function clearDashboardMemoryCache(uid) {

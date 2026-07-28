@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Repeat } from 'lucide-react';
-import { listRecorrencias } from '../../recorrencias/services/recorrenciasService.js';
-import { importarRecorrencias } from '../services/gestorService.js';
+import { repositories } from '../../../repositories/index.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 
 /** Lets the user pick which active recorrências (standing monthly commitments) enter the Gestor Financeiro. */
@@ -14,7 +13,7 @@ export default function ImportarRecorrenciasModal({ open, uid, onClose, onImport
   useEffect(() => {
     if (!open || !uid) return;
     setStatus('loading');
-    listRecorrencias(uid).then((lista) => {
+    repositories.recorrencias.list(uid).then((lista) => {
       const ativas = lista.filter((r) => r.ativo);
       setItens(ativas);
       setSelecionados(new Set());
@@ -36,7 +35,7 @@ export default function ImportarRecorrenciasModal({ open, uid, onClose, onImport
   async function handleImportar() {
     setStatus('importing');
     const escolhidas = itens.filter((r) => selecionados.has(r.id));
-    const res = await importarRecorrencias(uid, escolhidas);
+    const res = await repositories.gestor.importarRecorrencias(uid, escolhidas);
     setResultado(res);
     setStatus('done');
     onImported?.();

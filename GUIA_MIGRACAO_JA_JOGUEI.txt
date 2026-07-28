@@ -1,0 +1,626 @@
+GUIA DE EVOLUÇÃO E MIGRAÇÃO — JÁ JOGUEI
+React + Firebase → Android local-first + nuvem Premium
+
+======================================================================
+1. OBJETIVO
+======================================================================
+
+Evoluir o projeto “Já Joguei”, atualmente construído com React e
+Firebase, para o seguinte modelo:
+
+ANDROID GRATUITO
+- Funciona sem conta.
+- Catálogo e listas ficam salvos localmente.
+- Funciona completamente offline.
+- Não gera leituras no Firebase.
+- Permite exportar e importar os dados.
+
+ANDROID PREMIUM
+- Mantém o banco local.
+- Ativa conta, backup e sincronização na nuvem.
+- Permite restaurar a coleção em outro aparelho.
+- Pode liberar estatísticas e recursos avançados.
+
+WEB PREMIUM
+- Exige login.
+- Exige assinatura Premium ativa.
+- Mostra os mesmos jogos e listas sincronizados pelo Android.
+
+
+Arquitetura desejada:
+
+ANDROID GRATUITO
+
+React
+  ↓
+Camada de repositórios
+  ↓
+SQLite nativo
+
+
+ANDROID PREMIUM
+
+React
+  ↓
+Camada de repositórios
+  ↓
+SQLite nativo
+  ↓
+Fila de sincronização
+  ↓
+Firebase Auth + Firestore
+
+
+WEB PREMIUM
+
+React
+  ↓
+Firebase Auth
+  ↓
+Verificação Premium
+  ↓
+Firestore
+
+
+======================================================================
+2. PRIMEIRO PASSO: AUDITORIA DO PROJETO ATUAL
+======================================================================
+
+Antes de migrar, verificar:
+
+- Estrutura de pastas e componentes.
+- Versões do React, Vite e Firebase.
+- Rotas públicas e protegidas.
+- Estrutura das coleções do Firestore.
+- Regras de segurança do Firestore.
+- Quantidade de leituras feitas em cada tela.
+- Componentes que consultam o Firebase diretamente.
+- Duplicação de regras entre telas e serviços.
+- Tratamento de loading, erro e modo offline.
+- Responsividade para celular e telas grandes.
+- Estado da versão Android/Capacitor.
+- Autenticação Google, e-mail e outros provedores.
+- Exportação e exclusão de dados.
+- Política de privacidade e termos.
+- Testes automatizados existentes.
+
+Gerar um relatório contendo:
+
+1. Problemas críticos.
+2. Melhorias rápidas.
+3. Débitos técnicos.
+4. Riscos de perda de dados.
+5. Consultas caras no Firebase.
+6. Funcionalidades incompletas.
+7. Problemas de experiência do usuário.
+
+
+======================================================================
+3. MELHORIAS RECOMENDADAS ANTES DA MIGRAÇÃO
+======================================================================
+
+3.1 Organização
+
+- Separar páginas, componentes, serviços, repositórios e regras de negócio.
+- Retirar chamadas do Firebase de dentro dos componentes.
+- Criar funções puras para cálculos e filtros.
+- Padronizar loading, erros e telas vazias.
+- Criar limites claros entre catálogo, listas e perfil.
+
+3.2 Experiência
+
+- Melhorar pesquisa e filtros.
+- Permitir ordenar por nome, nota, plataforma e data.
+- Criar estados claros:
+  - Quero jogar.
+  - Jogando.
+  - Já joguei.
+  - Abandonei.
+  - Platinado/concluído 100%.
+- Permitir avaliação pessoal.
+- Permitir observações.
+- Mostrar progresso.
+- Melhorar edição em lote.
+- Criar dashboard com resumo da coleção.
+- Revisar funcionamento mobile.
+
+3.3 Qualidade
+
+- Criar testes para filtros e mudanças de status.
+- Criar testes para importação e exportação.
+- Criar testes das regras do Firestore.
+- Tratar duplicação de jogos.
+- Normalizar IDs e nomes de plataformas.
+- Evitar salvar capas ou imagens grandes diretamente no Firestore.
+
+
+======================================================================
+4. MODELO DE DADOS SUGERIDO
+======================================================================
+
+Entidades principais:
+
+JOGO
+- id
+- titulo
+- slug
+- capaUrl
+- plataformas
+- generos
+- desenvolvedora
+- publicadora
+- dataLancamento
+- origemMetadados
+- externalId
+
+ITEM DA BIBLIOTECA
+- id
+- jogoId
+- status
+- plataforma
+- notaPessoal
+- progresso
+- horasJogadas
+- iniciadoEm
+- concluidoEm
+- observacoes
+- favorito
+- createdAt
+- updatedAt
+- deletedAt
+- deviceId
+- syncStatus
+
+LISTA PERSONALIZADA
+- id
+- nome
+- descricao
+- cor
+- ordem
+- createdAt
+- updatedAt
+- deletedAt
+
+ITEM DA LISTA
+- id
+- listaId
+- jogoId
+- ordem
+- createdAt
+- updatedAt
+- deletedAt
+
+CONFIGURAÇÃO
+- tema
+- privacidade
+- filtrosPreferidos
+- plataformaPrincipal
+- onboardingConcluido
+
+FILA DE SINCRONIZAÇÃO
+- id
+- entidade
+- registroId
+- operacao
+- payload
+- tentativas
+- proximaTentativaEm
+- createdAt
+- erro
+
+
+Não duplicar todos os metadados de um jogo em cada lista.
+Separar “dados do jogo” de “dados pessoais do usuário”.
+
+
+======================================================================
+5. CAMADA DE REPOSITÓRIOS
+======================================================================
+
+As telas não devem saber se os dados vêm de SQLite ou Firebase.
+
+Exemplo:
+
+gamesRepository.search(filters)
+gamesRepository.getById(id)
+
+libraryRepository.list(filters)
+libraryRepository.add(game, status)
+libraryRepository.update(id, data)
+libraryRepository.remove(id)
+libraryRepository.changeStatus(id, status)
+
+listsRepository.list()
+listsRepository.create(data)
+listsRepository.addGame(listId, gameId)
+listsRepository.removeGame(listId, gameId)
+
+
+Implementações:
+
+- FirebaseLibraryRepository
+- SQLiteLibraryRepository
+- FirebaseListsRepository
+- SQLiteListsRepository
+
+
+Regra:
+
+- Android usa SQLite.
+- Android Premium usa SQLite e sincronizador.
+- Web Premium usa Firebase.
+
+
+======================================================================
+6. BANCO LOCAL ANDROID
+======================================================================
+
+Usar:
+
+- Capacitor.
+- @capacitor-community/sqlite.
+- SQLite nativo do Android.
+
+
+Tabelas sugeridas:
+
+- games
+- library_items
+- custom_lists
+- custom_list_items
+- settings
+- sync_queue
+- sync_state
+
+
+Índices:
+
+- games por título normalizado.
+- library_items por status.
+- library_items por jogo.
+- library_items por plataforma.
+- library_items por nota.
+- library_items por updatedAt.
+- sync_queue por estado e data.
+
+
+O arquivo SQLite deve ficar no armazenamento privado do aplicativo.
+O banco deve possuir migrations versionadas.
+
+
+======================================================================
+7. USO GRATUITO SEM CONTA
+======================================================================
+
+Na primeira abertura do Android:
+
+[ Continuar gratuitamente ]
+[ Entrar na minha conta ]
+
+
+Continuar gratuitamente:
+
+- Cria identidade local do aparelho.
+- Abre o catálogo e as listas.
+- Não inicializa sincronização.
+- Não exige Firebase Auth.
+
+
+Explicar:
+
+“Seus dados ficam somente neste aparelho. Ative o Premium para ter
+backup automático, sincronização e acesso pela web.”
+
+
+O gratuito deve possuir:
+
+- Lista de jogos.
+- Status e progresso.
+- Avaliações e observações.
+- Listas personalizadas básicas.
+- Pesquisa local.
+- Exportação e importação manual.
+
+
+======================================================================
+8. SINCRONIZAÇÃO PREMIUM
+======================================================================
+
+Toda alteração deve primeiro ser salva localmente.
+
+Fluxo:
+
+Usuário altera um jogo
+  ↓
+SQLite salva imediatamente
+  ↓
+Operação entra na sync_queue
+  ↓
+Quando houver Premium e internet
+  ↓
+Operação é enviada ao Firebase
+  ↓
+Servidor confirma
+  ↓
+Operação é removida da fila
+
+
+Estados visuais:
+
+- Somente neste aparelho.
+- Backup ativado.
+- Sincronizando.
+- Sincronizado.
+- Alterações pendentes.
+- Sem internet.
+- Backup pausado.
+- Erro de sincronização.
+
+
+Requisitos:
+
+- Envio em lotes.
+- Tentativas progressivas.
+- Operações idempotentes.
+- Exclusões usando deletedAt.
+- Cursor por coleção.
+- Detecção de conflito.
+- Última alteração vence como regra inicial.
+
+
+======================================================================
+9. ATIVAÇÃO DO PREMIUM
+======================================================================
+
+Fluxo recomendado:
+
+1. Usuário toca em “Ativar Premium”.
+2. Faz login ou cria uma conta.
+3. Compra pelo Google Play Billing.
+4. Aplicativo recebe purchaseToken.
+5. Backend valida com a Google Play Developer API.
+6. Compra é vinculada ao uid.
+7. Backend registra assinatura Premium.
+8. Aplicativo pergunta como iniciar o backup.
+
+
+Opções:
+
+- Enviar dados deste aparelho.
+- Baixar coleção existente.
+- Mesclar os dois conjuntos.
+
+
+Antes de enviar:
+
+- Gerar backup JSON.
+- Mostrar quantidade de jogos e listas.
+- Detectar possíveis duplicatas.
+- Permitir retomar após falha.
+
+
+======================================================================
+10. WEB EXCLUSIVA PARA PREMIUM
+======================================================================
+
+Na versão web:
+
+- Login sempre obrigatório.
+- Assinatura verificada antes das rotas privadas.
+- Conta sem Premium vê página de acesso bloqueado.
+- Assinante vê coleção sincronizada.
+- Checkout externo não aparece no build Android.
+
+
+Mensagem sugerida:
+
+“O acesso web, backup automático e sincronização entre dispositivos
+fazem parte do Já Joguei Premium.”
+
+
+======================================================================
+11. CANCELAMENTO
+======================================================================
+
+Ao cancelar:
+
+ANDROID
+- Dados locais continuam disponíveis.
+- Aplicativo gratuito continua funcionando.
+- Uploads são pausados.
+- Nada é apagado do aparelho.
+
+WEB
+- Acesso financeiro/pessoal é bloqueado após o fim do período pago.
+- Pode ser permitida exportação por prazo determinado.
+
+NUVEM
+- Manter cópia por prazo definido, por exemplo 90 dias.
+- Informar claramente a data de exclusão.
+- Permitir exclusão antecipada.
+
+
+======================================================================
+12. ECONOMIA DE FIREBASE
+======================================================================
+
+- Usuários gratuitos não devem autenticar nem consultar o Firestore.
+- Sincronizar somente alterações, nunca baixar tudo em cada abertura.
+- Manter cursor updatedAt por entidade.
+- Fazer operações em lote.
+- Evitar listeners permanentes.
+- Cachear catálogo e configurações.
+- Não guardar imagens no Firestore.
+- Usar CDN/API externa para capas quando permitido.
+- Criar documentos agregados para estatísticas.
+- Não recalcular toda a biblioteca para cada dashboard.
+- Definir alertas de orçamento no Google Cloud.
+- Medir leituras e gravações por assinante.
+
+
+======================================================================
+13. RECURSOS PREMIUM SUGERIDOS
+======================================================================
+
+- Backup automático.
+- Sincronização entre dispositivos.
+- Acesso web.
+- Estatísticas avançadas.
+- Histórico anual.
+- Listas ilimitadas.
+- Importação de outras plataformas.
+- Comparação de progresso.
+- Recomendações personalizadas.
+- Filtros avançados.
+- Exportações especiais.
+
+
+Não bloquear no gratuito as funções essenciais de registrar e consultar
+os próprios jogos.
+
+
+======================================================================
+14. SEGURANÇA
+======================================================================
+
+- Firebase App Check com Play Integrity.
+- Firestore Rules por uid.
+- Premium validado no servidor.
+- Nunca confiar em premium=true vindo do aplicativo.
+- purchaseToken validado no backend.
+- SQLite em armazenamento privado.
+- Avaliar SQLCipher antes da publicação.
+- Tokens protegidos pelo Android Keystore.
+- Backup automático do Android desativado.
+- Tráfego HTTP sem criptografia bloqueado.
+- Exportação e exclusão de dados disponíveis.
+
+
+======================================================================
+15. ETAPAS DE IMPLEMENTAÇÃO
+======================================================================
+
+FASE 1 — AUDITORIA E CORREÇÕES
+- Mapear arquitetura atual.
+- Corrigir bugs críticos.
+- Melhorar organização.
+- Criar testes básicos.
+
+FASE 2 — REPOSITÓRIOS
+- Criar contratos.
+- Encapsular Firebase.
+- Remover Firebase das páginas.
+
+FASE 3 — BANCO LOCAL
+- Instalar SQLite.
+- Criar migrations.
+- Implementar repositórios locais.
+
+FASE 4 — MODO GRATUITO
+- Remover login obrigatório no Android.
+- Criar onboarding local.
+- Criar importação/exportação.
+
+FASE 5 — MIGRAÇÃO
+- Copiar dados atuais para SQLite.
+- Validar contagens e totais.
+- Manter Firebase como backup.
+
+FASE 6 — SINCRONIZAÇÃO
+- Criar fila.
+- Enviar alterações.
+- Baixar mudanças remotas.
+- Resolver conflitos.
+
+FASE 7 — PREMIUM
+- Integrar Play Billing.
+- Validar assinatura.
+- Ativar backup.
+
+FASE 8 — WEB
+- Exigir Premium.
+- Tratar expiração.
+- Sincronizar coleção.
+
+FASE 9 — PUBLICAÇÃO
+- App Check.
+- Política de privacidade.
+- Segurança de dados.
+- Testes fechados.
+- AAB assinado.
+
+
+======================================================================
+16. TESTES OBRIGATÓRIOS
+======================================================================
+
+- Primeira abertura sem internet.
+- Cadastro de jogo sem conta.
+- Fechar e reabrir offline.
+- Alterar status offline.
+- Exportar e importar.
+- Assinar com coleção local.
+- Falhar internet durante upload.
+- Editar o mesmo jogo em dois aparelhos.
+- Excluir jogo offline.
+- Cancelar assinatura.
+- Renovar assinatura.
+- Trocar de celular.
+- Reinstalar.
+- Restaurar compra.
+- Entrar na web Premium.
+- Bloquear web não Premium.
+- Migrar usuário Firebase antigo.
+
+
+======================================================================
+17. PROMPT PARA USAR NO PROJETO JÁ JOGUEI
+======================================================================
+
+Use o texto abaixo ao iniciar o trabalho com um assistente de código:
+
+“Analise completamente este projeto React + Firebase chamado Já Joguei.
+Ele é um aplicativo para registrar jogos, status, progresso, avaliações
+e listas pessoais.
+
+Quero evoluí-lo para:
+
+- Android gratuito usando SQLite local e sem conta obrigatória.
+- Android Premium com Firebase Auth, backup e sincronização.
+- Web disponível somente para assinantes Premium.
+- Compra Premium pelo Google Play Billing.
+
+Primeiro, não implemente a migração inteira. Faça uma auditoria do
+projeto e apresente:
+
+1. Arquitetura atual.
+2. Coleções e dependências do Firebase.
+3. Bugs e riscos.
+4. Consultas que podem gerar custo.
+5. Problemas mobile e responsivos.
+6. Funcionalidades incompletas.
+7. Cobertura de testes.
+8. Ordem segura de melhorias.
+
+Depois crie uma camada de repositórios mantendo o comportamento atual.
+Não remova o Firebase antes que todos os serviços estejam encapsulados.
+Preserve dados existentes e faça mudanças graduais, verificadas por
+testes e build.”
+
+
+======================================================================
+18. PRIMEIRA AÇÃO RECOMENDADA
+======================================================================
+
+Levar este TXT para o diretório raiz do projeto Já Joguei.
+
+Em seguida:
+
+1. Fazer a auditoria.
+2. Corrigir problemas críticos.
+3. Criar a camada de repositórios.
+4. Migrar primeiro a biblioteca e os status para SQLite.
+5. Somente depois construir a sincronização Premium.
+
+
+FIM DO GUIA
