@@ -1,26 +1,29 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import AuthLayout from '../layouts/AuthLayout.jsx';
 import AppLayout from '../layouts/AppLayout.jsx';
 import LoadingScreen from '../components/ui/LoadingScreen.jsx';
+import RouteErrorBoundary from '../components/ui/RouteErrorBoundary.jsx';
+import { lazyWithRetry } from '../utils/lazyWithRetry.js';
 
-const LoginPage = lazy(() => import('../features/auth/pages/LoginPage.jsx'));
-const DashboardPage = lazy(() => import('../features/dashboard/pages/DashboardPage.jsx'));
-const LancamentosPage = lazy(() => import('../features/lancamentos/pages/LancamentosPage.jsx'));
-const CategoriasPage = lazy(() => import('../features/categorias/pages/CategoriasPage.jsx'));
-const RelatoriosPage = lazy(() => import('../features/relatorios/pages/RelatoriosPage.jsx'));
-const MetasPage = lazy(() => import('../features/metas/pages/MetasPage.jsx'));
-const GestorFinanceiroPage = lazy(() => import('../features/gestor/pages/GestorFinanceiroPage.jsx'));
-const OpcoesPage = lazy(() => import('../features/opcoes/pages/OpcoesPage.jsx'));
-const MeuPlanoPage = lazy(() => import('../features/premium/pages/MeuPlanoPage.jsx'));
-const TermosPage = lazy(() => import('../features/legal/pages/TermosPage.jsx'));
-const PrivacidadePage = lazy(() => import('../features/legal/pages/PrivacidadePage.jsx'));
+const LoginPage = lazyWithRetry(() => import('../features/auth/pages/LoginPage.jsx'));
+const DashboardPage = lazyWithRetry(() => import('../features/dashboard/pages/DashboardPage.jsx'));
+const LancamentosPage = lazyWithRetry(() => import('../features/lancamentos/pages/LancamentosPage.jsx'));
+const CategoriasPage = lazyWithRetry(() => import('../features/categorias/pages/CategoriasPage.jsx'));
+const RelatoriosPage = lazyWithRetry(() => import('../features/relatorios/pages/RelatoriosPage.jsx'));
+const MetasPage = lazyWithRetry(() => import('../features/metas/pages/MetasPage.jsx'));
+const GestorFinanceiroPage = lazyWithRetry(() => import('../features/gestor/pages/GestorFinanceiroPage.jsx'));
+const OpcoesPage = lazyWithRetry(() => import('../features/opcoes/pages/OpcoesPage.jsx'));
+const MeuPlanoPage = lazyWithRetry(() => import('../features/premium/pages/MeuPlanoPage.jsx'));
+const TermosPage = lazyWithRetry(() => import('../features/legal/pages/TermosPage.jsx'));
+const PrivacidadePage = lazyWithRetry(() => import('../features/legal/pages/PrivacidadePage.jsx'));
 
 export default function AppRoutes() {
   return (
-    <Suspense fallback={<LoadingScreen />}>
-      <Routes>
+    <RouteErrorBoundary>
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
         <Route element={<AuthLayout />}>
           <Route path="/entrar" element={<LoginPage />} />
         </Route>
@@ -47,7 +50,8 @@ export default function AppRoutes() {
         </Route>
 
         <Route path="*" element={<Navigate to="/entrar" replace />} />
-      </Routes>
-    </Suspense>
+        </Routes>
+      </Suspense>
+    </RouteErrorBoundary>
   );
 }

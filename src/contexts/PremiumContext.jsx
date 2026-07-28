@@ -1,4 +1,4 @@
-import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from './AuthContext.jsx';
 import { checkGate, getLimit } from '../config/premium.js';
 import {
@@ -12,9 +12,10 @@ import {
   writeSubscriptionCache,
 } from '../features/premium/services/subscriptionCache.js';
 import { track, EVENTS } from '../utils/analytics.js';
+import { lazyWithRetry } from '../utils/lazyWithRetry.js';
 
 const PremiumContext = createContext(null);
-const Paywall = lazy(() => import('../features/premium/components/Paywall.jsx'));
+const Paywall = lazyWithRetry(() => import('../features/premium/components/Paywall.jsx'));
 
 const FREE_STATE = toSubscriptionState(null);
 

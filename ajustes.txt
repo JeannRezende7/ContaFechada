@@ -562,3 +562,34 @@ Validação:
 - Suíte da aplicação: 81 testes aprovados em 11 arquivos.
 - npm run lint: aprovado sem erros ou avisos.
 - npm run build: build de produção aprovado.
+
+
+19. RECUPERAÇÃO DE CHUNKS APÓS DEPLOY — CONCLUÍDO EM 28/07/2026
+---------------------------------------------------------------
+
+Problema:
+
+- Uma versão antiga do PWA podia tentar abrir chunks lazy removidos pelo
+  deploy seguinte.
+- O fallback do Netlify respondia index.html para o arquivo JavaScript
+  inexistente, causando erro de MIME text/html.
+
+Correção:
+
+- Rotas lazy agora detectam falhas de chunks desatualizados.
+- O app remove somente o precache estático antigo, solicita atualização do
+  service worker e recarrega uma vez.
+- O IndexedDB financeiro do Firestore não é afetado por essa recuperação.
+- Uma janela de segurança impede ciclos infinitos de recarregamento.
+- Adicionado fallback visual com botão para recarregar caso a recuperação
+  automática não resolva.
+- O Netlify agora retorna 404 real para assets inexistentes.
+- index.html, sw.js e registerSW.js exigem revalidação em cada acesso.
+- Assets com hash continuam usando cache imutável de longo prazo.
+
+Validação:
+
+- Adicionados 3 testes para identificação e tratamento de imports dinâmicos.
+- Suíte da aplicação: 84 testes aprovados em 12 arquivos.
+- npm run lint: aprovado sem erros ou avisos.
+- npm run build: build de produção aprovado.
