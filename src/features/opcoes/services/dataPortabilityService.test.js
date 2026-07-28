@@ -13,7 +13,7 @@ vi.mock('../../../firebase/config.js', () => ({ auth: authMock }));
 
 import { deleteAllUserData, exportUserData } from './dataPortabilityService.js';
 
-const COLLECTIONS = ['lancamentos', 'categorias', 'recorrencias', 'metas', 'gestorLancamentos'];
+const COLLECTIONS = ['lancamentos', 'categorias', 'regrasCategorizacao', 'recorrencias', 'metas', 'gestorLancamentos', 'planejamento', 'fechamentos'];
 
 describe('dataPortabilityService', () => {
   beforeEach(() => {

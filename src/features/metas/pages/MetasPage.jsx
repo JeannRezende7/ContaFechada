@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Target, Plus, PiggyBank } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
-import { listMetas, createMeta, updateMeta, deleteMeta, aportarNaMeta } from '../services/metasService.js';
+import {
+  listMetas, createMeta, updateMeta, deleteMeta, aportarNaMeta,
+  calcularAporteAutomatico, preverConclusaoMeta, processarAportesAutomaticos,
+} from '../services/metasService.js';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
@@ -10,6 +13,9 @@ import { COLOR_MAP } from '../../categorias/colorMap.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import MetaModal from '../components/MetaModal.jsx';
+import { listAllLancamentos } from '../../lancamentos/services/lancamentosService.js';
+import { getFechamento } from '../../planejamento/services/fechamentoService.js';
+import { formatMonthLabel, getCurrentMonthKey } from '../../../utils/monthKey.js';
 
 /** Uma meta já atingida não conta no limite (metas concluídas não contam, ROADMAP_MONETIZACAO.txt Fase 6). */
 function isMetaAtiva(meta) {
@@ -27,6 +33,9 @@ export default function MetasPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [aportes, setAportes] = useState({});
+  const [monthItems, setMonthItems] = useState([]);
+  const [currentClosing, setCurrentClosing] = useState(null);
+  const monthKey = getCurrentMonthKey();
 
   const metasAtivasCount = useMemo(() => metas.filter(isMetaAtiva).length, [metas]);
 
@@ -36,7 +45,15 @@ export default function MetasPage() {
   }
 
   useEffect(() => {
-    reload();
+    if (!uid) return;
+    Promise.all([listMetas(uid), listAllLancamentos(uid), getFechamento(uid, monthKey)])
+      .then(async ([goalItems, launches, closing]) => {
+        const currentItems = launches.filter((item) => item.dataVencimento?.slice(0, 7) === monthKey);
+        await processarAportesAutomaticos(uid, goalItems, currentItems, closing, monthKey);
+        setMonthItems(currentItems);
+        setCurrentClosing(closing);
+        setMetas(await listMetas(uid));
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
 
@@ -91,6 +108,8 @@ export default function MetasPage() {
             const atual = Number(meta.valorAtual) || 0;
             const pct = alvo > 0 ? Math.min(100, Math.round((atual / alvo) * 100)) : 0;
             const atingida = alvo > 0 && atual >= alvo;
+            const aporteEstimado = calcularAporteAutomatico(meta, monthItems, currentClosing);
+            const previsao = preverConclusaoMeta(meta, aporteEstimado, monthKey);
 
             return (
               <div key={meta.id} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 md:p-5">
@@ -143,6 +162,14 @@ export default function MetasPage() {
                     </div>
                   )}
                 </div>
+                {meta.aporteAutomatico?.tipo && meta.aporteAutomatico.tipo !== 'nenhum' && (
+                  <div className="mt-3 rounded-xl bg-ledger-50 px-3 py-2 text-xs text-ledger-700">
+                    Aporte automático estimado: {formatCurrency(aporteEstimado)}
+                    {previsao && ` · conclusão prevista em ${formatMonthLabel(previsao)}`}
+                    {meta.ultimoAporteAutomaticoMes === monthKey && ` · ${formatCurrency(meta.ultimoAporteAutomaticoValor || 0)} aplicado neste mês`}
+                    {meta.aporteAutomatico.lembrete && <span className="block mt-1 font-medium">Lembrete: revise se o aporte deste mês está adequado.</span>}
+                  </div>
+                )}
               </div>
             );
           })}

@@ -8,7 +8,7 @@ import { auth } from '../../../firebase/config.js';
  * — adding a new collection to the app means updating this one list, not
  * two separate ones.
  */
-const COLLECTIONS = ['lancamentos', 'categorias', 'recorrencias', 'metas', 'gestorLancamentos'];
+const COLLECTIONS = ['lancamentos', 'categorias', 'regrasCategorizacao', 'recorrencias', 'metas', 'gestorLancamentos', 'planejamento', 'fechamentos'];
 
 /**
  * Everything the user has stored, as one plain object — downloaded as JSON

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowUpCircle, ArrowDownCircle, Wallet, Receipt } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import {
@@ -11,6 +12,7 @@ import {
   setLancamentoStatus,
   createParcelamento,
   updateGeneratedFromRecorrencia,
+  updateLancamentosEmMassa,
 } from '../services/lancamentosService.js';
 import {
   listRecorrencias,
@@ -20,6 +22,7 @@ import {
   ensureGeneratedForMonths,
 } from '../../recorrencias/services/recorrenciasService.js';
 import { ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
+import { createRegraCategorizacao } from '../../categorias/services/regrasCategorizacaoService.js';
 import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
@@ -31,6 +34,8 @@ import { buildLancamentoMatcher } from '../utils/searchLancamentos.js';
 import { buildCsv, downloadCsv } from '../../../utils/exportCsv.js';
 import LancamentoModal from '../components/LancamentoModal.jsx';
 import RecorrenciaModal from '../components/RecorrenciaModal.jsx';
+import ImportarExtratoModal from '../components/ImportarExtratoModal.jsx';
+import AcoesEmMassaModal from '../components/AcoesEmMassaModal.jsx';
 import {
   ActiveRecurrences,
   LancamentosActions,
@@ -49,6 +54,7 @@ import Topbar from '../../../components/layout/Topbar.jsx';
 // que já basta para o Rollup excluí-los do build de produção.
 
 export default function LancamentosPage() {
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const uid = user?.uid;
   const confirm = useConfirm();
@@ -96,10 +102,15 @@ export default function LancamentosPage() {
   const [categorias, setCategorias] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [duplicating, setDuplicating] = useState(false);
   const [recorrenciaModalOpen, setRecorrenciaModalOpen] = useState(false);
   const [editingRecorrencia, setEditingRecorrencia] = useState(null);
-  const [busca, setBusca] = useState('');
+  const [busca, setBusca] = useState(() => searchParams.get('q') || '');
   const [carregado, setCarregado] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [selecting, setSelecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
 
   const { gte, lte } = getRangeForPeriod(periodType, anchor, customRange);
 
@@ -158,6 +169,11 @@ export default function LancamentosPage() {
     return lancamentosDoTipo.filter(matcher);
   }, [lancamentosDoTipo, busca, categoriasById]);
 
+  useEffect(() => {
+    setSelectedIds(new Set());
+    setSelecting(false);
+  }, [tab, gte, lte]);
+
   // Totals reflect the whole period regardless of the despesa/receita tab —
   // the tab only filters which rows are listed below.
   const totais = useMemo(() => {
@@ -176,6 +192,7 @@ export default function LancamentosPage() {
     function handleKey(e) {
       if (e.key === 'n' && !modalOpen && document.activeElement.tagName !== 'INPUT') {
         setEditing(null);
+        setDuplicating(false);
         setModalOpen(true);
       }
     }
@@ -191,12 +208,24 @@ export default function LancamentosPage() {
       await createRecorrencia(uid, rest);
     } else if (parcelado) {
       await createParcelamento(uid, rest);
-    } else if (editing) {
+    } else if (editing && !duplicating) {
       await updateLancamento(uid, editing.id, rest);
+      if (rest.categoriaId && rest.categoriaId !== editing.categoriaId) {
+        const createRule = await confirm(`Criar uma regra para categorizar descrições contendo “${rest.descricao}” desta mesma forma nas próximas vezes?`);
+        if (createRule) {
+          await createRegraCategorizacao(uid, {
+            termo: rest.descricao.trim(),
+            tipo: rest.tipo,
+            categoriaId: rest.categoriaId,
+            prioridade: 0,
+          });
+        }
+      }
     } else {
       await createLancamento(uid, rest);
     }
     setModalOpen(false);
+    setDuplicating(false);
     reload();
   }
 
@@ -237,7 +266,11 @@ export default function LancamentosPage() {
     if (!isExportacaoDoMesAtual && !guardFeature(FEATURES.EXPORTACAO_AVANCADA)) return;
 
     const label = formatPeriodLabel(periodType, anchor, customRange);
-    const csv = buildCsv(lancamentosFiltrados, [
+    exportItems(lancamentosFiltrados, label);
+  }
+
+  function exportItems(items, label) {
+    const csv = buildCsv(items, [
       { label: 'Data', value: (l) => l.dataVencimento },
       { label: 'Descrição', value: (l) => l.descricao },
       { label: 'Categoria', value: (l) => categoriasById[l.categoriaId]?.nome ?? '' },
@@ -246,6 +279,44 @@ export default function LancamentosPage() {
       { label: 'Observações', value: (l) => l.observacoes ?? '' },
     ]);
     downloadCsv(`lancamentos-${tab}-${label.replace(/\s+/g, '-')}.csv`, csv);
+  }
+
+  function exportSelected() {
+    const isExportacaoDoMesAtual = periodType === 'mes' && anchor.slice(0, 7) === getCurrentMonthKey();
+    if (!isExportacaoDoMesAtual && !guardFeature(FEATURES.EXPORTACAO_AVANCADA)) return;
+    exportItems(lancamentosFiltrados.filter((item) => selectedIds.has(item.id)), 'selecionados');
+  }
+
+  function toggleSelected(id) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function applyBulk(action, value) {
+    const byId = Object.fromEntries(lancamentos.map((item) => [item.id, item]));
+    const updates = Object.fromEntries([...selectedIds].map((id) => {
+      const nextValue = action === 'observacoes'
+        ? [byId[id]?.observacoes, value].filter(Boolean).join('\n')
+        : value || null;
+      return [id, { [action]: nextValue }];
+    }));
+    await updateLancamentosEmMassa(uid, updates);
+    setBulkModalOpen(false);
+    setSelectedIds(new Set());
+    setSelecting(false);
+    reload();
+  }
+
+  async function deleteSelected() {
+    if (!await confirm(`Excluir ${selectedIds.size} lançamento(s) selecionado(s)?`)) return;
+    await deleteLancamentosByIds(uid, [...selectedIds]);
+    setSelectedIds(new Set());
+    setSelecting(false);
+    reload();
   }
 
   async function handleStatusChange(id, status) {
@@ -329,11 +400,27 @@ export default function LancamentosPage() {
           totalCount={lancamentosDoTipo.length}
           onDeleteAll={handleDeleteEmMassa}
           onExport={handleExportCsv}
+          onImport={() => setImportModalOpen(true)}
+          selecting={selecting}
+          onToggleSelecting={() => {
+            setSelecting((current) => !current);
+            setSelectedIds(new Set());
+          }}
           onNew={() => {
             setEditing(null);
+            setDuplicating(false);
             setModalOpen(true);
           }}
         />
+        {selecting && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-card bg-white p-3 shadow-card dark:bg-ink-700">
+            <button type="button" onClick={() => setSelectedIds(new Set(lancamentosFiltrados.map((item) => item.id)))} className="text-xs font-medium text-ledger-600">Selecionar todos</button>
+            <span className="flex-1 text-center text-xs text-ink-300">{selectedIds.size} selecionado(s)</span>
+            <button type="button" disabled={!selectedIds.size} onClick={exportSelected} className="text-xs text-ink-500 disabled:opacity-40">Exportar</button>
+            <button type="button" disabled={!selectedIds.size} onClick={() => setBulkModalOpen(true)} className="rounded-pill bg-ledger-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40">Editar</button>
+            <button type="button" disabled={!selectedIds.size} onClick={deleteSelected} className="text-xs text-signal-500 disabled:opacity-40">Excluir</button>
+          </div>
+        )}
         <LancamentosList
           items={lancamentosFiltrados}
           totalCount={lancamentosDoTipo.length}
@@ -346,8 +433,12 @@ export default function LancamentosPage() {
           }}
           onNew={() => {
             setEditing(null);
+            setDuplicating(false);
             setModalOpen(true);
           }}
+          selecting={selecting}
+          selectedIds={selectedIds}
+          onToggle={toggleSelected}
         />
 
         <UsageIndicator feature={FEATURES.RECORRENCIAS} count={recorrenciasAtivasCount} label="recorrências ativas" />
@@ -369,9 +460,25 @@ export default function LancamentosPage() {
         defaultTipo={tab}
         defaultDate={defaultDateForNovo}
         defaultMonthKey={defaultMonthKeyForNovo}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          setDuplicating(false);
+        }}
         onSave={handleSave}
         onDelete={handleDeleteLancamento}
+        copyMode={duplicating}
+        onDuplicate={(item) => {
+          const copy = {
+            ...item,
+            descricao: `${item.descricao} (cópia)`,
+            origemRecorrenciaId: null,
+            parcelamentoId: null,
+            parcelaAtual: null,
+            totalParcelas: null,
+          };
+          setEditing(copy);
+          setDuplicating(true);
+        }}
       />
 
       <RecorrenciaModal
@@ -381,6 +488,21 @@ export default function LancamentosPage() {
         onClose={() => setRecorrenciaModalOpen(false)}
         onSave={handleSaveRecorrencia}
         onDelete={handleDeleteRecorrencia}
+      />
+      <ImportarExtratoModal
+        open={importModalOpen}
+        uid={uid}
+        categorias={categorias}
+        onClose={() => setImportModalOpen(false)}
+        onImported={reload}
+      />
+      <AcoesEmMassaModal
+        open={bulkModalOpen}
+        count={selectedIds.size}
+        tipo={tab}
+        categorias={categorias}
+        onClose={() => setBulkModalOpen(false)}
+        onApply={applyBulk}
       />
     </>
   );

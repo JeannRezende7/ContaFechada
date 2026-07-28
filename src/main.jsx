@@ -6,6 +6,7 @@ import { AuthProvider } from './contexts/AuthContext.jsx';
 import { ConfirmProvider } from './contexts/ConfirmContext.jsx';
 import { ThemeProvider } from './contexts/ThemeContext.jsx';
 import { PremiumProvider } from './contexts/PremiumContext.jsx';
+import { PrivacyProvider } from './contexts/PrivacyContext.jsx';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -15,7 +16,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <AuthProvider>
           <ConfirmProvider>
             <PremiumProvider>
-              <App />
+              <PrivacyProvider>
+                <App />
+              </PrivacyProvider>
             </PremiumProvider>
           </ConfirmProvider>
         </AuthProvider>

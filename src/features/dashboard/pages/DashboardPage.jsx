@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey());
   const [indicators, setIndicators] = useState(null);
   const [comparacao, setComparacao] = useState(null);
+  const [dashboardItems, setDashboardItems] = useState({ atual: [], anterior: [] });
   const [categorias, setCategorias] = useState([]);
   const [metaEconomia, setMetaEconomia] = useState(null);
   const [editandoMeta, setEditandoMeta] = useState(false);
@@ -53,6 +54,7 @@ export default function DashboardPage() {
       cachePainted = true;
       setIndicators(memory.indicators);
       setComparacao(memory.comparacao);
+      setDashboardItems({ atual: memory.lancamentosAtual || [], anterior: memory.lancamentosAnterior || [] });
     } else {
       setIndicators(null);
       setComparacao(null);
@@ -70,6 +72,7 @@ export default function DashboardPage() {
           cachePainted = true;
           setIndicators(cached.indicators);
           setComparacao(cached.comparacao);
+          setDashboardItems({ atual: cached.lancamentosAtual || [], anterior: cached.lancamentosAnterior || [] });
           if (import.meta.env.DEV) {
             console.debug(`[dashboard] cache em ${Math.round(performance.now() - startedAt)}ms`);
           }
@@ -92,6 +95,7 @@ export default function DashboardPage() {
         serverApplied = true;
         setIndicators(data.indicators);
         setComparacao(data.comparacao);
+        setDashboardItems({ atual: data.lancamentosAtual || [], anterior: data.lancamentosAnterior || [] });
         setRefreshing(false);
         if (import.meta.env.DEV) {
           console.debug(`[dashboard] servidor em ${Math.round(performance.now() - startedAt)}ms`);
@@ -105,6 +109,7 @@ export default function DashboardPage() {
             if (cancelled || !updated) return;
             setIndicators(updated.indicators);
             setComparacao(updated.comparacao);
+            setDashboardItems({ atual: updated.lancamentosAtual || [], anterior: updated.lancamentosAnterior || [] });
           })
           .catch((error) => {
             if (import.meta.env.DEV) console.debug('[dashboard] sincronização de recorrências falhou', error);
@@ -154,8 +159,10 @@ export default function DashboardPage() {
       saldoMes: indicators.saldoMes,
       diasRestantes,
       diasNoMes,
+      lancamentosAtual: dashboardItems.atual,
+      lancamentosAnterior: dashboardItems.anterior,
     });
-  }, [indicators, comparacao, categoriasById, diasRestantes, diasNoMes]);
+  }, [indicators, comparacao, categoriasById, diasRestantes, diasNoMes, dashboardItems]);
 
   async function handleSalvarMeta() {
     const valor = Number(metaInput);

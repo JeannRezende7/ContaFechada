@@ -1,0 +1,424 @@
+MELHORIAS DE FUNCIONALIDADES — CONTA FECHADA
+============================================
+
+Documento criado em 28/07/2026.
+
+
+1. PRIORIDADE ALTA — PREVISÃO DE SALDO [CONCLUÍDO EM 28/07/2026]
+--------------------------------------
+
+Objetivo:
+
+- Mostrar como o saldo deve evoluir ao longo do mês.
+
+Funcionalidades:
+
+- Saldo atual.
+- Receitas previstas.
+- Despesas e recorrências futuras.
+- Menor saldo previsto do mês.
+- Data provável em que o saldo ficará negativo.
+- Linha do tempo diária ou semanal.
+- Comparação entre saldo realizado e saldo previsto.
+
+Essa funcionalidade aproveita lançamentos, recorrências e parcelamentos que já
+existem e reforça diretamente a proposta do Conta Fechada.
+
+
+2. PRIORIDADE ALTA — ORÇAMENTO POR CATEGORIA [CONCLUÍDO EM 28/07/2026]
+-------------------------------------------
+
+Funcionalidades:
+
+- Definir um limite mensal por categoria.
+- Exibir valor utilizado e valor restante.
+- Mostrar percentual consumido.
+- Alertar ao atingir 80% e 100%.
+- Comparar o orçamento com meses anteriores.
+- Permitir copiar os orçamentos para o mês seguinte.
+
+
+3. PRIORIDADE ALTA — CENTRAL DE PENDÊNCIAS [CONCLUÍDO EM 28/07/2026]
+-----------------------------------------
+
+Criar uma tela ou seção reunindo:
+
+- Contas vencidas.
+- Vencimentos dos próximos sete dias.
+- Receitas ainda não recebidas.
+- Lançamentos sem categoria.
+- Recorrências que precisam de revisão.
+- Parcelamentos próximos do fim.
+
+
+4. PRIORIDADE ALTA — NOTIFICAÇÕES DE VENCIMENTO [CONCLUÍDO EM 28/07/2026]
+----------------------------------------------
+
+Notificações locais para Android e PWA:
+
+- Conta vence amanhã.
+- Conta venceu.
+- Receita prevista continua pendente.
+- Orçamento de categoria próximo do limite.
+- Lembrete para fechar o mês.
+
+Começar com notificações locais, sem depender de um servidor de push.
+
+
+5. PRIORIDADE ALTA — CONCILIAÇÃO E FECHAMENTO MENSAL [CONCLUÍDO EM 28/07/2026]
+---------------------------------------------------
+
+Criar um fluxo para:
+
+- Revisar lançamentos pendentes.
+- Confirmar pagamentos e recebimentos.
+- Comparar saldo calculado com saldo real.
+- Registrar ajustes de saldo.
+- Levar pendências para o mês seguinte.
+- Salvar um resumo imutável do fechamento.
+- Comparar o fechamento com meses anteriores.
+
+
+6. IMPORTAÇÃO POR CSV E OFX [CONCLUÍDO EM 28/07/2026]
+---------------------------
+
+Funcionalidades:
+
+- Importar extratos bancários em CSV.
+- Importar arquivos OFX.
+- Exibir prévia antes da importação.
+- Detectar lançamentos duplicados.
+- Permitir alterar categoria antes de confirmar.
+- Mostrar relatório de itens importados, ignorados e duplicados.
+
+CSV e OFX devem ter prioridade sobre PDF por serem formatos mais estruturados
+e confiáveis.
+
+
+7. REGRAS AUTOMÁTICAS DE CATEGORIZAÇÃO [CONCLUÍDO EM 28/07/2026]
+--------------------------------------
+
+Exemplos:
+
+- Descrição contendo “Uber” -> Transporte.
+- Descrição contendo “iFood” -> Alimentação.
+- Descrição contendo “Netflix” -> Assinaturas.
+
+Funcionalidades:
+
+- Criar, editar e excluir regras.
+- Sugerir uma regra ao corrigir uma categoria.
+- Aplicar a regra durante importações.
+- Permitir aplicar uma regra aos lançamentos antigos.
+- Definir prioridade quando várias regras forem compatíveis.
+
+
+8. AÇÕES EM MASSA [CONCLUÍDO EM 28/07/2026]
+-----------------
+
+Permitir selecionar vários lançamentos para:
+
+- Marcar como pagos ou recebidos.
+- Alterar categoria.
+- Alterar vencimento.
+- Adicionar observação.
+- Excluir.
+- Exportar.
+
+
+9. DUPLICAR LANÇAMENTO [CONCLUÍDO EM 28/07/2026]
+----------------------
+
+Adicionar uma ação para copiar um lançamento existente, permitindo alterar:
+
+- Data.
+- Valor.
+- Descrição.
+- Categoria.
+- Status.
+
+
+10. INSIGHTS MAIS ACIONÁVEIS [CONCLUÍDO EM 28/07/2026]
+----------------------------
+
+Melhorias:
+
+- Mostrar quais lançamentos causaram o aumento de uma categoria.
+- Sugerir orçamento baseado na média dos últimos meses.
+- Identificar possíveis assinaturas esquecidas.
+- Destacar gastos incomuns.
+- Comparar compromissos fixos com a renda.
+- Explicar sempre como cada valor ou sugestão foi calculado.
+- Oferecer um atalho para abrir os lançamentos relacionados.
+
+
+11. SIMULADOR DE COMPRA PARCELADA [CONCLUÍDO EM 28/07/2026]
+---------------------------------
+
+Antes de cadastrar uma compra:
+
+- Informar valor, entrada e número de parcelas.
+- Mostrar o comprometimento dos próximos meses.
+- Exibir o menor saldo previsto.
+- Comparar diferentes quantidades de parcelas.
+- Avisar quando alguma parcela causar saldo negativo.
+- Permitir transformar a simulação em um lançamento real.
+
+
+12. METAS COM CONTRIBUIÇÃO AUTOMÁTICA [CONCLUÍDO EM 28/07/2026]
+-------------------------------------
+
+Permitir vincular regras às metas:
+
+- Reservar uma porcentagem de toda receita.
+- Aportar um valor fixo mensalmente.
+- Destinar o saldo positivo do fechamento mensal.
+- Criar lembretes de aporte.
+- Mostrar previsão da data de conclusão.
+
+
+13. ONBOARDING INICIAL [CONCLUÍDO EM 28/07/2026]
+----------------------
+
+No primeiro acesso:
+
+- Explicar rapidamente o conceito do aplicativo.
+- Cadastrar renda principal.
+- Adicionar contas recorrentes.
+- Escolher ou revisar categorias.
+- Definir uma primeira meta.
+- Mostrar o primeiro resumo financeiro.
+- Permitir pular e retomar o onboarding posteriormente.
+
+
+14. BUSCA GLOBAL [CONCLUÍDO EM 28/07/2026]
+----------------
+
+Pesquisar em um único lugar:
+
+- Lançamentos.
+- Categorias.
+- Metas.
+- Recorrências.
+- Parcelamentos.
+
+Adicionar filtros por tipo, período, categoria, valor e status.
+
+
+15. MODO PRIVACIDADE [CONCLUÍDO EM 28/07/2026]
+--------------------
+
+Adicionar um botão para ocultar valores financeiros:
+
+- Substituir valores por marcadores.
+- Manter descrições visíveis.
+- Aplicar em todas as telas.
+- Lembrar a preferência no dispositivo.
+- Facilitar o uso em locais públicos e capturas de tela.
+
+
+ORDEM RECOMENDADA DE IMPLEMENTAÇÃO
+==================================
+
+1. Previsão de saldo.
+2. Orçamento por categoria.
+3. Central de pendências.
+4. Conciliação e fechamento mensal.
+5. Notificações de vencimento.
+6. Regras automáticas de categorização.
+7. Importação CSV e OFX.
+8. Simulador de compra parcelada.
+9. Ações em massa.
+10. Metas com contribuição automática.
+11. Busca global.
+12. Modo privacidade.
+13. Onboarding inicial.
+14. Insights mais acionáveis.
+15. Duplicar lançamento.
+
+
+RECOMENDAÇÃO PARA A PRÓXIMA ENTREGA
+===================================
+
+Começar pela previsão de saldo porque:
+
+- aproveita a estrutura atual de lançamentos, recorrências e parcelamentos;
+- entrega valor sem exigir uma grande mudança no modelo de dados;
+- ajuda o usuário a tomar decisões antes de o saldo ficar negativo;
+- diferencia o Conta Fechada de um simples registrador de despesas;
+- cria uma base reutilizável para notificações, orçamento e simulador de
+  parcelamentos.
+
+
+ENTREGA DOS PONTOS 1, 2 E 3 — 28/07/2026
+========================================
+
+Nova área de Planejamento:
+
+- Página acessível pelo menu lateral, navegação inferior e início.
+- Navegação mensal compartilhada entre previsão e orçamentos.
+- Abas para Previsão, Orçamentos e Pendências.
+
+Previsão de saldo:
+
+- Configuração do saldo inicial de cada mês.
+- Saldo previsto para hoje.
+- Saldo previsto no encerramento do mês.
+- Menor saldo previsto.
+- Identificação da primeira data com saldo negativo.
+- Linha do tempo cronológica agrupada por dia.
+- Receitas somadas e despesas descontadas pela data de vencimento.
+
+Orçamento por categoria:
+
+- Limite independente para cada categoria de despesa.
+- Persistência dos limites por usuário e mês.
+- Total gasto, valor restante e percentual utilizado.
+- Estados normal, atenção a partir de 80% e excedido a partir de 100%.
+- Possibilidade de remover um limite informando valor zero.
+
+Central de pendências:
+
+- Contas atrasadas, inclusive de meses anteriores.
+- Vencimentos dos próximos sete dias.
+- Receitas pendentes.
+- Lançamentos sem categoria.
+- Recorrências incompletas para revisão.
+- Parcelamentos nas duas últimas parcelas.
+- Atalho para abrir a tela de lançamentos.
+
+Segurança e dados:
+
+- Criada coleção planejamento com regra explícita de acesso pelo proprietário.
+- Planejamento incluído na exportação e exclusão completa dos dados da conta.
+- Cálculos financeiros isolados em funções puras e testáveis.
+- 87 testes da aplicação aprovados em 13 arquivos.
+- Testes das regras aprovados no Firebase Emulator.
+- Regra da coleção planejamento publicada no Firebase.
+- ESLint e build de produção aprovados.
+
+
+ENTREGA DOS PONTOS 4, 5 E 6 — 28/07/2026
+========================================
+
+Notificações:
+
+- Integração com o plugin oficial de notificações locais do Capacitor.
+- Permissão solicitada somente quando o usuário ativa os alertas.
+- Android agenda lembretes mesmo com o aplicativo fechado.
+- PWA avisa sobre vencimentos ao abrir o aplicativo, conforme a limitação do navegador.
+- Lembretes para contas e receitas na véspera e para o fechamento no último dia do mês.
+- Horário configurável e opção para cancelar os agendamentos.
+
+Fechamento mensal:
+
+- Comparação entre receitas e despesas realizadas, saldo calculado e saldo real.
+- Registro da diferença e de observações.
+- Contagem das pendências no momento do fechamento.
+- Opção para transferir pendências para o mês seguinte.
+- Resumo mensal imutável depois de salvo.
+- Fechamentos incluídos na exportação e na exclusão completa da conta.
+
+Importação CSV e OFX:
+
+- Leitura local dos arquivos, sem enviar extratos para outro servidor.
+- Suporte a datas e valores nos formatos brasileiro e ISO.
+- Prévia com seleção individual e categorização antes da confirmação.
+- Identificação idempotente para ignorar lançamentos já importados.
+- Relatório de importados, duplicados e ignorados.
+
+Validação:
+
+- 94 testes da aplicação aprovados em 16 arquivos.
+- 8 testes das regras do Firestore aprovados.
+- Regras da coleção de fechamentos publicadas no Firebase.
+- Lint, build PWA e sincronização do projeto Android aprovados.
+
+
+ENTREGA DOS PONTOS 7, 8 E 9 — 28/07/2026
+========================================
+
+Regras automáticas:
+
+- Criação por termo contido na descrição, tipo e categoria.
+- Prioridade configurável quando várias regras combinam.
+- Edição, ativação, desativação e exclusão.
+- Aplicação automática nas importações CSV e OFX.
+- Aplicação opcional aos lançamentos antigos sem categoria.
+- Sugestão para criar uma regra ao corrigir manualmente uma categoria.
+
+Ações em massa:
+
+- Seleção individual ou de todos os resultados filtrados.
+- Alteração de status, categoria e vencimento.
+- Inclusão de observações sem apagar o texto anterior.
+- Exclusão protegida por confirmação.
+- Exportação apenas dos itens selecionados, respeitando o plano do usuário.
+
+Duplicação:
+
+- Ação disponível na edição de qualquer lançamento.
+- Cópia aberta no formulário para revisão antes de salvar.
+- Descrição, data, valor, categoria e status podem ser alterados.
+- Vínculos de recorrência e parcelamento não são copiados.
+
+
+ENTREGA DOS PONTOS 10, 11 E 12 — 28/07/2026
+==========================================
+
+Insights acionáveis:
+
+- Identificação dos lançamentos que mais impactaram a alta de uma categoria.
+- Sugestão de orçamento pela média dos dois últimos meses.
+- Detecção de despesas incomuns em relação à média mensal.
+- Identificação de possíveis assinaturas pela repetição entre meses.
+- Comparação de recorrências e parcelas com a renda cadastrada.
+- Explicação do cálculo exibida em cada insight.
+- Atalho para abrir os lançamentos relacionados com a busca preenchida.
+
+Simulador de compra parcelada:
+
+- Configuração de valor, entrada, parcelas, vencimento e categoria.
+- Comparação automática entre diferentes quantidades de parcelas.
+- Valor da parcela, menor saldo projetado e primeira data negativa.
+- Consideração dos demais lançamentos já previstos.
+- Conversão da opção escolhida em entrada e parcelamento reais.
+
+Metas automáticas:
+
+- Aporte mensal por valor fixo.
+- Reserva de uma porcentagem das receitas recebidas.
+- Uso do saldo positivo registrado no fechamento.
+- Proteção contra aplicar o mesmo aporte mais de uma vez no mês.
+- Lembrete mensal visível para revisão.
+- Previsão do mês de conclusão com explicação do aporte estimado.
+
+
+ENTREGA DOS PONTOS 13, 14 E 15 — 28/07/2026
+==========================================
+
+Onboarding:
+
+- Apresentação curta do conceito do aplicativo.
+- Cadastro opcional de renda e conta recorrentes.
+- Preparação e revisão automática das categorias padrão.
+- Criação opcional da primeira meta.
+- Resumo antes da conclusão.
+- Possibilidade de pular e retomar posteriormente pelas Opções.
+- Proteção contra duplicar configurações ao executar novamente.
+
+Busca global:
+
+- Pesquisa em lançamentos, parcelamentos, recorrências, categorias e metas.
+- Filtros por recurso, tipo, status, categoria, datas e faixa de valor.
+- Busca sem diferenciação de maiúsculas e acentos.
+- Atalhos para abrir o recurso ou lançamento encontrado.
+- Acesso pelo ícone de pesquisa presente em todas as telas.
+
+Modo privacidade:
+
+- Botão rápido em todas as barras superiores.
+- Configuração adicional na tela de Opções.
+- Valores substituídos por marcadores sem ocultar descrições.
+- Aplicação global em todas as telas e formulários monetários.
+- Preferência lembrada localmente no dispositivo.

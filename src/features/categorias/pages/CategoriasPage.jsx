@@ -8,6 +8,7 @@ import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
 import CategoriaModal from '../components/CategoriaModal.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
+import RegrasCategorizacao from '../components/RegrasCategorizacao.jsx';
 
 export default function CategoriasPage() {
   const { user } = useAuth();
@@ -109,6 +110,7 @@ export default function CategoriasPage() {
             <p className="col-span-full text-sm text-ink-300 text-center py-6">Nenhuma categoria ainda.</p>
           )}
         </div>
+        <RegrasCategorizacao uid={uid} categorias={categorias} />
       </div>
 
       <CategoriaModal

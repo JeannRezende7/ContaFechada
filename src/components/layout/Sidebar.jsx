@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Receipt, Tag, PieChart, Target, Landmark, Crown } from 'lucide-react';
+import { Home, Receipt, Tag, PieChart, Target, Landmark, Crown, CalendarRange } from 'lucide-react';
 import BrandIcon from '../ui/BrandIcon.jsx';
 import { usePremium } from '../../contexts/PremiumContext.jsx';
 import { PREMIUM_ENFORCED } from '../../config/premium.js';
@@ -9,6 +9,7 @@ import { track, EVENTS } from '../../utils/analytics.js';
 const ITEMS = [
   { to: '/', label: 'Início', icon: Home },
   { to: '/lancamentos', label: 'Lançamentos', icon: Receipt },
+  { to: '/planejamento', label: 'Planejamento', icon: CalendarRange },
   { to: '/categorias', label: 'Categorias', icon: Tag },
   { to: '/relatorios', label: 'Relatórios', icon: PieChart },
   { to: '/metas', label: 'Metas', icon: Target },

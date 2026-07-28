@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import {
   CalendarClock,
+  CalendarRange,
   ChevronRight,
   Clock,
   Flame,
@@ -203,8 +204,16 @@ export function InsightsCard({ insights }) {
         <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Insights automáticos</p>
       </div>
       <ul className="flex flex-col gap-1.5">
-        {insights.map((texto) => (
-          <li key={texto} className="text-sm text-ink-500 pl-2">• {texto}</li>
+        {insights.map((insight, index) => (
+          <li key={`${insight.title || insight}-${index}`} className="rounded-xl bg-ink-50 p-3 text-sm dark:bg-ink-900">
+            <p className="font-medium text-ink-700 dark:text-ink-100">{insight.title || insight}</p>
+            {insight.detail && <p className="mt-1 text-xs text-ink-300">{insight.detail}</p>}
+            {typeof insight === 'object' && (
+              <Link to={`/lancamentos${insight.query ? `?q=${encodeURIComponent(insight.query)}` : ''}`} className="mt-1.5 inline-block text-xs font-medium text-ledger-600 hover:underline">
+                Ver lançamentos relacionados
+              </Link>
+            )}
+          </li>
         ))}
       </ul>
     </div>
@@ -215,10 +224,17 @@ export function DashboardLinks() {
   return (
     <>
       <DashboardLink
+        to="/planejamento"
+        icon={CalendarRange}
+        tone="bg-ledger-50 text-ledger-600"
+        text="Antecipe seu saldo, defina orçamentos e resolva pendências"
+      />
+      <DashboardLink
         to="/relatorios"
         icon={PieChart}
         tone="bg-clay-50 text-clay-500"
         text="Veja a distribuição de gastos por categoria e a evolução mês a mês"
+        className="mt-3"
       />
       <DashboardLink
         to="/gestor"

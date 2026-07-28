@@ -42,10 +42,12 @@ export default function LancamentoModal({
   onClose,
   onSave,
   onDelete,
+  onDuplicate,
+  copyMode = false,
 }) {
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
-  const isNew = !initialData;
+  const isNew = !initialData || copyMode;
   const confirm = useConfirm();
   const confirmChoice = useConfirmChoice();
 
@@ -175,7 +177,7 @@ export default function LancamentoModal({
         <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
 
         <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-4">
-          {isNew ? 'Novo lançamento' : 'Editar lançamento'}
+          {copyMode ? 'Duplicar lançamento' : isNew ? 'Novo lançamento' : 'Editar lançamento'}
         </h2>
 
         <div className="flex gap-2 mb-4">
@@ -384,13 +386,14 @@ export default function LancamentoModal({
         </div>
 
         {!isNew && (
-          <button
-            type="button"
-            onClick={handleDeleteClick}
-            className="w-full mt-2 rounded-xl py-2 text-xs font-medium text-signal-500 hover:bg-signal-50 transition-colors"
-          >
-            Excluir lançamento
-          </button>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => onDuplicate(initialData)} className="rounded-xl py-2 text-xs font-medium text-ledger-600 hover:bg-ledger-50">
+              Duplicar lançamento
+            </button>
+            <button type="button" onClick={handleDeleteClick} className="rounded-xl py-2 text-xs font-medium text-signal-500 hover:bg-signal-50 transition-colors">
+              Excluir lançamento
+            </button>
+          </div>
         )}
       </form>
     </div>

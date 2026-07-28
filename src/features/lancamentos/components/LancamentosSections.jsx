@@ -1,4 +1,4 @@
-import { Download, Plus, Repeat, Search, Sprout, Trash2, X } from 'lucide-react';
+import { CheckSquare, Download, FileUp, Plus, Repeat, Search, Sprout, Trash2, X } from 'lucide-react';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import LancamentoRow from './LancamentoRow.jsx';
 
@@ -49,6 +49,9 @@ export function LancamentosActions({
   totalCount,
   onDeleteAll,
   onExport,
+  onImport,
+  onToggleSelecting,
+  selecting,
   onNew,
 }) {
   return (
@@ -75,6 +78,19 @@ export function LancamentosActions({
             <Download size={14} strokeWidth={2} />
           </button>
         )}
+        <button
+          type="button"
+          onClick={onImport}
+          aria-label="Importar extrato CSV ou OFX"
+          className="text-ink-300 hover:text-ledger-600 transition-colors shrink-0"
+        >
+          <FileUp size={14} strokeWidth={2} />
+        </button>
+        {totalCount > 0 && (
+          <button type="button" onClick={onToggleSelecting} aria-label="Selecionar lançamentos" className={selecting ? 'text-ledger-600' : 'text-ink-300 hover:text-ledger-600'}>
+            <CheckSquare size={14} />
+          </button>
+        )}
       </div>
       <button
         type="button"
@@ -96,6 +112,9 @@ export function LancamentosList({
   onStatusChange,
   onSelect,
   onNew,
+  selecting = false,
+  selectedIds = new Set(),
+  onToggle,
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -106,6 +125,9 @@ export function LancamentosList({
           categoria={categoriasById[item.categoriaId]}
           onStatusChange={onStatusChange}
           onClick={onSelect}
+          selecting={selecting}
+          selected={selectedIds.has(item.id)}
+          onToggle={onToggle}
         />
       ))}
       {totalCount === 0 && (

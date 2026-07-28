@@ -14,10 +14,12 @@ const CategoriasPage = lazyWithRetry(() => import('../features/categorias/pages/
 const RelatoriosPage = lazyWithRetry(() => import('../features/relatorios/pages/RelatoriosPage.jsx'));
 const MetasPage = lazyWithRetry(() => import('../features/metas/pages/MetasPage.jsx'));
 const GestorFinanceiroPage = lazyWithRetry(() => import('../features/gestor/pages/GestorFinanceiroPage.jsx'));
+const PlanejamentoPage = lazyWithRetry(() => import('../features/planejamento/pages/PlanejamentoPage.jsx'));
 const OpcoesPage = lazyWithRetry(() => import('../features/opcoes/pages/OpcoesPage.jsx'));
 const MeuPlanoPage = lazyWithRetry(() => import('../features/premium/pages/MeuPlanoPage.jsx'));
 const TermosPage = lazyWithRetry(() => import('../features/legal/pages/TermosPage.jsx'));
 const PrivacidadePage = lazyWithRetry(() => import('../features/legal/pages/PrivacidadePage.jsx'));
+const BuscaGlobalPage = lazyWithRetry(() => import('../features/busca/pages/BuscaGlobalPage.jsx'));
 
 export default function AppRoutes() {
   return (
@@ -45,8 +47,10 @@ export default function AppRoutes() {
           <Route path="/relatorios" element={<RelatoriosPage />} />
           <Route path="/metas" element={<MetasPage />} />
           <Route path="/gestor" element={<GestorFinanceiroPage />} />
+          <Route path="/planejamento" element={<PlanejamentoPage />} />
           <Route path="/opcoes" element={<OpcoesPage />} />
           <Route path="/opcoes/meu-plano" element={<MeuPlanoPage />} />
+          <Route path="/buscar" element={<BuscaGlobalPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/entrar" replace />} />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive } from 'lucide-react';
+import { Eye, EyeOff, ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -16,6 +16,7 @@ import { deleteAccount, signOutUser } from '../../../firebase/auth.js';
 import { clearDeviceData } from '../../../utils/deviceCache.js';
 import { track, EVENTS } from '../../../utils/analytics.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
+import { usePrivacy } from '../../../contexts/PrivacyContext.jsx';
 
 export default function OpcoesPage() {
   const { user } = useAuth();
@@ -23,6 +24,7 @@ export default function OpcoesPage() {
   const { isPremium } = usePremium();
   const [loading, setLoading] = useState(null);
   const [gestorUsaMovimento, setGestorUsaMovimentoState] = useState(true);
+  const privacy = usePrivacy();
 
   useEffect(() => {
     if (!user) return;
@@ -132,6 +134,18 @@ export default function OpcoesPage() {
     <>
       <Topbar title="Opções" icon={Settings} />
       <div className="p-4 md:p-8 max-w-2xl mx-auto flex flex-col gap-4">
+        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span className="w-8 h-8 rounded-full bg-ledger-50 text-ledger-600 flex items-center justify-center">{privacy.enabled ? <EyeOff size={15} /> : <Eye size={15} />}</span>
+            <div><p className="text-sm font-medium">Modo privacidade</p><p className="text-xs text-ink-300">Oculta valores em todas as telas e capturas.</p></div>
+          </div>
+          <button role="switch" aria-checked={privacy.enabled} onClick={privacy.toggle} className={`relative h-6 w-11 rounded-pill ${privacy.enabled ? 'bg-ledger-500' : 'bg-ink-100 dark:bg-ink-900'}`}><span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${privacy.enabled ? 'translate-x-5' : ''}`} /></button>
+        </div>
+
+        <button onClick={() => window.dispatchEvent(new Event('contafechada:open-onboarding'))} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 text-left hover:shadow-card-hover">
+          <div className="flex items-start gap-3"><span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><ListRestart size={15} /></span><div><p className="text-sm font-medium">Retomar configuração inicial</p><p className="text-xs text-ink-300">Revise renda, recorrências, categorias e sua primeira meta.</p></div></div>
+          <ChevronRight size={16} className="text-ink-300" />
+        </button>
         <Link
           to="/opcoes/meu-plano"
           onClick={() => !isPremium && track(EVENTS.PREMIUM_CARD_CLICKED, { placement: 'opcoes' })}

@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom';
-import { LogOut, Settings, Sun, Moon } from 'lucide-react';
+import { Eye, EyeOff, LogOut, Search, Settings, Sun, Moon } from 'lucide-react';
 import { signOutUser } from '../../firebase/auth.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useTheme } from '../../contexts/ThemeContext.jsx';
+import { usePrivacy } from '../../contexts/PrivacyContext.jsx';
 
 export default function Topbar({ title, icon: Icon }) {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const privacy = usePrivacy();
 
   return (
     <header className="flex items-center justify-between px-4 py-3 md:px-8 md:py-5 border-b border-ink-100 dark:border-ink-700 bg-paper/95 dark:bg-ink-900/95 backdrop-blur sticky top-0 z-10">
@@ -15,6 +17,12 @@ export default function Topbar({ title, icon: Icon }) {
         {title}
       </h1>
       <div className="flex items-center gap-3 md:gap-4">
+        <Link to="/buscar" aria-label="Busca global" className="flex items-center text-ink-300 hover:text-ledger-600">
+          <Search size={18} />
+        </Link>
+        <button onClick={privacy.toggle} aria-label={privacy.enabled ? 'Mostrar valores' : 'Ocultar valores'} className="flex items-center text-ink-300 hover:text-ledger-600">
+          {privacy.enabled ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
         {user?.photoURL ? (
           <img
             src={user.photoURL}

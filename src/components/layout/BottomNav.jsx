@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Receipt, Tag, PieChart, Target, Landmark } from 'lucide-react';
+import { Home, Receipt, Tag, PieChart, Target, Landmark, CalendarRange } from 'lucide-react';
 
 const ITEMS = [
   { to: '/', label: 'Início', icon: Home },
-  { to: '/lancamentos', label: 'Lançamentos', icon: Receipt },
+  { to: '/lancamentos', label: 'Movimento', icon: Receipt },
+  { to: '/planejamento', label: 'Planejar', icon: CalendarRange },
   { to: '/categorias', label: 'Categorias', icon: Tag },
   { to: '/relatorios', label: 'Relatórios', icon: PieChart },
   { to: '/metas', label: 'Metas', icon: Target },
@@ -25,7 +26,7 @@ export default function BottomNav() {
             to={item.to}
             end={item.to === '/'}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 py-2.5 px-1 text-[10px] font-medium ${
+              `flex flex-1 min-w-0 flex-col items-center gap-1 py-2.5 px-0.5 text-[10px] font-medium ${
                 isActive ? 'text-ledger-600' : 'text-ink-300'
               }`
             }

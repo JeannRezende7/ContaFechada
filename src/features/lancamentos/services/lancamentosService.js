@@ -14,6 +14,8 @@ import {
 } from '../../../firebase/firestore.js';
 import { monthRangeBounds, shiftMonthKey, clampDayToMonth } from '../../../utils/monthKey.js';
 import { slugify } from '../../../utils/slugify.js';
+import { listRegrasCategorizacao } from '../../categorias/services/regrasCategorizacaoService.js';
+import { aplicarRegras } from '../../categorias/utils/regrasCategorizacao.js';
 
 const COLLECTION = 'lancamentos';
 
@@ -248,14 +250,21 @@ export function buildImportPayload(itens, idsExistentes) {
 
 /** Bulk-creates parsed statement/fatura transactions in the main Movimento — see `buildImportPayload`. */
 export async function importLancamentos(uid, itens) {
-  const existentes = await listUserDocs(uid, COLLECTION);
+  const [existentes, regras] = await Promise.all([
+    listUserDocs(uid, COLLECTION),
+    listRegrasCategorizacao(uid),
+  ]);
   const idsExistentes = new Set(existentes.map((d) => d.id));
 
-  const { novos, totalConsiderados } = buildImportPayload(itens, idsExistentes);
+  const { novos, totalConsiderados } = buildImportPayload(aplicarRegras(itens, regras), idsExistentes);
 
   const idsNovos = Object.keys(novos);
   if (idsNovos.length > 0) await batchSetUserDocs(uid, COLLECTION, novos);
   return { importados: idsNovos.length, duplicados: totalConsiderados - idsNovos.length };
+}
+
+export function updateLancamentosEmMassa(uid, updatesById) {
+  return batchUpdateUserDocsWithData(uid, COLLECTION, updatesById);
 }
 
 /** Deletes exactly the given lançamentos — used for "excluir deste período" bulk actions. */

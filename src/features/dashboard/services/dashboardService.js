@@ -115,6 +115,8 @@ async function loadDashboardMonths(uid, monthKey, source = 'default') {
   return {
     indicators: computeIndicators(lancamentosAtual, monthKey),
     comparacao: computeComparacao(lancamentosAtual, lancamentosAnterior),
+    lancamentosAtual,
+    lancamentosAnterior,
     documentCount: lancamentosAtual.length + lancamentosAnterior.length,
   };
 }

@@ -62,6 +62,24 @@ describe('Firestore owner data', () => {
     await assertSucceeds(setDoc(doc(ownerDb, path), { valor: 10 }));
     await assertSucceeds(getDoc(doc(ownerDb, path)));
     await assertFails(getDoc(doc(otherDb, path)));
+
+    const planningPath = 'users/user-a/planejamento/2026-07';
+    await assertSucceeds(setDoc(doc(ownerDb, planningPath), {
+      monthKey: '2026-07',
+      saldoInicial: 100,
+      orcamentos: { alimentacao: 500 },
+    }));
+    await assertFails(getDoc(doc(otherDb, planningPath)));
+
+    const rulePath = 'users/user-a/regrasCategorizacao/regra-1';
+    await assertSucceeds(setDoc(doc(ownerDb, rulePath), { termo: 'Uber', categoriaId: 'transporte' }));
+    await assertFails(getDoc(doc(otherDb, rulePath)));
+
+    const closingPath = 'users/user-a/fechamentos/2026-07';
+    await assertSucceeds(setDoc(doc(ownerDb, closingPath), { saldoReal: 100 }));
+    await assertSucceeds(getDoc(doc(ownerDb, closingPath)));
+    await assertFails(updateDoc(doc(ownerDb, closingPath), { saldoReal: 200 }));
+    await assertFails(getDoc(doc(otherDb, closingPath)));
   });
 
   it('denies collections that were not explicitly allowed', async () => {

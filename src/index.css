@@ -37,6 +37,21 @@
     font-feature-settings: 'tnum' 1;
     font-variant-numeric: tabular-nums;
   }
+  .privacy-mode .money:not(input):not(textarea) {
+    font-size: 0 !important;
+    color: transparent !important;
+    user-select: none;
+  }
+  .privacy-mode .money:not(input):not(textarea)::after {
+    content: '••••';
+    color: theme('colors.ink.500');
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.875rem;
+  }
+  .privacy-mode input.money,
+  .privacy-mode textarea.money {
+    -webkit-text-security: disc;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

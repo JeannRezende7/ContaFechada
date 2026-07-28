@@ -5,18 +5,28 @@ import { getColor } from '../../categorias/colorMap.js';
 import { getIcon } from '../../categorias/iconMap.js';
 import StatusBadge from './StatusBadge.jsx';
 
-export default function LancamentoRow({ lancamento, categoria, onStatusChange, onClick }) {
+export default function LancamentoRow({ lancamento, categoria, onStatusChange, onClick, selecting, selected, onToggle }) {
   const isReceita = lancamento.tipo === 'receita';
   const Icon = isReceita ? ArrowUpRight : ArrowDownRight;
   const CategoriaIcon = categoria ? getIcon(categoria.icone) : null;
 
   return (
     <div
-      onClick={() => onClick(lancamento)}
+      onClick={() => selecting ? onToggle(lancamento.id) : onClick(lancamento)}
       className="flex items-center justify-between gap-3 px-4 py-3 md:px-5 md:py-4 bg-white dark:bg-ink-700 rounded-card shadow-card
                  cursor-pointer hover:shadow-card-hover hover:-translate-y-px transition-all"
     >
       <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
+        {selecting && (
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => onToggle(lancamento.id)}
+            onClick={(event) => event.stopPropagation()}
+            aria-label={`Selecionar ${lancamento.descricao}`}
+            className="h-4 w-4 rounded border-ink-100 text-ledger-500"
+          />
+        )}
         <span
           className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center shrink-0 ${
             categoria ? getColor(categoria.corKey).dot : isReceita ? 'bg-ledger-50 text-ledger-600' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
@@ -54,13 +64,13 @@ export default function LancamentoRow({ lancamento, categoria, onStatusChange, o
         <span className={`money text-sm md:text-base font-semibold whitespace-nowrap ${isReceita ? 'text-ledger-600' : 'text-ink-900 dark:text-ink-50'}`}>
           {isReceita ? '+' : '-'} {formatCurrency(lancamento.valor)}
         </span>
-        <div onClick={(e) => e.stopPropagation()}>
+        {!selecting && <div onClick={(e) => e.stopPropagation()}>
           <StatusBadge
             status={lancamento.status}
             tipo={lancamento.tipo}
             onChange={(status) => onStatusChange(lancamento.id, status)}
           />
-        </div>
+        </div>}
       </div>
     </div>
   );

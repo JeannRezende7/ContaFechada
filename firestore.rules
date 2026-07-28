@@ -18,6 +18,10 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
+    match /users/{uid}/regrasCategorizacao/{docId} {
+      allow read, write: if isOwner(uid);
+    }
+
     match /users/{uid}/recorrencias/{docId} {
       allow read, write: if isOwner(uid);
     }
@@ -28,6 +32,21 @@ service cloud.firestore {
 
     match /users/{uid}/gestorLancamentos/{docId} {
       allow read, write: if isOwner(uid);
+    }
+
+    match /users/{uid}/planejamento/{docId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Monthly closings are immutable snapshots: the owner may create and
+    // read them, but editing would invalidate the historical reconciliation.
+    match /users/{uid}/fechamentos/{docId} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid);
+      allow update: if false;
+      // Deletion remains available only so the account-deletion flow can
+      // remove every user-owned document.
+      allow delete: if isOwner(uid);
     }
 
     match /users/{uid}/config/{docId} {

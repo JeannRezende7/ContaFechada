@@ -1,10 +1,24 @@
+import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar.jsx';
 import BottomNav from '../components/layout/BottomNav.jsx';
 import TrialBanner from '../features/premium/components/TrialBanner.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import OnboardingWizard from '../features/onboarding/components/OnboardingWizard.jsx';
+import { getOnboardingState } from '../features/onboarding/services/onboardingService.js';
 
 /** Mobile-first: bottom nav + stacked content. From md breakpoint up: sidebar layout. */
 export default function AppLayout() {
+  const { user } = useAuth();
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    getOnboardingState(user.uid).then((state) => setOnboardingOpen(!state.completed && !state.skipped));
+    const open = () => setOnboardingOpen(true);
+    window.addEventListener('contafechada:open-onboarding', open);
+    return () => window.removeEventListener('contafechada:open-onboarding', open);
+  }, [user]);
   return (
     <div className="flex min-h-screen bg-paper dark:bg-ink-900">
       <Sidebar />
@@ -21,6 +35,7 @@ export default function AppLayout() {
         <Outlet />
       </div>
       <BottomNav />
+      <OnboardingWizard uid={user?.uid} open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
     </div>
   );
 }

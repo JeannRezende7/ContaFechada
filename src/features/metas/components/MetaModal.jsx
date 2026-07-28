@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { COLOR_MAP } from '../../categorias/colorMap.js';
 
-const EMPTY = { nome: '', valorAlvo: '', valorAtual: '', corKey: 'azul' };
+const EMPTY = { nome: '', valorAlvo: '', valorAtual: '', corKey: 'azul', aporteTipo: 'nenhum', aporteValor: '', lembreteAporte: false };
 
 /** Create/edit modal for a Meta Financeira (named savings goal with a progress bar). */
 export default function MetaModal({ open, meta, onClose, onSave, onDelete }) {
@@ -17,6 +17,9 @@ export default function MetaModal({ open, meta, onClose, onSave, onDelete }) {
               valorAlvo: meta.valorAlvo ?? '',
               valorAtual: meta.valorAtual ?? 0,
               corKey: meta.corKey ?? 'azul',
+              aporteTipo: meta.aporteAutomatico?.tipo ?? 'nenhum',
+              aporteValor: meta.aporteAutomatico?.valor ?? '',
+              lembreteAporte: meta.aporteAutomatico?.lembrete ?? false,
             }
           : EMPTY
       );
@@ -45,6 +48,11 @@ export default function MetaModal({ open, meta, onClose, onSave, onDelete }) {
       valorAlvo: Number(form.valorAlvo),
       valorAtual: Number(form.valorAtual) || 0,
       corKey: form.corKey,
+      aporteAutomatico: {
+        tipo: form.aporteTipo,
+        valor: Number(form.aporteValor) || 0,
+        lembrete: form.lembreteAporte,
+      },
     });
   }
 
@@ -95,6 +103,25 @@ export default function MetaModal({ open, meta, onClose, onSave, onDelete }) {
             />
           </div>
         </div>
+
+        <label className="block text-xs font-medium text-ink-300 mb-1">Contribuição automática mensal</label>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <select value={form.aporteTipo} onChange={(e) => update('aporteTipo', e.target.value)} className="rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900">
+            <option value="nenhum">Sem automação</option>
+            <option value="fixo">Valor fixo</option>
+            <option value="percentual_receita">% das receitas</option>
+            <option value="saldo_fechamento">Saldo positivo do fechamento</option>
+          </select>
+          {['fixo', 'percentual_receita'].includes(form.aporteTipo) ? (
+            <input type="number" min="0" step="0.01" value={form.aporteValor} onChange={(e) => update('aporteValor', e.target.value)} placeholder={form.aporteTipo === 'fixo' ? 'Valor mensal' : 'Percentual'} className="rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900" />
+          ) : <div />}
+        </div>
+        {form.aporteTipo !== 'nenhum' && (
+          <label className="mb-4 flex items-center gap-2 text-xs text-ink-500">
+            <input type="checkbox" checked={form.lembreteAporte} onChange={(e) => update('lembreteAporte', e.target.checked)} />
+            Mostrar lembrete mensal para revisar o aporte
+          </label>
+        )}
 
         <p className="text-xs font-medium text-ink-300 mb-1">Cor</p>
         <div className="grid grid-cols-8 sm:grid-cols-10 gap-3 p-1 mb-4">
