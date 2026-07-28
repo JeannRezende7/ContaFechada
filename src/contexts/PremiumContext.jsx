@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from './AuthContext.jsx';
 import { checkGate, getLimit } from '../config/premium.js';
 import {
@@ -7,10 +7,10 @@ import {
   startTrial as startTrialDoc,
 } from '../features/premium/services/subscriptionService.js';
 import { toSubscriptionState } from '../features/premium/utils/subscriptionState.js';
-import Paywall from '../features/premium/components/Paywall.jsx';
 import { track, EVENTS } from '../utils/analytics.js';
 
 const PremiumContext = createContext(null);
+const Paywall = lazy(() => import('../features/premium/components/Paywall.jsx'));
 
 const FREE_STATE = toSubscriptionState(null);
 
@@ -113,7 +113,7 @@ export function PremiumProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [uid]);
+  }, [uid, applyState]);
 
   const refreshSubscription = useCallback(async () => {
     if (!uid) return FREE_STATE;
@@ -192,7 +192,11 @@ export function PremiumProvider({ children }) {
   return (
     <PremiumContext.Provider value={value}>
       {children}
-      <Paywall open={Boolean(paywall)} context={paywall} onClose={closePaywall} />
+      {paywall && (
+        <Suspense fallback={null}>
+          <Paywall open context={paywall} onClose={closePaywall} />
+        </Suspense>
+      )}
     </PremiumContext.Provider>
   );
 }

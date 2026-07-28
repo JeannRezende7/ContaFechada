@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Plus, X, Tag } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { listCategorias, createCategoria, deleteCategoria, ensureDefaultCategorias } from '../services/categoriasService.js';
-import { COLOR_MAP, getColor } from '../colorMap.js';
-import { ICON_MAP, getIcon } from '../iconMap.js';
+import { getColor } from '../colorMap.js';
+import { getIcon } from '../iconMap.js';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
-import UsageIndicator from '../../premium/components/UsageIndicator.jsx';
+import CategoriaModal from '../components/CategoriaModal.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 
 export default function CategoriasPage() {
@@ -15,9 +15,7 @@ export default function CategoriasPage() {
   const { guardFeature } = usePremium();
   const [categorias, setCategorias] = useState([]);
   const [tab, setTab] = useState('despesa');
-  const [nome, setNome] = useState('');
-  const [corKey, setCorKey] = useState('cinza');
-  const [icone, setIcone] = useState('tag');
+  const [modalOpen, setModalOpen] = useState(false);
 
   const reload = async () => {
     if (!uid) return;
@@ -33,10 +31,6 @@ export default function CategoriasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
 
-  useEffect(() => {
-    setNome('');
-  }, [tab]);
-
   const doTipo = useMemo(
     () => categorias.filter((c) => c.tipo === tab).sort((a, b) => a.ordem - b.ordem),
     [categorias, tab]
@@ -44,12 +38,10 @@ export default function CategoriasPage() {
 
   const customCount = useMemo(() => categorias.filter((c) => !c.padrao).length, [categorias]);
 
-  async function handleAdd(e) {
-    e.preventDefault();
-    if (!nome.trim()) return;
+  async function handleAdd(dados) {
     if (!guardFeature(FEATURES.CATEGORIAS_CUSTOM, { count: customCount })) return;
-    await createCategoria(uid, { nome: nome.trim(), tipo: tab, corKey, icone, ordem: Date.now() });
-    setNome('');
+    await createCategoria(uid, { ...dados, ordem: Date.now() });
+    setModalOpen(false);
     reload();
   }
 
@@ -81,6 +73,16 @@ export default function CategoriasPage() {
           </button>
         </div>
 
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setModalOpen(true)}
+            className="flex items-center gap-1.5 rounded-pill bg-ledger-500 text-white pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
+          >
+            <Plus size={16} strokeWidth={2.25} />
+            Nova categoria
+          </button>
+        </div>
+
         <div className="grid grid-cols-4 sm:grid-cols-6 gap-x-2 gap-y-4">
           {doTipo.map((c) => {
             const color = getColor(c.corKey);
@@ -107,61 +109,15 @@ export default function CategoriasPage() {
             <p className="col-span-full text-sm text-ink-300 text-center py-6">Nenhuma categoria ainda.</p>
           )}
         </div>
-
-        <form onSubmit={handleAdd} className="mt-8 bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Nova categoria de {tab === 'despesa' ? 'despesa' : 'receita'}</p>
-            <UsageIndicator feature={FEATURES.CATEGORIAS_CUSTOM} count={customCount} label="categorias personalizadas" />
-          </div>
-
-          <input
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            placeholder="Ex: Papelaria"
-            className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
-          />
-
-          <p className="text-xs font-medium text-ink-300 -mb-1">Cor</p>
-          <div className="grid grid-cols-8 sm:grid-cols-10 gap-3 p-1">
-            {Object.keys(COLOR_MAP).map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setCorKey(key)}
-                aria-label={`Cor ${key}`}
-                className={`w-7 h-7 rounded-full mx-auto ${COLOR_MAP[key].dot} transition-all ${
-                  corKey === key ? 'ring-2 ring-offset-2 dark:ring-offset-ink-700 ring-ink-900 dark:ring-ink-50' : ''
-                }`}
-              />
-            ))}
-          </div>
-
-          <p className="text-xs font-medium text-ink-300 -mb-1">Ícone</p>
-          <div className="grid grid-cols-8 sm:grid-cols-10 gap-3 p-1 max-h-40 overflow-y-auto">
-            {Object.entries(ICON_MAP).map(([key, Icon]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setIcone(key)}
-                aria-label={`Ícone ${key}`}
-                className={`w-8 h-8 rounded-full mx-auto flex items-center justify-center transition-all ${COLOR_MAP[corKey].dot} ${
-                  icone === key ? 'ring-2 ring-offset-2 dark:ring-offset-ink-700 ring-ink-900 dark:ring-ink-50' : 'opacity-60 hover:opacity-100'
-                }`}
-              >
-                <Icon size={15} strokeWidth={2.25} className="text-white" />
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="submit"
-            className="self-start flex items-center gap-1.5 rounded-pill bg-ledger-500 text-white pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
-          >
-            <Plus size={16} strokeWidth={2.25} />
-            Adicionar
-          </button>
-        </form>
       </div>
+
+      <CategoriaModal
+        open={modalOpen}
+        tipo={tab}
+        customCount={customCount}
+        onClose={() => setModalOpen(false)}
+        onSave={handleAdd}
+      />
     </>
   );
 }

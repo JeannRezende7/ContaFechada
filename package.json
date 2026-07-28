@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm run lint",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run src",
+    "test:rules": "vitest run tests/firestore.rules.spec.mjs",
+    "test:rules:emulator": "npx --yes firebase-tools@14.22.0 emulators:exec --only firestore \"npm run test:rules\""
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",
@@ -23,6 +26,7 @@
     "recharts": "^2.12.7"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -31,6 +35,7 @@
     "eslint-plugin-react": "^7.34.3",
     "eslint-plugin-react-hooks": "^4.6.2",
     "firebase-admin": "^14.2.0",
+    "globals": "^15.15.0",
     "google-auth-library": "^10.9.0",
     "mercadopago": "^3.2.0",
     "postcss": "^8.4.39",

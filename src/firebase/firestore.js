@@ -7,6 +7,8 @@ import {
   deleteDoc,
   getDoc,
   getDocs,
+  getDocsFromCache,
+  getDocsFromServer,
   query,
   where,
   orderBy,
@@ -15,6 +17,12 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { db } from './config.js';
+
+function getDocsFromSource(queryRef, source = 'default') {
+  if (source === 'cache') return getDocsFromCache(queryRef);
+  if (source === 'server') return getDocsFromServer(queryRef);
+  return getDocs(queryRef);
+}
 
 /**
  * Every resource lives under /users/{uid}/{subcollection} — each Firebase
@@ -122,10 +130,14 @@ export async function listUserDocs(uid, subcollection, { field, direction = 'des
 }
 
 /** Range query on a single field (e.g. 'YYYY-MM-DD' date strings for a given month). */
-export async function listUserDocsInRange(uid, subcollection, { field, gte, lte, direction = 'asc' }) {
+export async function listUserDocsInRange(
+  uid,
+  subcollection,
+  { field, gte, lte, direction = 'asc', source = 'default' }
+) {
   const col = userCollection(uid, subcollection);
   const q = query(col, where(field, '>=', gte), where(field, '<=', lte), orderBy(field, direction));
-  const snap = await getDocs(q);
+  const snap = await getDocsFromSource(q, source);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 

@@ -1,0 +1,449 @@
+AJUSTES RECOMENDADOS — CONTA FECHADA
+====================================
+
+Data da análise: 28/07/2026
+
+Resumo
+------
+
+O projeto possui uma boa base: organização por features, serviços separados,
+suporte offline do Firestore, PWA, Android e identidade visual consistente.
+O build de produção funciona e os 47 testes existentes estão passando.
+
+Existe, porém, um problema crítico nas regras de segurança do Firestore que
+deve ser corrigido antes das demais melhorias.
+
+
+1. PRIORIDADE MÁXIMA — SEGURANÇA DO FIRESTORE [CONCLUÍDO EM 28/07/2026]
+----------------------------------------------
+
+Arquivo: firestore.rules
+
+A regra genérica:
+
+  match /users/{uid}/{document=**} {
+    allow read, write: if request.auth != null
+      && request.auth.uid == uid;
+  }
+
+também corresponde aos seguintes caminhos protegidos:
+
+  /users/{uid}/private/subscription
+  /users/{uid}/private/subscription/subscription_log/{logId}
+
+No Firestore, regras que correspondem ao mesmo caminho são combinadas por
+"OU". Uma regra mais específica não substitui nem restringe uma regra
+genérica que já concedeu acesso.
+
+Consequências possíveis:
+
+- O cliente pode alterar o próprio plano ou status de assinatura.
+- O cliente pode tentar se promover para Premium sem passar pelo backend.
+- O cliente pode escrever ou adulterar o histórico da assinatura.
+- O allow delete da assinatura permite apagá-la, recriar o estado gratuito
+  e tentar iniciar um novo período de teste.
+
+Ações recomendadas:
+
+- Remover a regra recursiva genérica.
+- Criar matches explícitos para cada coleção pertencente ao usuário:
+  lançamentos, categorias, recorrências, metas, configurações etc.
+- Manter subscription e subscription_log fora das permissões genéricas.
+- Fazer exclusão de assinatura/conta por backend confiável, quando necessário.
+- Criar testes automatizados das regras usando Firebase Emulator.
+- Testar explicitamente que um usuário não consegue:
+  - alterar plan ou subscriptionStatus;
+  - alterar currentPeriodEnd;
+  - criar logs de assinatura;
+  - apagar e recriar a assinatura para repetir o trial;
+  - ler ou escrever dados de outro usuário.
+
+
+2. ALTO IMPACTO — REDUZIR O BUNDLE INICIAL [CONCLUÍDO EM 28/07/2026]
+-------------------------------------------
+
+Situação atual:
+
+- O JavaScript inicial tem aproximadamente 1,33 MB.
+- O Vite apresenta alerta de chunk acima de 500 KB.
+- Todas as páginas são importadas imediatamente em src/routes/AppRoutes.jsx.
+- Recharts e PDF.js podem entrar no carregamento inicial mesmo quando o
+  usuário não utiliza relatórios ou importação de fatura.
+
+Ações recomendadas:
+
+- Usar React.lazy() e Suspense nas páginas das rotas.
+- Carregar Recharts somente ao abrir Relatórios.
+- Importar pdfjs-dist dinamicamente somente quando o usuário iniciar uma
+  importação de PDF.
+- Carregar modais grandes apenas quando forem abertos.
+- Analisar os chunks após a alteração.
+- Definir uma tela de carregamento curta e consistente para rotas lazy.
+
+
+3. ALTO IMPACTO — CORRIGIR O ESLINT [CONCLUÍDO EM 28/07/2026]
+------------------------------------
+
+Situação atual:
+
+- O comando npm run lint existe.
+- O comando falha porque não há arquivo de configuração do ESLint.
+- Há comentários eslint-disable espalhados pelo projeto, mas eles não estão
+  sendo efetivamente verificados.
+
+Ações recomendadas:
+
+- Criar eslint.config.js compatível com a versão escolhida do ESLint.
+- Configurar React e react-hooks.
+- Ignorar dist, node_modules, android/build e arquivos gerados.
+- Executar lint no CI antes do build/deploy.
+- Revisar cada eslint-disable e manter somente os necessários.
+
+
+4. ALTO IMPACTO — AMPLIAR OS TESTES
+------------------------------------
+
+Situação atual:
+
+- Existem 2 arquivos de teste.
+- Os 47 testes atuais estão passando.
+- A cobertura está concentrada na configuração e no estado Premium.
+
+Áreas prioritárias para testes:
+
+- Regras de segurança do Firestore com Firebase Emulator.
+- CRUD de lançamentos.
+- Geração e atualização de recorrências.
+- Importação de faturas e parcelamentos.
+- Cálculos do dashboard.
+- Análise do gestor financeiro.
+- Metas e categorias.
+- Exportação dos dados.
+- Exclusão de conta.
+- Limites do plano gratuito.
+- Início e término do trial.
+- Webhook do Mercado Pago.
+- Cancelamento de assinatura.
+- Validação de compra da Google Play.
+
+Também é recomendável adicionar alguns testes de integração dos fluxos mais
+importantes da interface.
+
+
+5. EXPERIÊNCIA — EVITAR TELA VAZIA NA AUTENTICAÇÃO [CONCLUÍDO EM 28/07/2026]
+---------------------------------------------------
+
+Arquivo: src/routes/ProtectedRoute.jsx
+
+Situação atual:
+
+  if (loading) return null;
+
+Isso pode produzir uma tela vazia enquanto o Firebase restaura a sessão.
+
+Ação recomendada:
+
+- Renderizar o LoadingScreen ou uma splash leve durante a autenticação.
+
+
+6. LIMPEZA — REMOVER ASSETS ANTIGOS [CONCLUÍDO EM 28/07/2026]
+------------------------------------
+
+Existem imagens grandes dentro de public que não são mais utilizadas:
+
+- logo.png
+- logo2.png
+- icone5.png
+- icone5-clean.png
+- conta-fechada-icon-master.png
+- brand-32.png
+- brand-36.png
+- brand-56.png
+- outras versões de teste, se não estiverem referenciadas
+
+Esses arquivos ocupam vários megabytes e tudo que fica em public pode ser
+copiado para o deploy.
+
+Ações recomendadas:
+
+- Confirmar referências com rg antes de excluir.
+- Manter apenas:
+  - marca transparente final;
+  - variantes pequenas realmente utilizadas;
+  - favicon;
+  - ícones PWA;
+  - Apple Touch Icon.
+- Mover arquivos-fonte ou históricos para uma pasta de design fora de public,
+  caso seja necessário preservá-los.
+- Remover tmp/imagegen depois que a marca final estiver aprovada.
+
+
+7. MANUTENÇÃO — DIVIDIR COMPONENTES GRANDES
+--------------------------------------------
+
+Principais candidatos:
+
+- src/features/lancamentos/pages/LancamentosPage.jsx
+- src/features/lancamentos/components/LancamentoModal.jsx
+- src/features/gestor/pages/GestorFinanceiroPage.jsx
+- src/features/dashboard/pages/DashboardPage.jsx
+- src/features/premium/pages/MeuPlanoPage.jsx
+- src/features/opcoes/pages/OpcoesPage.jsx
+- src/features/premium/components/Paywall.jsx
+- src/features/lancamentos/components/ImportarFaturaModal.jsx
+
+Ações recomendadas:
+
+- Extrair hooks de carregamento e mutação de dados.
+- Separar filtros e pesquisa.
+- Separar cabeçalhos, listas, estados vazios e indicadores.
+- Isolar estados e validações de formulários.
+- Separar lógica de negócio da renderização.
+- Evitar páginas controlando vários modais e fluxos simultaneamente.
+- Criar testes para os hooks e funções extraídas.
+
+
+8. DEPENDÊNCIAS — ATUALIZAR COM CAUTELA
+----------------------------------------
+
+Existem versões principais mais recentes de:
+
+- React
+- React Router
+- Firebase
+- Vite
+- Tailwind CSS
+- Recharts
+- ESLint
+
+Não é recomendado atualizar tudo de uma vez.
+
+Ordem sugerida:
+
+1. Corrigir segurança.
+2. Configurar lint e ampliar testes.
+3. Atualizar patches e versões menores compatíveis.
+4. Atualizar uma dependência principal por vez.
+5. Rodar testes, lint e build após cada migração.
+6. Testar web, PWA e Android antes de publicar.
+
+
+9. PWA E DADOS OFFLINE
+-----------------------
+
+O cache persistente do Firestore é útil para funcionamento offline, mas dados
+financeiros podem permanecer no dispositivo depois do logout.
+
+Ações recomendadas:
+
+- Avaliar o comportamento em dispositivos compartilhados.
+- Definir se o cache deve ser limpo ao excluir a conta.
+- Verificar como a troca de usuários se comporta no mesmo navegador.
+- Documentar claramente o suporte offline.
+- Testar atualização do service worker e invalidação de versões antigas.
+
+
+10. CI E QUALIDADE
+-------------------
+
+Ações recomendadas:
+
+- Criar um pipeline executando:
+  1. npm ci
+  2. npm run lint
+  3. npm test
+  4. npm run build
+- Bloquear deploy quando lint, testes ou build falharem.
+- Adicionar testes das regras do Firestore ao pipeline.
+- Considerar auditoria periódica de dependências.
+
+
+ORDEM RECOMENDADA DE EXECUÇÃO
+------------------------------
+
+1. Corrigir imediatamente as regras do Firestore.
+2. Criar testes das regras com Firebase Emulator.
+3. Configurar e corrigir o ESLint.
+4. Implementar lazy loading e importações dinâmicas.
+5. Remover assets antigos e arquivos temporários.
+6. Melhorar a tela de carregamento da autenticação.
+7. Refatorar páginas e modais grandes.
+8. Ampliar testes de regras de negócio e integrações.
+9. Revisar cache offline e logout.
+10. Atualizar dependências gradualmente.
+
+
+VALIDAÇÕES REALIZADAS NA ANÁLISE
+--------------------------------
+
+- npm run build: passou.
+- npm test: 47 testes passaram em 2 arquivos.
+- npm run lint: falhou por ausência de configuração ESLint.
+- Bundle inicial: aproximadamente 1,33 MB.
+- Regras do Firestore: encontrada sobreposição crítica de permissões.
+
+
+11. DESEMPENHO DOS TOTALIZADORES — IMPLEMENTADO EM 28/07/2026
+--------------------------------------------------------------
+
+Problema encontrado:
+
+- A quantidade de lançamentos não era o principal fator de lentidão.
+- O Dashboard fazia consultas dos dois meses e de recorrências.
+- Depois aguardava uma segunda rodada para verificar instâncias recorrentes
+  antes de exibir qualquer total.
+- Quando uma recorrência era criada, ainda fazia uma terceira rodada.
+- Falhas ou demora excessiva podiam deixar a tela carregando indefinidamente.
+
+Melhorias implementadas:
+
+- Os totalizadores agora dependem somente das consultas do mês atual e do mês
+  anterior, executadas em paralelo.
+- A sincronização das recorrências acontece depois que os valores já estão
+  visíveis.
+- Os totais são relidos somente quando uma recorrência realmente cria um novo
+  lançamento.
+- A verificação de vários meses passou a usar uma única consulta por intervalo.
+- A tela de lançamentos também usa uma única verificação para todo o período.
+- Foi adicionado timeout de 12 segundos ao Dashboard.
+- Foi adicionada mensagem de erro com botão "Tentar novamente".
+- Em desenvolvimento, o console informa o tempo dos totalizadores e o tempo
+  da sincronização de recorrências.
+- As páginas passaram a usar React.lazy e Suspense.
+- Recharts fica no chunk da página de Relatórios.
+- PDF.js só é importado quando uma importação PDF é iniciada.
+- ProtectedRoute mostra LoadingScreen enquanto restaura a autenticação.
+
+Resultado do build:
+
+- Bundle principal anterior: aproximadamente 1,33 MB (347 KB gzip).
+- Bundle principal depois: aproximadamente 781 KB (202 KB gzip).
+- Relatórios ficou em um chunk separado de aproximadamente 406 KB.
+- Dashboard ficou em um chunk separado de aproximadamente 13,5 KB.
+
+Testes:
+
+- Foi criado dashboardService.test.js.
+- Os testes garantem que os totais não aguardam recorrências.
+- Os testes garantem que dois meses usam uma única sincronização.
+- Os meses só são relidos quando algo foi realmente gerado.
+- Total atual: 50 testes passando em 3 arquivos.
+
+
+12. CACHE DOS TOTALIZADORES — IMPLEMENTADO EM 28/07/2026
+---------------------------------------------------------
+
+Problema:
+
+- O Firestore já possuía cache persistente em IndexedDB, mas getDocs aguardava
+  a tentativa de obter dados atuais do servidor.
+- Ao trocar ou revisitar um mês, o Dashboard limpava os indicadores e mostrava
+  carregamento mesmo quando os dados já haviam sido vistos.
+
+Solução implementada:
+
+- Os helpers do Firestore agora aceitam leitura explícita do cache ou servidor.
+- O Dashboard tenta pintar primeiro os dados persistidos no IndexedDB.
+- Um resultado vazio do cache não é tratado automaticamente como saldo zero,
+  pois também pode representar um mês nunca armazenado no dispositivo.
+- Existe um cache em memória por usuário e mês para navegação instantânea
+  durante a mesma sessão.
+- A consulta do servidor acontece em paralelo e continua sendo a fonte final
+  de verdade.
+- Enquanto confirma os dados, a interface mostra discretamente "Atualizando…".
+- Se o servidor estiver lento ou offline, os últimos dados conhecidos continuam
+  visíveis.
+- A sincronização de recorrências continua em segundo plano e atualiza o cache
+  somente quando gerar lançamentos.
+
+Comportamento esperado:
+
+- Voltar para um mês já visitado: exibição praticamente instantânea.
+- Reabrir o app: exibição rápida quando o Firestore tiver aquele mês no cache.
+- Primeiro acesso a um mês nunca visitado: carregamento normal pelo servidor.
+- Conexão lenta: dados anteriores permanecem visíveis enquanto são confirmados.
+
+
+13. PONTOS 1 E 2 — CONCLUÍDOS EM 28/07/2026
+--------------------------------------------
+
+Ponto 1 — Segurança do Firestore:
+
+- Removida a regra recursiva /users/{uid}/{document=**}.
+- Criadas permissões explícitas para lançamentos, categorias, recorrências,
+  metas, gestorLancamentos e config.
+- Assinatura permite somente leitura do próprio usuário.
+- Criação da assinatura exige o estado gratuito inicial completo, sem campos
+  adicionais ou privilégios.
+- Atualização permite somente a transição exata e única de none para trialing.
+- Promoção direta para Premium ativo foi bloqueada.
+- Exclusão direta da assinatura foi bloqueada para impedir repetição do trial.
+- subscription_log permite leitura do dono, mas nenhuma escrita pelo cliente.
+- A exclusão dos dados privados foi movida para a função autenticada
+  delete-private-user-data, executada com Admin SDK.
+- Criada suíte de testes com Firebase Rules Unit Testing e Emulator.
+- Testados acesso do dono, isolamento entre usuários, coleção desconhecida,
+  criação gratuita, tentativa de promoção, trial válido, exclusão/repetição
+  de trial e falsificação de logs.
+
+Ponto 2 — Bundle inicial:
+
+- Todas as páginas continuam carregadas com React.lazy e Suspense.
+- Paywall passou a carregar somente quando for aberto.
+- Firebase Analytics passou a carregar apenas no primeiro evento.
+- React, ícones, Firebase Core, Auth e Firestore foram separados em chunks
+  independentes e reutilizáveis pelo cache do navegador.
+- Recharts/D3 ficaram em um chunk carregado apenas com Relatórios.
+- PDF.js continua sendo importado somente durante uma importação de PDF.
+- Não existem mais chunks acima de 500 KB.
+
+Principais chunks depois da otimização:
+
+- Aplicação principal: aproximadamente 23,7 KB (8,5 KB gzip).
+- React: aproximadamente 165,6 KB (54 KB gzip).
+- Firebase Core: aproximadamente 61,7 KB (12,7 KB gzip).
+- Firebase Auth: aproximadamente 112,2 KB (23 KB gzip).
+- Firestore: aproximadamente 385,6 KB (96,6 KB gzip).
+- Gráficos, somente em Relatórios: aproximadamente 399,7 KB (108,4 KB gzip).
+- Analytics, sob demanda: aproximadamente 16,4 KB (4,7 KB gzip).
+- Paywall, sob demanda: aproximadamente 7,3 KB (2,9 KB gzip).
+
+Observação do ambiente local:
+
+- O Firebase CLI atual exige Java 21.
+- A máquina possui Java 17 e Node 24.
+- Os testes foram executados com Firebase CLI 14.22.0, compatível com Java 17.
+- Para CI, preferir Node 20 ou 22 e Java 21.
+
+
+14. PONTOS 3, 5 E 6 — CONCLUÍDOS EM 28/07/2026
+-----------------------------------------------
+
+Ponto 3 — ESLint:
+
+- Criado eslint.config.js para ESLint 8 com React e React Hooks.
+- Configurados os ambientes do navegador e Node.
+- Ignorados dist, node_modules, android, coverage, tmp e public.
+- Diretivas eslint-disable sem efeito agora são tratadas como erro.
+- Corrigidos todos os erros e avisos encontrados pelo lint.
+- Adicionado prebuild para executar o lint automaticamente antes de cada build.
+
+Ponto 5 — Carregamento da autenticação:
+
+- ProtectedRoute renderiza LoadingScreen enquanto o Firebase restaura a sessão.
+- A tela não fica mais vazia durante a verificação da autenticação.
+
+Ponto 6 — Assets antigos:
+
+- Confirmado com busca global que os arquivos antigos não eram referenciados.
+- Removidos de public logo.png, logo2.png, icone3.png, icone5.png,
+  icone5-clean.png, conta-fechada-icon-master.png e as variantes brand antigas.
+- Os arquivos históricos foram preservados em assets/archive, fora do deploy.
+- Mantidos apenas os assets utilizados: marca transparente final, variantes
+  brand-mark, favicon, ícones PWA e Apple Touch Icon.
+
+Validação:
+
+- npm run lint: aprovado sem erros ou avisos.
+- npm test: 51 testes aprovados.
+- npm run build: build de produção aprovado.

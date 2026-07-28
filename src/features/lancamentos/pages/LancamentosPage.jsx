@@ -7,6 +7,7 @@ import {
   updateLancamento,
   deleteLancamento,
   deleteLancamentosByIds,
+  deleteGeneratedFromRecorrencia,
   setLancamentoStatus,
   createParcelamento,
   setCategoriaForRecorrencia,
@@ -16,15 +17,15 @@ import {
   createRecorrencia,
   updateRecorrencia,
   deleteRecorrencia,
-  ensureGeneratedForMonth,
+  ensureGeneratedForMonths,
 } from '../../recorrencias/services/recorrenciasService.js';
 import { ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
-import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
+import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
 import UsageIndicator from '../../premium/components/UsageIndicator.jsx';
 import { getTodayISODate } from '../../../utils/formatDate.js';
-import { getCurrentMonthKey, shiftMonthKey } from '../../../utils/monthKey.js';
+import { getCurrentMonthKey, shiftMonthKey, daysInMonth } from '../../../utils/monthKey.js';
 import { getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { buildLancamentoMatcher } from '../utils/searchLancamentos.js';
@@ -46,6 +47,7 @@ export default function LancamentosPage() {
   const { user } = useAuth();
   const uid = user?.uid;
   const confirm = useConfirm();
+  const confirmChoice = useConfirmChoice();
   const { guardFeature, isPremium, openPaywall, getLimit } = usePremium();
   const [tab, setTab] = useState('despesa');
   const [periodType, setPeriodType] = useState('mes');
@@ -96,12 +98,22 @@ export default function LancamentosPage() {
 
   const { gte, lte } = getRangeForPeriod(periodType, anchor, customRange);
 
+  // Novo lançamento nasce no mês que o usuário está navegando, não sempre em
+  // "hoje" — se ele está vendo agosto, o padrão é um dia de agosto (mesmo dia
+  // do mês de hoje, ajustado para caber no mês), preservando "hoje" quando o
+  // mês navegado é o mês corrente.
+  const defaultMonthKeyForNovo = periodType === 'mes' ? anchor.slice(0, 7) : getCurrentMonthKey();
+  const defaultDateForNovo =
+    defaultMonthKeyForNovo === getCurrentMonthKey()
+      ? getTodayISODate()
+      : `${defaultMonthKeyForNovo}-${String(Math.min(Number(getTodayISODate().slice(8, 10)), daysInMonth(defaultMonthKeyForNovo))).padStart(2, '0')}`;
+
   const reload = useCallback(async () => {
     if (!uid) return;
     const meses = monthKeysInRange(gte, lte);
 
     // listLancamentosByRange doesn't depend on recorrencias, so fire it in
-    // true parallel instead of waiting on ensureGeneratedForMonth first —
+    // true parallel instead of waiting on recurrence generation first —
     // that only matters on the rare visit where a recorrência's instance for
     // this month hasn't been generated yet (first visit of the month), in
     // which case we re-fetch once more below.
@@ -109,14 +121,11 @@ export default function LancamentosPage() {
       listRecorrencias(uid),
       listLancamentosByRange(uid, gte, lte),
     ]);
-    const gerouAlgo = (
-      await Promise.all(meses.map((mk) => ensureGeneratedForMonth(uid, mk, todasRecorrencias)))
-    ).some(Boolean);
+    const gerouAlgo = await ensureGeneratedForMonths(uid, meses, todasRecorrencias);
 
     setLancamentos(gerouAlgo ? await listLancamentosByRange(uid, gte, lte) : items);
     setRecorrencias(todasRecorrencias);
     setCarregado(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, gte, lte]);
 
   useEffect(() => {
@@ -186,13 +195,20 @@ export default function LancamentosPage() {
     reload();
   }
 
-  async function handleDeleteLancamento(item, { futureInstallments = false } = {}) {
+  async function handleDeleteLancamento(item, { futureInstallments = false, futureRecorrencia = false, allRecorrencia = false } = {}) {
     if (futureInstallments && item.parcelamentoId && item.totalParcelas) {
       const ids = [];
       for (let n = item.parcelaAtual; n <= item.totalParcelas; n++) {
         ids.push(`${item.parcelamentoId}_${n}`);
       }
       await deleteLancamentosByIds(uid, ids);
+    } else if ((futureRecorrencia || allRecorrencia) && item.origemRecorrenciaId) {
+      await deleteGeneratedFromRecorrencia(
+        uid,
+        item.origemRecorrenciaId,
+        futureRecorrencia ? { fromMonthKey: item.mesReferencia } : {}
+      );
+      if (allRecorrencia) await deleteRecorrencia(uid, item.origemRecorrenciaId);
     } else {
       await deleteLancamento(uid, item.id);
     }
@@ -241,10 +257,24 @@ export default function LancamentosPage() {
     reload();
   }
 
-  async function handleDeleteRecorrencia(id) {
+  async function handleDeleteRecorrencia(id, { deleteGerados = false } = {}) {
+    if (deleteGerados) await deleteGeneratedFromRecorrencia(uid, id);
     await deleteRecorrencia(uid, id);
     setRecorrenciaModalOpen(false);
     reload();
+  }
+
+  async function handleEncerrarRecorrenciaInline(r) {
+    const escolha = await confirmChoice(
+      `Encerrar a recorrência "${r.descricao}"?`,
+      [
+        { value: 'keep', label: 'Encerrar e manter os já gerados', tone: 'primary' },
+        { value: 'delete', label: 'Encerrar e excluir os já gerados', tone: 'danger' },
+        { value: 'cancel', label: 'Cancelar', tone: 'neutral' },
+      ]
+    );
+    if (escolha === 'keep') handleDeleteRecorrencia(r.id);
+    else if (escolha === 'delete') handleDeleteRecorrencia(r.id, { deleteGerados: true });
   }
 
   const ativos = recorrencias.filter((r) => r.ativo && r.tipo === tab);
@@ -385,7 +415,7 @@ export default function LancamentosPage() {
           )}
           {lancamentosDoTipo.length > 0 && lancamentosFiltrados.length === 0 && (
             <p className="text-sm text-ink-300 text-center py-8">
-              Nenhum lançamento encontrado para "{busca}".
+              Nenhum lançamento encontrado para &ldquo;{busca}&rdquo;.
             </p>
           )}
         </div>
@@ -424,7 +454,7 @@ export default function LancamentosPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteRecorrencia(r.id);
+                        handleEncerrarRecorrenciaInline(r);
                       }}
                       aria-label="Encerrar recorrência"
                       className="flex items-center gap-1 text-xs text-signal-500 hover:bg-signal-50 rounded-pill px-2 py-1 transition-colors"
@@ -445,6 +475,8 @@ export default function LancamentosPage() {
         initialData={editing}
         categorias={categorias}
         defaultTipo={tab}
+        defaultDate={defaultDateForNovo}
+        defaultMonthKey={defaultMonthKeyForNovo}
         onClose={() => setModalOpen(false)}
         onSave={handleSave}
         onDelete={handleDeleteLancamento}

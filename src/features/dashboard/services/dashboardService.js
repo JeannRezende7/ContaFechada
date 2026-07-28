@@ -1,7 +1,21 @@
 import { listLancamentosByMonth } from '../../lancamentos/services/lancamentosService.js';
-import { listRecorrencias, ensureGeneratedForMonth } from '../../recorrencias/services/recorrenciasService.js';
+import { listRecorrencias, ensureGeneratedForMonths } from '../../recorrencias/services/recorrenciasService.js';
 import { shiftMonthKey, getCurrentMonthKey } from '../../../utils/monthKey.js';
 import { getUserDoc, setUserDocMerged } from '../../../firebase/firestore.js';
+
+const dashboardMemory = new Map();
+
+function dashboardCacheKey(uid, monthKey) {
+  return `${uid}:${monthKey}`;
+}
+
+export function getDashboardMemoryCache(uid, monthKey) {
+  return dashboardMemory.get(dashboardCacheKey(uid, monthKey)) ?? null;
+}
+
+export function setDashboardMemoryCache(uid, monthKey, data) {
+  dashboardMemory.set(dashboardCacheKey(uid, monthKey), data);
+}
 
 function computeIndicators(lancamentos, monthKey) {
   let saldoMes = 0;
@@ -80,39 +94,47 @@ function computeComparacao(lancamentosAtual, lancamentosAnterior) {
   return { despesaAtual, despesaAnterior, percentual, porCategoriaAtual, porCategoriaAnterior };
 }
 
-/**
- * Everything the Início page needs, fetched with as few sequential round
- * trips as possible: recorrências + both months' lançamentos fire in one
- * parallel batch (sharing the recorrências list instead of each caller
- * re-fetching it), and each month is only re-read if `ensureGeneratedForMonth`
- * actually created something new — the common case (already generated)
- * needs zero extra round trips.
- * MVP version: works client-side over each month's lancamentos.
- * Move to a Cloud Function / aggregation query once volume grows.
- */
-export async function getDashboardData(uid, monthKey) {
+async function loadDashboardMonths(uid, monthKey, source = 'default') {
   const anterior = shiftMonthKey(monthKey, -1);
-
-  const [recorrencias, lancamentosAtual0, lancamentosAnterior0] = await Promise.all([
-    listRecorrencias(uid),
-    listLancamentosByMonth(uid, monthKey),
-    listLancamentosByMonth(uid, anterior),
-  ]);
-
-  const [gerouAtual, gerouAnterior] = await Promise.all([
-    ensureGeneratedForMonth(uid, monthKey, recorrencias),
-    ensureGeneratedForMonth(uid, anterior, recorrencias),
-  ]);
-
   const [lancamentosAtual, lancamentosAnterior] = await Promise.all([
-    gerouAtual ? listLancamentosByMonth(uid, monthKey) : lancamentosAtual0,
-    gerouAnterior ? listLancamentosByMonth(uid, anterior) : lancamentosAnterior0,
+    listLancamentosByMonth(uid, monthKey, { source }),
+    listLancamentosByMonth(uid, anterior, { source }),
   ]);
 
   return {
     indicators: computeIndicators(lancamentosAtual, monthKey),
     comparacao: computeComparacao(lancamentosAtual, lancamentosAnterior),
+    documentCount: lancamentosAtual.length + lancamentosAnterior.length,
   };
+}
+
+/**
+ * Fast first paint: only the two month queries needed for the visible totals.
+ * Recurrence synchronization deliberately does not block these values.
+ */
+export async function getDashboardData(uid, monthKey, { source = 'default' } = {}) {
+  const data = await loadDashboardMonths(uid, monthKey, source);
+  // A non-empty IndexedDB result is useful for later navigation in the same
+  // session. An empty cache is ignored because it may only be a cache miss.
+  if (source !== 'cache' || data.documentCount > 0) {
+    setDashboardMemoryCache(uid, monthKey, data);
+  }
+  return data;
+}
+
+/**
+ * Runs after the totals are already visible. Both months share one recurrence
+ * range query; only when new instances are written do we re-read the totals.
+ * Returns null in the common no-change case.
+ */
+export async function syncDashboardRecorrencias(uid, monthKey) {
+  const anterior = shiftMonthKey(monthKey, -1);
+  const recorrencias = await listRecorrencias(uid);
+  const gerouAlgo = await ensureGeneratedForMonths(uid, [anterior, monthKey], recorrencias);
+  if (!gerouAlgo) return null;
+  const data = await loadDashboardMonths(uid, monthKey, 'server');
+  setDashboardMemoryCache(uid, monthKey, data);
+  return data;
 }
 
 const CONFIG_COLLECTION = 'config';

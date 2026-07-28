@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
-import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
+import { useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
 
 const EMPTY = { descricao: '', valor: '', diaVencimento: '', categoriaId: '', observacoes: '' };
 
@@ -8,7 +8,6 @@ const EMPTY = { descricao: '', valor: '', diaVencimento: '', categoriaId: '', ob
 export default function RecorrenciaModal({ open, recorrencia, categorias = [], onClose, onSave, onDelete }) {
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
-  const confirm = useConfirm();
   const confirmChoice = useConfirmChoice();
 
   const categoriasDoTipo = categorias.filter((c) => c.tipo === recorrencia?.tipo);
@@ -155,9 +154,16 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
         <button
           type="button"
           onClick={async () => {
-            if (await confirm('Encerrar esta recorrência? Os lançamentos já gerados continuam existindo.')) {
-              onDelete(recorrencia.id);
-            }
+            const escolha = await confirmChoice(
+              'Encerrar esta recorrência? Ela para de gerar novos lançamentos.',
+              [
+                { value: 'keep', label: 'Encerrar e manter os já gerados', tone: 'primary' },
+                { value: 'delete', label: 'Encerrar e excluir os já gerados', tone: 'danger' },
+                { value: 'cancel', label: 'Cancelar', tone: 'neutral' },
+              ]
+            );
+            if (escolha === 'keep') onDelete(recorrencia.id);
+            else if (escolha === 'delete') onDelete(recorrencia.id, { deleteGerados: true });
           }}
           className="w-full mt-2 rounded-xl py-2 text-xs font-medium text-signal-500 hover:bg-signal-50 transition-colors"
         >

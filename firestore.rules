@@ -1,47 +1,82 @@
 rules_version = '2';
 
-// Cada usuário autenticado é dono direto dos próprios dados — sem
-// workspace/tenant compartilhado. `uid` é um segmento fixo do caminho
-// comparado com request.auth.uid, então o Firestore consegue provar a
-// regra estaticamente para queries de listagem (get()/resource.data não
-// são necessários aqui, evitando as armadilhas de permission-denied em
-// list queries).
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
     }
 
-    // Assinatura (ROADMAP_MONETIZACAO.txt, Fase 2): guardada fora do padrao
-    // "dono le/escreve tudo" acima porque plano e status nao podem ser
-    // decididos pelo proprio cliente. Esta regra e mais especifica que a
-    // match /{document=**} de cima, entao o Firestore usa esta para
-    // qualquer request em users/{uid}/private/subscription.
-    //
-    // - create: só permitido no estado inicial gratuito — é o que permite o
-    //   app criar o documento no primeiro login sem precisar de backend.
-    // - update/delete: nunca pelo cliente. Só Admin SDK (Cloud
-    //   Functions/scripts com service account, que ignoram estas regras)
-    //   pode promover, renovar, cancelar ou expirar uma assinatura — ver
-    //   scripts/grant-premium.mjs para concessao manual de teste/parceiros.
-    match /users/{uid}/private/subscription {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow create: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.plan == 'free'
-        && request.resource.data.subscriptionStatus == 'none';
+    // User-entered application data. These collections are intentionally
+    // explicit: a recursive /users/{uid}/{document=**} rule would also grant
+    // writes to private subscription data because matching Firestore allows
+    // are ORed rather than overridden by a more-specific match.
+    match /users/{uid}/lancamentos/{docId} {
+      allow read, write: if isOwner(uid);
+    }
 
-      // Teste Premium (Fase 7): única exceção de `update` que o cliente
-      // recebe — a transição exata "none" -> "trialing", e só uma vez.
-      // `resource.data.trialStartedAt == null` é o que impede repetir: depois
-      // do primeiro sucesso esse campo nunca mais volta a ser null (nada aqui
-      // permite desfazer o trial), então tentar de novo sempre falha nessa
-      // condição. `trialEndsAt` é limitado a uma janela de 13–15 dias a
-      // partir de request.time em vez de exigir igualdade exata, porque
-      // comparar um timestamp calculado no cliente com request.time bit a
-      // bit quebraria por qualquer diferença de relógio/latência de rede.
-      allow update: if request.auth != null && request.auth.uid == uid
+    match /users/{uid}/categorias/{docId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /users/{uid}/recorrencias/{docId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /users/{uid}/metas/{docId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /users/{uid}/gestorLancamentos/{docId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /users/{uid}/config/{docId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // The client may create only the complete initial free subscription and
+    // perform the exact one-time none -> trialing transition. Paid status,
+    // renewals and cancellations are written by Admin SDK code, which bypasses
+    // these rules.
+    match /users/{uid}/private/subscription {
+      allow read: if isOwner(uid);
+
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'plan',
+          'subscriptionStatus',
+          'subscriptionProvider',
+          'subscriptionId',
+          'currentPeriodEnd',
+          'cancelAtPeriodEnd',
+          'trialStartedAt',
+          'trialEndsAt',
+          'founder',
+          'createdAt'
+        ])
+        && request.resource.data.plan == 'free'
+        && request.resource.data.subscriptionStatus == 'none'
+        && request.resource.data.subscriptionProvider == 'manual'
+        && request.resource.data.subscriptionId == null
+        && request.resource.data.currentPeriodEnd == null
+        && request.resource.data.cancelAtPeriodEnd == false
+        && request.resource.data.trialStartedAt == null
+        && request.resource.data.trialEndsAt == null
+        && request.resource.data.founder == false
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if isOwner(uid)
         && resource.data.subscriptionStatus == 'none'
         && resource.data.trialStartedAt == null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'plan',
+          'subscriptionStatus',
+          'subscriptionProvider',
+          'subscriptionId',
+          'cancelAtPeriodEnd',
+          'trialStartedAt',
+          'trialEndsAt'
+        ])
         && request.resource.data.plan == 'premium'
         && request.resource.data.subscriptionStatus == 'trialing'
         && request.resource.data.subscriptionProvider == 'web'
@@ -49,23 +84,19 @@ service cloud.firestore {
         && request.resource.data.cancelAtPeriodEnd == false
         && request.resource.data.currentPeriodEnd == resource.data.currentPeriodEnd
         && request.resource.data.founder == resource.data.founder
+        && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.trialStartedAt == request.time
         && request.resource.data.trialEndsAt > request.time + duration.value(13, 'd')
         && request.resource.data.trialEndsAt < request.time + duration.value(15, 'd');
 
-      // Exclusão de conta (Fase 11): o dono pode apagar o próprio registro de
-      // assinatura como parte de apagar a conta inteira — perder o histórico
-      // de plano não é um risco de seguranca (ele só volta a existir, do
-      // zero, no proximo login, via ensureSubscriptionDoc). Qualquer outra
-      // alteração continua bloqueada.
-      allow delete: if request.auth != null && request.auth.uid == uid;
+      // Private deletion is performed by the authenticated backend endpoint
+      // during account deletion. Allowing direct deletion would let a client
+      // recreate this document and repeatedly claim a new trial.
+      allow delete: if false;
     }
 
-    // Histórico de alterações de assinatura (Fase 11) — só o Admin SDK
-    // escreve (webhook do MercadoPago, scripts/grant-premium.mjs); o dono
-    // pode ler o próprio histórico, mas não forjar entradas nele.
     match /users/{uid}/private/subscription/subscription_log/{logId} {
-      allow read: if request.auth != null && request.auth.uid == uid;
+      allow read: if isOwner(uid);
       allow write: if false;
     }
   }

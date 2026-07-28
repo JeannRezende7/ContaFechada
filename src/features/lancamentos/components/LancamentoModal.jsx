@@ -11,6 +11,7 @@ const EMPTY = {
   valor: '',
   dataVencimento: '',
   diaVencimento: '',
+  mesInicio: '', // 'YYYY-MM' — first month a recorrente starts generating from
   modo: 'normal', // 'normal' | 'recorrente' | 'parcelado' — only meaningful for new entries
   numParcelas: '2',
   status: 'pendente',
@@ -35,6 +36,8 @@ export default function LancamentoModal({
   initialData,
   categorias = [],
   defaultTipo,
+  defaultDate,
+  defaultMonthKey,
   permitirRecorrente = true,
   onClose,
   onSave,
@@ -61,11 +64,16 @@ export default function LancamentoModal({
       setForm(
         initialData
           ? { ...EMPTY, ...initialData, observacoes: initialData.observacoes ?? '' }
-          : { ...EMPTY, tipo: defaultTipo ?? EMPTY.tipo }
+          : {
+              ...EMPTY,
+              tipo: defaultTipo ?? EMPTY.tipo,
+              dataVencimento: defaultDate ?? EMPTY.dataVencimento,
+              mesInicio: defaultMonthKey ?? EMPTY.mesInicio,
+            }
       );
       setTimeout(() => firstFieldRef.current?.focus(), 0);
     }
-  }, [open, initialData, defaultTipo]);
+  }, [open, initialData, defaultTipo, defaultDate, defaultMonthKey]);
 
   useEffect(() => {
     function handleKey(e) {
@@ -100,6 +108,19 @@ export default function LancamentoModal({
       );
       if (escolha === 'only') onDelete(initialData, { futureInstallments: false });
       else if (escolha === 'future') onDelete(initialData, { futureInstallments: true });
+    } else if (initialData.origemRecorrenciaId) {
+      const escolha = await confirmChoice(
+        'Este lançamento foi gerado por uma recorrência. O que você quer excluir?',
+        [
+          { value: 'only', label: 'Excluir apenas este mês', tone: 'danger' },
+          { value: 'future', label: 'Excluir este e os próximos gerados', tone: 'danger' },
+          { value: 'all', label: 'Excluir todos os gerados e encerrar a recorrência', tone: 'danger' },
+          { value: 'cancel', label: 'Cancelar', tone: 'neutral' },
+        ]
+      );
+      if (escolha === 'only') onDelete(initialData, {});
+      else if (escolha === 'future') onDelete(initialData, { futureRecorrencia: true });
+      else if (escolha === 'all') onDelete(initialData, { allRecorrencia: true });
     } else if (await confirm('Excluir este lançamento?')) {
       onDelete(initialData, {});
     }
@@ -116,6 +137,7 @@ export default function LancamentoModal({
         descricao: form.descricao,
         valor,
         diaVencimento: Number(form.diaVencimento),
+        mesInicio: form.mesInicio,
         observacoes: form.observacoes || null,
         categoriaId: form.categoriaId || null,
       });
@@ -262,6 +284,19 @@ export default function LancamentoModal({
             )}
           </div>
         </div>
+
+        {isNew && form.modo === 'recorrente' && (
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-ink-300 mb-1">A partir de</label>
+            <input
+              required
+              type="month"
+              value={form.mesInicio}
+              onChange={(e) => update('mesInicio', e.target.value)}
+              className="[color-scheme:light] w-full bg-white text-ink-900 rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+            />
+          </div>
+        )}
 
         {!(isNew && form.modo === 'recorrente') && (
           <div className="flex gap-1.5 mb-3 -mt-1.5">

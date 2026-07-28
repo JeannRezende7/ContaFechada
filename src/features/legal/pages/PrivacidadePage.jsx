@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, PiggyBank } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import BrandIcon from '../../../components/ui/BrandIcon.jsx';
 
 /**
  * RASCUNHO (ROADMAP_MONETIZACAO.txt, Fase 11) — escrito a partir do que o
@@ -18,9 +19,7 @@ export default function PrivacidadePage() {
         </Link>
 
         <div className="flex items-center gap-2.5 mb-6">
-          <span className="w-9 h-9 rounded-lg bg-ledger-500 flex items-center justify-center shrink-0">
-            <PiggyBank size={18} className="text-white" strokeWidth={1.75} />
-          </span>
+          <BrandIcon size={36} className="w-9 h-9 shrink-0" />
           <h1 className="font-display text-xl md:text-2xl font-semibold text-ink-900 dark:text-ink-50">
             Política de Privacidade — Conta Fechada
           </h1>

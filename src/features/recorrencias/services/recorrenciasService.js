@@ -3,7 +3,7 @@ import {
   updateUserDoc,
   deleteUserDoc,
   listUserDocs,
-  listUserDocsWhereEquals,
+  listUserDocsInRange,
   batchSetUserDocs,
 } from '../../../firebase/firestore.js';
 import { clampDayToMonth, monthKeyFromTimestamp } from '../../../utils/monthKey.js';
@@ -18,6 +18,7 @@ const COLLECTION = 'recorrencias';
  * @property {number} diaVencimento  1-31, clamped per month at generation time
  * @property {boolean} ativo
  * @property {string|null} observacoes
+ * @property {string} [mesInicio]  'YYYY-MM' — first month to generate; older recorrências without it fall back to `createdAt`'s month
  */
 
 export function listRecorrencias(uid) {
@@ -57,37 +58,54 @@ export function deleteRecorrencia(uid, id) {
  * needed generating, the common case after the first visit of the month)
  * know it must re-fetch instead of trusting stale results.
  */
-export async function ensureGeneratedForMonth(uid, monthKey, recorrenciasPreFetched) {
+export async function ensureGeneratedForMonths(uid, monthKeys, recorrenciasPreFetched) {
+  const meses = [...new Set(monthKeys)].sort();
+  if (meses.length === 0) return false;
+
   const recorrencias = recorrenciasPreFetched ?? (await listRecorrencias(uid));
-  const ativas = recorrencias.filter(
-    (r) => r.ativo && (!r.createdAt || monthKey >= monthKeyFromTimestamp(r.createdAt))
-  );
+  const ativas = recorrencias.filter((r) => r.ativo);
   if (ativas.length === 0) return false;
 
-  const jaGerados = await listUserDocsWhereEquals(uid, 'lancamentos', 'mesReferencia', monthKey);
+  // A single range query covers every requested month. Previously each month
+  // issued its own equality query, making dashboard/list loading latency grow
+  // with the number of visible months even when only a handful of docs existed.
+  const jaGerados = await listUserDocsInRange(uid, 'lancamentos', {
+    field: 'mesReferencia',
+    gte: meses[0],
+    lte: meses[meses.length - 1],
+  });
   const idsGerados = new Set(jaGerados.map((d) => d.id));
 
   const novos = {};
-  for (const r of ativas) {
-    const generatedId = `${r.id}_${monthKey}`;
-    if (idsGerados.has(generatedId)) continue;
+  for (const monthKey of meses) {
+    for (const r of ativas) {
+      const inicio = r.mesInicio ?? (r.createdAt ? monthKeyFromTimestamp(r.createdAt) : null);
+      if (inicio && monthKey < inicio) continue;
 
-    const dia = clampDayToMonth(monthKey, r.diaVencimento);
-    novos[generatedId] = {
-      tipo: r.tipo,
-      descricao: r.descricao,
-      valor: r.valor,
-      dataVencimento: `${monthKey}-${String(dia).padStart(2, '0')}`,
-      dataPagamento: null,
-      status: 'pendente',
-      observacoes: r.observacoes ?? null,
-      categoriaId: r.categoriaId ?? null,
-      origemRecorrenciaId: r.id,
-      mesReferencia: monthKey,
-    };
+      const generatedId = `${r.id}_${monthKey}`;
+      if (idsGerados.has(generatedId)) continue;
+
+      const dia = clampDayToMonth(monthKey, r.diaVencimento);
+      novos[generatedId] = {
+        tipo: r.tipo,
+        descricao: r.descricao,
+        valor: r.valor,
+        dataVencimento: `${monthKey}-${String(dia).padStart(2, '0')}`,
+        dataPagamento: null,
+        status: 'pendente',
+        observacoes: r.observacoes ?? null,
+        categoriaId: r.categoriaId ?? null,
+        origemRecorrenciaId: r.id,
+        mesReferencia: monthKey,
+      };
+    }
   }
 
   if (Object.keys(novos).length === 0) return false;
   await batchSetUserDocs(uid, 'lancamentos', novos);
   return true;
+}
+
+export function ensureGeneratedForMonth(uid, monthKey, recorrenciasPreFetched) {
+  return ensureGeneratedForMonths(uid, [monthKey], recorrenciasPreFetched);
 }

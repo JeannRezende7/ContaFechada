@@ -69,7 +69,6 @@ export default function MeuPlanoPage() {
         await new Promise((resolve) => setTimeout(resolve, RETURN_POLL_DELAY_MS));
       }
       if (!cancelled) setReturnStatus('pending');
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     })();
 
     return () => {
@@ -142,7 +141,7 @@ export default function MeuPlanoPage() {
         {returnStatus === 'pending' && (
           <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
             <p className="text-sm text-ink-500">
-              Ainda estamos confirmando seu pagamento — pode levar alguns minutos. Toque em "Sincronizar assinatura"
+              Ainda estamos confirmando seu pagamento — pode levar alguns minutos. Toque em &ldquo;Sincronizar assinatura&rdquo;
               mais abaixo daqui a pouco, ou volte a esta página em instantes.
             </p>
           </div>

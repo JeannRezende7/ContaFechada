@@ -30,7 +30,6 @@ export default function OpcoesPage() {
 
   useEffect(() => {
     if (!isPremium) track(EVENTS.PREMIUM_CARD_VIEWED, { placement: 'opcoes' });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
 
   async function handleToggleGestorUsaMovimento() {

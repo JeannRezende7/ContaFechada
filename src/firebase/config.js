@@ -1,6 +1,5 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { isSupported, getAnalytics } from 'firebase/analytics';
 import {
   initializeFirestore,
   getFirestore,
@@ -31,11 +30,19 @@ export const auth = getAuth(app);
  * either). `src/utils/analytics.js` awaits this and no-ops when it's null,
  * so every `logEvent` call site stays unconditional.
  */
-export const analyticsReady = firebaseConfig.measurementId
-  ? isSupported()
-      .then((supported) => (supported ? getAnalytics(app) : null))
-      .catch(() => null)
-  : Promise.resolve(null);
+let analyticsPromise;
+
+export function getAnalyticsReady() {
+  if (!firebaseConfig.measurementId) return Promise.resolve(null);
+  if (!analyticsPromise) {
+    analyticsPromise = import('firebase/analytics')
+      .then(async ({ isSupported, getAnalytics, logEvent }) =>
+        (await isSupported()) ? { analytics: getAnalytics(app), logEvent } : null
+      )
+      .catch(() => null);
+  }
+  return analyticsPromise;
+}
 
 /**
  * IndexedDB-backed local cache: reads fall back to the last-synced data and

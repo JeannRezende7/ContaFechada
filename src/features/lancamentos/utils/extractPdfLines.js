@@ -1,7 +1,3 @@
-import * as pdfjsLib from 'pdfjs-dist';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
-
 /**
  * Reconstructs visual text lines from a PDF file by clustering pdf.js's
  * positioned text items by their y-coordinate (same row) and ordering each
@@ -9,6 +5,14 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.mi
  * runs, not lines.
  */
 export async function extractPdfLines(file) {
+  // PDF.js is one of the largest dependencies in the app. Load it only when
+  // the user actually imports a PDF instead of shipping it on initial paint.
+  const pdfjsLib = await import('pdfjs-dist');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+  ).toString();
+
   const buffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
   const lines = [];

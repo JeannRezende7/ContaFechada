@@ -1,4 +1,5 @@
 import { listUserDocs, getUserDoc, deleteAllUserDocs, deleteUserDoc } from '../../../firebase/firestore.js';
+import { auth } from '../../../firebase/config.js';
 
 /**
  * Every top-level collection a user's data lives in, kept in one place so
@@ -40,7 +41,20 @@ export async function exportUserData(uid) {
 export async function deleteAllUserData(uid) {
   await Promise.all(COLLECTIONS.map((name) => deleteAllUserDocs(uid, name)));
   await deleteUserDoc(uid, 'config', 'geral');
-  await deleteUserDoc(uid, 'private', 'subscription');
+
+  const user = auth.currentUser;
+  if (!user || user.uid !== uid) throw new Error('Usuário não autenticado.');
+  const token = await user.getIdToken();
+  const response = await fetch('/api/delete-private-user-data', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || 'Não foi possível excluir os dados privados da conta.');
+  }
 }
 
 export function downloadJson(filename, data) {

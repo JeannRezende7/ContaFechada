@@ -70,7 +70,6 @@ export async function importarDoMovimento(uid, lancamentosSelecionados) {
   for (const l of lancamentosSelecionados) {
     const id = `mov-${l.id}`;
     if (idsExistentes.has(id)) continue;
-    // eslint-disable-next-line no-unused-vars
     const { id: _id, createdAt: _createdAt, ...resto } = l;
     novos[id] = resto;
   }

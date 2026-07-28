@@ -1,5 +1,4 @@
-import { logEvent as firebaseLogEvent } from 'firebase/analytics';
-import { analyticsReady } from '../firebase/config.js';
+import { getAnalyticsReady } from '../firebase/config.js';
 
 /**
  * Event catalog (ROADMAP_MONETIZACAO.txt, Fase 10 "Eventos minimos") — one
@@ -25,13 +24,13 @@ export const EVENTS = {
 
 /**
  * Logs `event` with `params` once Analytics resolves (or silently does
- * nothing if unavailable — see `analyticsReady` in firebase/config.js).
+ * nothing if unavailable — see `getAnalyticsReady` in firebase/config.js).
  * Never awaited by callers, never throws into caller code.
  */
 export function track(event, params = {}) {
-  analyticsReady
-    .then((analytics) => {
-      if (analytics) firebaseLogEvent(analytics, event, params);
+  getAnalyticsReady()
+    .then((ready) => {
+      if (ready) ready.logEvent(ready.analytics, event, params);
     })
     .catch(() => {
       // Analytics é observação, nunca deve derrubar a ação que está observando.

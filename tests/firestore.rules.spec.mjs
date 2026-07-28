@@ -1,0 +1,158 @@
+import { readFileSync } from 'node:fs';
+import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import {
+  assertFails,
+  assertSucceeds,
+  initializeTestEnvironment,
+} from '@firebase/rules-unit-testing';
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  updateDoc,
+} from 'firebase/firestore';
+
+const PROJECT_ID = 'contafechada-rules-test';
+let testEnv;
+
+function initialSubscription(overrides = {}) {
+  return {
+    plan: 'free',
+    subscriptionStatus: 'none',
+    subscriptionProvider: 'manual',
+    subscriptionId: null,
+    currentPeriodEnd: null,
+    cancelAtPeriodEnd: false,
+    trialStartedAt: null,
+    trialEndsAt: null,
+    founder: false,
+    createdAt: serverTimestamp(),
+    ...overrides,
+  };
+}
+
+beforeAll(async () => {
+  testEnv = await initializeTestEnvironment({
+    projectId: PROJECT_ID,
+    firestore: {
+      host: '127.0.0.1',
+      port: 8080,
+      rules: readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8'),
+    },
+  });
+});
+
+beforeEach(async () => {
+  await testEnv.clearFirestore();
+});
+
+afterAll(async () => {
+  await testEnv.cleanup();
+});
+
+describe('Firestore owner data', () => {
+  it('allows the owner and denies another user', async () => {
+    const ownerDb = testEnv.authenticatedContext('user-a').firestore();
+    const otherDb = testEnv.authenticatedContext('user-b').firestore();
+    const path = 'users/user-a/lancamentos/item-1';
+
+    await assertSucceeds(setDoc(doc(ownerDb, path), { valor: 10 }));
+    await assertSucceeds(getDoc(doc(ownerDb, path)));
+    await assertFails(getDoc(doc(otherDb, path)));
+  });
+
+  it('denies collections that were not explicitly allowed', async () => {
+    const ownerDb = testEnv.authenticatedContext('user-a').firestore();
+    await assertFails(setDoc(doc(ownerDb, 'users/user-a/colecaoInesperada/item-1'), { value: true }));
+  });
+});
+
+describe('subscription protection', () => {
+  it('allows only the complete initial free subscription', async () => {
+    const db = testEnv.authenticatedContext('user-a').firestore();
+    const ref = doc(db, 'users/user-a/private/subscription');
+
+    await assertSucceeds(setDoc(ref, initialSubscription()));
+  });
+
+  it('denies privileged fields during initial creation', async () => {
+    const db = testEnv.authenticatedContext('user-a').firestore();
+    const ref = doc(db, 'users/user-a/private/subscription');
+
+    await assertFails(setDoc(ref, initialSubscription({ plan: 'premium', founder: true })));
+  });
+
+  it('denies direct promotion to an active paid plan', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), 'users/user-a/private/subscription'),
+        initialSubscription({ createdAt: Timestamp.now() })
+      );
+    });
+
+    const db = testEnv.authenticatedContext('user-a').firestore();
+    const ref = doc(db, 'users/user-a/private/subscription');
+    await assertFails(updateDoc(ref, {
+      plan: 'premium',
+      subscriptionStatus: 'active',
+      founder: true,
+    }));
+  });
+
+  it('allows the exact one-time trial transition', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), 'users/user-a/private/subscription'),
+        initialSubscription({ createdAt: Timestamp.now() })
+      );
+    });
+
+    const db = testEnv.authenticatedContext('user-a').firestore();
+    const ref = doc(db, 'users/user-a/private/subscription');
+    await assertSucceeds(updateDoc(ref, {
+      plan: 'premium',
+      subscriptionStatus: 'trialing',
+      subscriptionProvider: 'web',
+      subscriptionId: null,
+      cancelAtPeriodEnd: false,
+      trialStartedAt: serverTimestamp(),
+      trialEndsAt: Timestamp.fromMillis(Date.now() + 14 * 86_400_000),
+    }));
+  });
+
+  it('denies deleting the subscription to repeat a trial', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), 'users/user-a/private/subscription'),
+        initialSubscription({
+          plan: 'premium',
+          subscriptionStatus: 'trialing',
+          subscriptionProvider: 'web',
+          trialStartedAt: Timestamp.now(),
+          trialEndsAt: Timestamp.fromMillis(Date.now() + 14 * 86_400_000),
+          createdAt: Timestamp.now(),
+        })
+      );
+    });
+
+    const db = testEnv.authenticatedContext('user-a').firestore();
+    await assertFails(deleteDoc(doc(db, 'users/user-a/private/subscription')));
+  });
+
+  it('allows reading but never writing subscription logs', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), 'users/user-a/private/subscription/subscription_log/log-1'),
+        { action: 'created' }
+      );
+    });
+
+    const db = testEnv.authenticatedContext('user-a').firestore();
+    const ref = doc(db, 'users/user-a/private/subscription/subscription_log/log-1');
+    await assertSucceeds(getDoc(ref));
+    await assertFails(setDoc(ref, { action: 'forged' }));
+  });
+});

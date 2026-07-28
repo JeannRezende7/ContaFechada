@@ -34,9 +34,9 @@ const COLLECTION = 'lancamentos';
  */
 
 /** Lists only the lançamentos due within the given 'YYYY-MM' month. */
-export function listLancamentosByMonth(uid, monthKey) {
+export function listLancamentosByMonth(uid, monthKey, { source = 'default' } = {}) {
   const { gte, lte } = monthRangeBounds(monthKey);
-  return listUserDocsInRange(uid, COLLECTION, { field: 'dataVencimento', gte, lte });
+  return listUserDocsInRange(uid, COLLECTION, { field: 'dataVencimento', gte, lte, source });
 }
 
 /** Lists every lançamento regardless of date — used by the Gestor Financeiro's analysis and import picker. */
@@ -76,6 +76,19 @@ export async function setCategoriaForRecorrencia(uid, recorrenciaId, categoriaId
   const gerados = await listUserDocsWhereEquals(uid, COLLECTION, 'origemRecorrenciaId', recorrenciaId);
   if (gerados.length === 0) return;
   await batchUpdateUserDocs(uid, COLLECTION, gerados.map((l) => l.id), { categoriaId });
+}
+
+/**
+ * Deletes lançamentos already generated from a recorrência — every instance,
+ * or only `mesReferencia >= fromMonthKey` onward when the user picks "esta e
+ * as próximas". Doesn't touch the `recorrencias` template itself; callers
+ * that also want to stop future generation call `deleteRecorrencia` separately.
+ */
+export async function deleteGeneratedFromRecorrencia(uid, recorrenciaId, { fromMonthKey } = {}) {
+  const gerados = await listUserDocsWhereEquals(uid, COLLECTION, 'origemRecorrenciaId', recorrenciaId);
+  const alvo = fromMonthKey ? gerados.filter((l) => l.mesReferencia >= fromMonthKey) : gerados;
+  if (alvo.length === 0) return;
+  await deleteUserDocsByIds(uid, COLLECTION, alvo.map((l) => l.id));
 }
 
 /** Quick status change from the list row, without opening the modal. */
