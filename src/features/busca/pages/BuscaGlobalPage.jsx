@@ -11,17 +11,24 @@ import { listRecorrencias } from '../../recorrencias/services/recorrenciasServic
 import { filtrarBuscaGlobal } from '../utils/buscaGlobal.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
+import { usePremium } from '../../../contexts/PremiumContext.jsx';
+import { FEATURES } from '../../../config/premium.js';
 
 const EMPTY_FILTERS = { query: '', recurso: 'todos', tipo: 'todos', status: 'todos', categoriaId: '', de: '', ate: '', valorMin: '', valorMax: '' };
 
 export default function BuscaGlobalPage() {
   const { user } = useAuth();
+  const { canUse, openPaywall, loading: premiumLoading } = usePremium();
+  const allowed = canUse(FEATURES.BUSCA_GLOBAL);
   const [data, setData] = useState({ lancamentos: [], categorias: [], metas: [], recorrencias: [] });
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || !allowed) {
+      if (!premiumLoading) setLoading(false);
+      return;
+    }
     Promise.all([
       listAllLancamentos(user.uid),
       ensureDefaultCategorias(user.uid),
@@ -31,7 +38,7 @@ export default function BuscaGlobalPage() {
       setData({ lancamentos, categorias, metas, recorrencias });
       setLoading(false);
     });
-  }, [user]);
+  }, [user, allowed, premiumLoading]);
 
   const items = useMemo(() => [
     ...data.lancamentos.map((item) => ({
@@ -50,6 +57,17 @@ export default function BuscaGlobalPage() {
   }
 
   if (loading) return <><Topbar title="Busca global" icon={Search} /><LoadingScreen /></>;
+  if (!allowed) {
+    return (
+      <>
+        <Topbar title="Busca global" icon={Search} />
+        <div className="mx-auto max-w-lg p-8 text-center">
+          <p className="text-sm text-ink-500">A busca em todo o histórico e os filtros avançados fazem parte do Premium.</p>
+          <button onClick={() => openPaywall({ feature: FEATURES.BUSCA_GLOBAL })} className="mt-3 rounded-pill bg-ledger-500 px-4 py-2.5 text-sm font-medium text-white">Conhecer o Premium</button>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

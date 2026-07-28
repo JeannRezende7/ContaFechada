@@ -47,6 +47,30 @@ const FEATURE_COPY = {
     title: 'Exportação avançada',
     desc: 'Exporte outros períodos e use filtros avançados.',
   },
+  [FEATURES.PLANEJAMENTO_AVANCADO]: {
+    title: 'Planejamento financeiro completo',
+    desc: 'Orçamentos, fechamento mensal, alertas e simulador de parcelas fazem parte do Premium.',
+  },
+  [FEATURES.IMPORTACAO_EXTRATO]: {
+    title: 'Importação bancária',
+    desc: 'Importe extratos CSV e OFX, revise categorias e evite duplicidades com o Premium.',
+  },
+  [FEATURES.REGRAS_CATEGORIZACAO]: {
+    title: 'Categorização automática',
+    desc: 'Crie regras e aplique categorias automaticamente com o Premium.',
+  },
+  [FEATURES.ACOES_EM_MASSA]: {
+    title: 'Ações em massa',
+    desc: 'Edite, exporte ou exclua vários lançamentos de uma vez com o Premium.',
+  },
+  [FEATURES.BUSCA_GLOBAL]: {
+    title: 'Busca global',
+    desc: 'Pesquise todo o histórico, metas, categorias e recorrências com filtros avançados.',
+  },
+  [FEATURES.METAS_AUTOMATICAS]: {
+    title: 'Metas automáticas',
+    desc: 'Automatize aportes por valor, receita ou saldo mensal com o Premium.',
+  },
 };
 
 const DISCOVERY_COPY = {

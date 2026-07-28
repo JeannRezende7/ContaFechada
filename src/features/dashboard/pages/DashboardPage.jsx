@@ -24,11 +24,19 @@ import {
   InsightsCard,
   MonthlyComparisonCard,
   SavingsChallenge,
+  FreeValueSummary,
 } from '../components/DashboardSections.jsx';
+import { usePremium } from '../../../contexts/PremiumContext.jsx';
+import { FEATURES } from '../../../config/premium.js';
+import { getDistribuicaoMensal } from '../../valor-livre/services/valorLivreService.js';
+import { calcularValorLivre } from '../../valor-livre/utils/valorLivre.js';
+import { listMetas } from '../../metas/services/metasService.js';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const uid = user?.uid;
+  const { canUse, openPaywall } = usePremium();
+  const insightsAllowed = canUse(FEATURES.INSIGHTS_AVANCADOS);
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey());
   const [indicators, setIndicators] = useState(null);
   const [comparacao, setComparacao] = useState(null);
@@ -40,6 +48,8 @@ export default function DashboardPage() {
   const [loadError, setLoadError] = useState(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [distribuicaoValorLivre, setDistribuicaoValorLivre] = useState([]);
+  const [metasValorLivre, setMetasValorLivre] = useState([]);
 
   useEffect(() => {
     if (!uid) return;
@@ -141,6 +151,27 @@ export default function DashboardPage() {
     getMetaEconomiaMensal(uid).then((valor) => setMetaEconomia(valor));
   }, [uid]);
 
+  useEffect(() => {
+    if (!uid) return;
+    let cancelled = false;
+    setDistribuicaoValorLivre([]);
+    setMetasValorLivre([]);
+    Promise.all([getDistribuicaoMensal(uid, monthKey), listMetas(uid)])
+      .then(([items, goalItems]) => {
+        if (!cancelled) {
+          setDistribuicaoValorLivre(items);
+          setMetasValorLivre(goalItems);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDistribuicaoValorLivre([]);
+          setMetasValorLivre([]);
+        }
+      });
+    return () => { cancelled = true; };
+  }, [uid, monthKey]);
+
   const categoriasById = useMemo(
     () => Object.fromEntries(categorias.map((c) => [c.id, c])),
     [categorias]
@@ -151,7 +182,7 @@ export default function DashboardPage() {
   const gastoDiario = indicators && diasRestantes > 0 ? indicators.saldoMes / diasRestantes : null;
 
   const insights = useMemo(() => {
-    if (!indicators || !comparacao) return [];
+    if (!indicators || !comparacao || !insightsAllowed) return [];
     return computeInsights({
       despesaPorCategoriaAtual: comparacao.porCategoriaAtual,
       despesaPorCategoriaAnterior: comparacao.porCategoriaAnterior,
@@ -162,7 +193,7 @@ export default function DashboardPage() {
       lancamentosAtual: dashboardItems.atual,
       lancamentosAnterior: dashboardItems.anterior,
     });
-  }, [indicators, comparacao, categoriasById, diasRestantes, diasNoMes, dashboardItems]);
+  }, [indicators, comparacao, categoriasById, diasRestantes, diasNoMes, dashboardItems, insightsAllowed]);
 
   async function handleSalvarMeta() {
     const valor = Number(metaInput);
@@ -174,6 +205,10 @@ export default function DashboardPage() {
 
   const economiaAtual = indicators ? Math.max(0, indicators.saldoMes) : 0;
   const economiaPct = metaEconomia > 0 ? Math.min(100, Math.round((economiaAtual / metaEconomia) * 100)) : 0;
+  const resumoValorLivre = useMemo(
+    () => calcularValorLivre(dashboardItems.atual, distribuicaoValorLivre),
+    [dashboardItems.atual, distribuicaoValorLivre]
+  );
 
   if (loadError && !indicators) {
     return (
@@ -241,6 +276,7 @@ export default function DashboardPage() {
 
         <MonthlyComparisonCard comparacao={comparacao} monthKey={monthKey} />
         <DailyBudgetCard gastoDiario={gastoDiario} diasRestantes={diasRestantes} />
+        <FreeValueSummary resumo={resumoValorLivre} metas={metasValorLivre} />
         <DashboardHighlights indicators={indicators} />
 
         <SavingsChallenge
@@ -256,7 +292,11 @@ export default function DashboardPage() {
           onInputChange={setMetaInput}
           onSave={handleSalvarMeta}
         />
-        <InsightsCard insights={insights} />
+        <InsightsCard
+          insights={insights}
+          locked={!insightsAllowed}
+          onUnlock={() => openPaywall({ feature: FEATURES.INSIGHTS_AVANCADOS })}
+        />
         <DashboardLinks />
       </div>
     </>

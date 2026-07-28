@@ -13,6 +13,7 @@ import {
   Target,
   TrendingDown,
   TrendingUp,
+  WalletCards,
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
@@ -70,6 +71,103 @@ export function DailyBudgetCard({ gastoDiario, diasRestantes }) {
         )}
       </div>
     </div>
+  );
+}
+
+export function FreeValueSummary({ resumo, metas = [] }) {
+  if (!resumo) return null;
+  const distribuido = Math.max(0, resumo.totalPlanejado);
+  const percentual = resumo.valorLivre > 0
+    ? Math.min(100, Math.round((distribuido / resumo.valorLivre) * 100))
+    : 0;
+
+  return (
+    <Link
+      to="/valor-livre"
+      className="mt-4 block rounded-card bg-white p-4 shadow-card transition-shadow hover:shadow-card-hover dark:bg-ink-700"
+    >
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ledger-50 text-ledger-600">
+          <WalletCards size={18} strokeWidth={1.75} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-xs text-ink-300">Valor livre do mês</p>
+              <p className={`money text-xl font-semibold ${resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>
+                {formatCurrency(resumo.valorLivre)}
+              </p>
+            </div>
+            <ChevronRight size={17} className="shrink-0 text-ink-300" />
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+            <span className="text-ink-300">Renda <b className="money block text-ink-500 dark:text-ink-100">{formatCurrency(resumo.renda)}</b></span>
+            <span className="text-ink-300">Contas fixas <b className="money block text-ink-500 dark:text-ink-100">{formatCurrency(resumo.contasFixas)}</b></span>
+            <span className="col-span-2 text-ink-300 sm:col-span-1">Não distribuído <b className={`money block ${resumo.naoDistribuido < 0 ? 'text-signal-500' : 'text-ink-500 dark:text-ink-100'}`}>{formatCurrency(resumo.naoDistribuido)}</b></span>
+          </div>
+
+          {resumo.valorLivre > 0 && distribuido > 0 && (
+            <div className="mt-3">
+              <div className="h-2 overflow-hidden rounded-pill bg-ink-50 dark:bg-ink-900">
+                <div className="h-full rounded-pill bg-ledger-500" style={{ width: `${percentual}%` }} />
+              </div>
+              <p className="mt-1 text-[11px] text-ink-300">{percentual}% do valor livre distribuído</p>
+            </div>
+          )}
+
+          {resumo.itens.length > 0 && (
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {resumo.itens.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-ink-100 bg-ink-50/60 p-3 dark:border-ink-900 dark:bg-ink-900"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="truncate text-xs font-medium text-ink-700 dark:text-ink-100">
+                      {item.nome || 'Sem nome'}
+                    </p>
+                    <span className="shrink-0 text-[10px] text-ink-300">
+                      {Number(item.percentual) || 0}%
+                    </span>
+                  </div>
+                  <p className={`money mt-1 text-base font-semibold ${
+                    item.disponivel < 0 ? 'text-signal-500' : 'text-ledger-600'
+                  }`}>
+                    {formatCurrency(item.disponivel)}
+                  </p>
+                  <p className="text-[10px] text-ink-300">disponível para gastar</p>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-pill bg-white dark:bg-ink-700">
+                    <div
+                      className={`h-full rounded-pill ${
+                        item.disponivel < 0 ? 'bg-signal-500' : 'bg-ledger-500'
+                      }`}
+                      style={{ width: `${item.percentualUsado}%` }}
+                    />
+                  </div>
+                  <div className="mt-1.5 flex justify-between gap-2 text-[10px] text-ink-300">
+                    <span>Gasto: <b className="money">{formatCurrency(item.gasto)}</b></span>
+                    <span>Limite: <b className="money">{formatCurrency(item.planejado)}</b></span>
+                  </div>
+                  {item.metaId && (() => {
+                    const meta = metas.find((goal) => goal.id === item.metaId);
+                    if (!meta) return null;
+                    const alvo = Number(meta.valorAlvo) || 0;
+                    const atual = Number(meta.valorAtual) || 0;
+                    const progresso = alvo > 0 ? Math.min(100, Math.round((atual / alvo) * 100)) : 0;
+                    return (
+                      <p className="mt-2 border-t border-ink-100 pt-2 text-[10px] text-gold-700 dark:border-ink-700 dark:text-gold-200">
+                        Meta: {meta.nome} · {progresso}%
+                      </p>
+                    );
+                  })()}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -192,8 +290,8 @@ export function SavingsChallenge({
   );
 }
 
-export function InsightsCard({ insights }) {
-  if (insights.length === 0) return null;
+export function InsightsCard({ insights, locked = false, onUnlock }) {
+  if (!locked && insights.length === 0) return null;
 
   return (
     <div className="mt-4 bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
@@ -204,6 +302,12 @@ export function InsightsCard({ insights }) {
         <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Insights automáticos</p>
       </div>
       <ul className="flex flex-col gap-1.5">
+        {locked && (
+          <li className="rounded-xl bg-ink-50 p-3 text-sm text-ink-500 dark:bg-ink-900">
+            Insights explicados, gastos incomuns e detecção de assinaturas fazem parte do Premium.
+            <button onClick={onUnlock} className="mt-1.5 block text-xs font-medium text-ledger-600 hover:underline">Conhecer o Premium</button>
+          </li>
+        )}
         {insights.map((insight, index) => (
           <li key={`${insight.title || insight}-${index}`} className="rounded-xl bg-ink-50 p-3 text-sm dark:bg-ink-900">
             <p className="font-medium text-ink-700 dark:text-ink-100">{insight.title || insight}</p>

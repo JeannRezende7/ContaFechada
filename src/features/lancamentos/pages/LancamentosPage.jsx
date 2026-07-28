@@ -400,9 +400,13 @@ export default function LancamentosPage() {
           totalCount={lancamentosDoTipo.length}
           onDeleteAll={handleDeleteEmMassa}
           onExport={handleExportCsv}
-          onImport={() => setImportModalOpen(true)}
+          onImport={() => {
+            if (!guardFeature(FEATURES.IMPORTACAO_EXTRATO)) return;
+            setImportModalOpen(true);
+          }}
           selecting={selecting}
           onToggleSelecting={() => {
+            if (!selecting && !guardFeature(FEATURES.ACOES_EM_MASSA)) return;
             setSelecting((current) => !current);
             setSelectedIds(new Set());
           }}

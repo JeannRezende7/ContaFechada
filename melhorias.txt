@@ -422,3 +422,25 @@ Modo privacidade:
 - Valores substituídos por marcadores sem ocultar descrições.
 - Aplicação global em todas as telas e formulários monetários.
 - Preferência lembrada localmente no dispositivo.
+
+
+PREPARAÇÃO DOS RECURSOS PREMIUM — 28/07/2026
+============================================
+
+Os bloqueios abaixo foram conectados à configuração central, mas continuam
+inativos enquanto PREMIUM_ENFORCED permanecer false:
+
+- Planejamento avançado: orçamento, pendências, fechamento, alertas e simulador.
+- Importação de extratos CSV e OFX.
+- Regras automáticas de categorização.
+- Ações em massa.
+- Busca global com filtros.
+- Metas com contribuição automática.
+- Insights acionáveis avançados.
+
+Quando os bloqueios forem ativados:
+
+- o gratuito mantém lançamentos, previsão mensal e busca no Movimento;
+- telas Premium não executam consultas pesadas antes de mostrar o paywall;
+- assinantes e usuários em período de teste continuam com acesso integral;
+- títulos e descrições contextuais explicam qual recurso causou o bloqueio.

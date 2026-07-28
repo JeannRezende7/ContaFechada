@@ -28,7 +28,8 @@ export default function MetasPage() {
   const { user } = useAuth();
   const uid = user?.uid;
   const confirm = useConfirm();
-  const { guardFeature } = usePremium();
+  const { guardFeature, canUse } = usePremium();
+  const automaticGoalsAllowed = canUse(FEATURES.METAS_AUTOMATICAS);
   const [metas, setMetas] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -46,18 +47,24 @@ export default function MetasPage() {
 
   useEffect(() => {
     if (!uid) return;
-    Promise.all([listMetas(uid), listAllLancamentos(uid), getFechamento(uid, monthKey)])
-      .then(async ([goalItems, launches, closing]) => {
+    const automationData = automaticGoalsAllowed
+      ? Promise.all([listAllLancamentos(uid), getFechamento(uid, monthKey)])
+      : Promise.resolve([[], null]);
+    Promise.all([listMetas(uid), automationData])
+      .then(async ([goalItems, [launches, closing]]) => {
         const currentItems = launches.filter((item) => item.dataVencimento?.slice(0, 7) === monthKey);
-        await processarAportesAutomaticos(uid, goalItems, currentItems, closing, monthKey);
+        if (automaticGoalsAllowed) {
+          await processarAportesAutomaticos(uid, goalItems, currentItems, closing, monthKey);
+        }
         setMonthItems(currentItems);
         setCurrentClosing(closing);
         setMetas(await listMetas(uid));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid]);
+  }, [uid, automaticGoalsAllowed]);
 
   async function handleSave(id, data) {
+    if (data.aporteAutomatico?.tipo !== 'nenhum' && !guardFeature(FEATURES.METAS_AUTOMATICAS)) return;
     if (id) {
       await updateMeta(uid, id, data);
     } else {

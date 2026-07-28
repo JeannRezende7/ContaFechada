@@ -9,9 +9,13 @@ import {
   listRegrasCategorizacao,
   updateRegraCategorizacao,
 } from '../services/regrasCategorizacaoService.js';
+import { usePremium } from '../../../contexts/PremiumContext.jsx';
+import { FEATURES } from '../../../config/premium.js';
 
 export default function RegrasCategorizacao({ uid, categorias }) {
   const confirm = useConfirm();
+  const { canUse, openPaywall, loading } = usePremium();
+  const allowed = canUse(FEATURES.REGRAS_CATEGORIZACAO);
   const [rules, setRules] = useState([]);
   const [form, setForm] = useState({ termo: '', tipo: 'despesa', categoriaId: '', prioridade: 0 });
   const [feedback, setFeedback] = useState('');
@@ -21,9 +25,19 @@ export default function RegrasCategorizacao({ uid, categorias }) {
   }
 
   useEffect(() => {
-    if (uid) reload();
+    if (uid && allowed) reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid]);
+  }, [uid, allowed]);
+
+  if (loading) return null;
+  if (!allowed) {
+    return (
+      <section className="mt-10 rounded-card bg-white p-5 text-center shadow-card dark:bg-ink-700">
+        <p className="text-sm font-medium">Regras automáticas fazem parte do Premium.</p>
+        <button onClick={() => openPaywall({ feature: FEATURES.REGRAS_CATEGORIZACAO })} className="mt-2 text-sm font-medium text-ledger-600 hover:underline">Conhecer o Premium</button>
+      </section>
+    );
+  }
 
   const available = categorias.filter((item) => item.tipo === form.tipo);
 

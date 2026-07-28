@@ -20,6 +20,7 @@ const MeuPlanoPage = lazyWithRetry(() => import('../features/premium/pages/MeuPl
 const TermosPage = lazyWithRetry(() => import('../features/legal/pages/TermosPage.jsx'));
 const PrivacidadePage = lazyWithRetry(() => import('../features/legal/pages/PrivacidadePage.jsx'));
 const BuscaGlobalPage = lazyWithRetry(() => import('../features/busca/pages/BuscaGlobalPage.jsx'));
+const ValorLivrePage = lazyWithRetry(() => import('../features/valor-livre/pages/ValorLivrePage.jsx'));
 
 export default function AppRoutes() {
   return (
@@ -51,6 +52,7 @@ export default function AppRoutes() {
           <Route path="/opcoes" element={<OpcoesPage />} />
           <Route path="/opcoes/meu-plano" element={<MeuPlanoPage />} />
           <Route path="/buscar" element={<BuscaGlobalPage />} />
+          <Route path="/valor-livre" element={<ValorLivrePage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/entrar" replace />} />

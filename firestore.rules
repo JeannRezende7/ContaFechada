@@ -38,6 +38,10 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
+    match /users/{uid}/valorLivre/{docId} {
+      allow read, write: if isOwner(uid);
+    }
+
     // Monthly closings are immutable snapshots: the owner may create and
     // read them, but editing would invalidate the historical reconciliation.
     match /users/{uid}/fechamentos/{docId} {

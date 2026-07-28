@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Receipt, Tag, PieChart, Target, Landmark, CalendarRange } from 'lucide-react';
+import { Home, Receipt, Tag, PieChart, Target, Landmark, CalendarRange, WalletCards } from 'lucide-react';
 
 const ITEMS = [
   { to: '/', label: 'Início', icon: Home },
   { to: '/lancamentos', label: 'Movimento', icon: Receipt },
   { to: '/planejamento', label: 'Planejar', icon: CalendarRange },
+  { to: '/valor-livre', label: 'Livre', icon: WalletCards },
   { to: '/categorias', label: 'Categorias', icon: Tag },
   { to: '/relatorios', label: 'Relatórios', icon: PieChart },
   { to: '/metas', label: 'Metas', icon: Target },

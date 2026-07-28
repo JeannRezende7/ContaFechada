@@ -7,7 +7,7 @@ import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import { clampDayToMonth, getCurrentMonthKey } from '../../../utils/monthKey.js';
 import { ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
-import { createLancamento, createParcelamento, listAllLancamentos } from '../../lancamentos/services/lancamentosService.js';
+import { createLancamento, createParcelamento, listAllLancamentos, listLancamentosByMonth } from '../../lancamentos/services/lancamentosService.js';
 import {
   ensureGeneratedForMonth,
   listRecorrencias,
@@ -38,11 +38,17 @@ import {
   getNotificationSettings,
 } from '../services/notificationService.js';
 import { compararParcelamentos } from '../utils/simuladorParcelamento.js';
+import { usePremium } from '../../../contexts/PremiumContext.jsx';
+import { FEATURES } from '../../../config/premium.js';
 
 const TABS = [
-  { id: 'previsao', label: 'Previsão' },
-  { id: 'orcamentos', label: 'Orçamentos' },
+  { id: 'resumo', label: 'Resumo' },
   { id: 'pendencias', label: 'Pendências' },
+  { id: 'ferramentas', label: 'Mais ferramentas' },
+];
+
+const TOOL_TABS = [
+  { id: 'orcamentos', label: 'Orçamentos' },
   { id: 'fechamento', label: 'Fechamento' },
   { id: 'alertas', label: 'Alertas' },
   { id: 'simulador', label: 'Simulador' },
@@ -51,8 +57,11 @@ const TABS = [
 export default function PlanejamentoPage() {
   const { user } = useAuth();
   const uid = user?.uid;
+  const { canUse, guardFeature } = usePremium();
+  const advancedPlanning = canUse(FEATURES.PLANEJAMENTO_AVANCADO);
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey());
-  const [tab, setTab] = useState('previsao');
+  const [tab, setTab] = useState('resumo');
+  const [toolTab, setToolTab] = useState('orcamentos');
   const [lancamentos, setLancamentos] = useState([]);
   const [recorrencias, setRecorrencias] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -76,7 +85,7 @@ export default function PlanejamentoPage() {
     setLoading(true);
 
     Promise.all([
-      listAllLancamentos(uid),
+      advancedPlanning ? listAllLancamentos(uid) : listLancamentosByMonth(uid, monthKey),
       listRecorrencias(uid),
       ensureDefaultCategorias(uid),
       getPlanejamentoMensal(uid, monthKey),
@@ -101,7 +110,7 @@ export default function PlanejamentoPage() {
     return () => {
       cancelled = true;
     };
-  }, [uid, monthKey]);
+  }, [uid, monthKey, advancedPlanning]);
 
   const forecast = useMemo(
     () => calcularPrevisao(lancamentos, monthKey, planejamento.saldoInicial),
@@ -243,12 +252,15 @@ export default function PlanejamentoPage() {
       <Topbar title="Planejamento" icon={CalendarRange} />
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
         <MonthNav monthKey={monthKey} onChange={setMonthKey} />
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-5">
+        <div className="grid grid-cols-3 gap-2 mb-5">
           {TABS.map((item) => (
             <button
               type="button"
               key={item.id}
-              onClick={() => setTab(item.id)}
+              onClick={() => {
+                if (item.id !== 'resumo' && !guardFeature(FEATURES.PLANEJAMENTO_AVANCADO)) return;
+                setTab(item.id);
+              }}
               className={`rounded-xl px-2 py-2.5 text-sm font-medium transition-colors ${
                 tab === item.id
                   ? 'bg-ledger-500 text-white'
@@ -265,7 +277,7 @@ export default function PlanejamentoPage() {
           ))}
         </div>
 
-        {tab === 'previsao' && (
+        {tab === 'resumo' && (
           <ForecastSection
             forecast={forecast}
             saldoInput={saldoInput}
@@ -274,44 +286,67 @@ export default function PlanejamentoPage() {
             saving={saving === 'saldo'}
           />
         )}
-        {tab === 'orcamentos' && (
-          <BudgetsSection items={budgets} onSave={handleSaveBudget} savingCategory={saving} />
-        )}
         {tab === 'pendencias' && <PendingSection pending={pending} />}
-        {tab === 'fechamento' && (
-          <ClosingSection
-            summary={closingSummary}
-            saved={fechamento}
-            saldoReal={saldoReal}
-            onSaldoRealChange={setSaldoReal}
-            notes={closingNotes}
-            onNotesChange={setClosingNotes}
-            carryPending={carryPending}
-            onCarryPendingChange={setCarryPending}
-            onCloseMonth={handleCloseMonth}
-            saving={saving === 'fechamento'}
-          />
-        )}
-        {tab === 'alertas' && (
-          <NotificationsSection
-            enabled={notificationSettings.enabled}
-            hour={notificationSettings.hour}
-            onHourChange={(hour) => setNotificationSettings((current) => ({ ...current, hour }))}
-            onToggle={handleToggleNotifications}
-            saving={saving === 'alertas'}
-            feedback={notificationFeedback}
-            native={Capacitor.isNativePlatform()}
-          />
-        )}
-        {tab === 'simulador' && (
-          <InstallmentSimulatorSection
-            form={simulator}
-            onChange={(field, value) => setSimulator((current) => ({ ...current, [field]: value }))}
-            scenarios={scenarios}
-            categorias={categorias}
-            onCreate={handleCreateSimulation}
-            saving={saving === 'simulador'}
-          />
+        {tab === 'ferramentas' && (
+          <>
+            <div className="mb-4 rounded-card bg-white p-3 shadow-card dark:bg-ink-700">
+              <p className="mb-2 text-xs text-ink-300">Escolha somente quando precisar de uma ferramenta específica.</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {TOOL_TABS.map((item) => (
+                  <button
+                    type="button"
+                    key={item.id}
+                    onClick={() => setToolTab(item.id)}
+                    className={`rounded-xl px-2 py-2 text-xs font-medium ${
+                      toolTab === item.id
+                        ? 'bg-ink-900 text-white dark:bg-ledger-500'
+                        : 'bg-ink-50 text-ink-500 dark:bg-ink-900'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {toolTab === 'orcamentos' && (
+              <BudgetsSection items={budgets} onSave={handleSaveBudget} savingCategory={saving} />
+            )}
+            {toolTab === 'fechamento' && (
+              <ClosingSection
+                summary={closingSummary}
+                saved={fechamento}
+                saldoReal={saldoReal}
+                onSaldoRealChange={setSaldoReal}
+                notes={closingNotes}
+                onNotesChange={setClosingNotes}
+                carryPending={carryPending}
+                onCarryPendingChange={setCarryPending}
+                onCloseMonth={handleCloseMonth}
+                saving={saving === 'fechamento'}
+              />
+            )}
+            {toolTab === 'alertas' && (
+              <NotificationsSection
+                enabled={notificationSettings.enabled}
+                hour={notificationSettings.hour}
+                onHourChange={(hour) => setNotificationSettings((current) => ({ ...current, hour }))}
+                onToggle={handleToggleNotifications}
+                saving={saving === 'alertas'}
+                feedback={notificationFeedback}
+                native={Capacitor.isNativePlatform()}
+              />
+            )}
+            {toolTab === 'simulador' && (
+              <InstallmentSimulatorSection
+                form={simulator}
+                onChange={(field, value) => setSimulator((current) => ({ ...current, [field]: value }))}
+                scenarios={scenarios}
+                categorias={categorias}
+                onCreate={handleCreateSimulation}
+                saving={saving === 'simulador'}
+              />
+            )}
+          </>
         )}
       </div>
     </>

@@ -84,7 +84,7 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
       {open && (
         <div
           className={`absolute z-40 mt-1.5 max-h-72 overflow-y-auto rounded-xl border border-ink-100 bg-white dark:bg-ink-700 shadow-card-hover p-3 ${
-            compact ? 'w-64 right-0' : 'w-full'
+            compact ? 'w-64 right-0' : 'w-full sm:w-72 sm:right-0'
           }`}
         >
           <div className="grid grid-cols-4 gap-x-2 gap-y-3">

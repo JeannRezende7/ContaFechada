@@ -71,6 +71,13 @@ describe('Firestore owner data', () => {
     }));
     await assertFails(getDoc(doc(otherDb, planningPath)));
 
+    const freeValuePath = 'users/user-a/valorLivre/2026-07';
+    await assertSucceeds(setDoc(doc(ownerDb, freeValuePath), {
+      monthKey: '2026-07',
+      distribuicoes: [{ nome: 'Comida', categoriaId: 'mercado', valor: 500 }],
+    }));
+    await assertFails(getDoc(doc(otherDb, freeValuePath)));
+
     const rulePath = 'users/user-a/regrasCategorizacao/regra-1';
     await assertSucceeds(setDoc(doc(ownerDb, rulePath), { termo: 'Uber', categoriaId: 'transporte' }));
     await assertFails(getDoc(doc(otherDb, rulePath)));

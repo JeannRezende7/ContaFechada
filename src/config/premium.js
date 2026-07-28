@@ -28,6 +28,12 @@ export const FEATURES = {
   GESTOR_AVANCADO: 'gestor_avancado',
   INSIGHTS_AVANCADOS: 'insights_avancados',
   EXPORTACAO_AVANCADA: 'exportacao_avancada',
+  PLANEJAMENTO_AVANCADO: 'planejamento_avancado',
+  IMPORTACAO_EXTRATO: 'importacao_extrato',
+  REGRAS_CATEGORIZACAO: 'regras_categorizacao',
+  ACOES_EM_MASSA: 'acoes_em_massa',
+  BUSCA_GLOBAL: 'busca_global',
+  METAS_AUTOMATICAS: 'metas_automaticas',
 };
 
 /**
@@ -46,6 +52,12 @@ const FEATURE_KIND = {
   [FEATURES.GESTOR_AVANCADO]: 'boolean',
   [FEATURES.INSIGHTS_AVANCADOS]: 'boolean',
   [FEATURES.EXPORTACAO_AVANCADA]: 'boolean',
+  [FEATURES.PLANEJAMENTO_AVANCADO]: 'boolean',
+  [FEATURES.IMPORTACAO_EXTRATO]: 'boolean',
+  [FEATURES.REGRAS_CATEGORIZACAO]: 'boolean',
+  [FEATURES.ACOES_EM_MASSA]: 'boolean',
+  [FEATURES.BUSCA_GLOBAL]: 'boolean',
+  [FEATURES.METAS_AUTOMATICAS]: 'boolean',
 };
 
 /**
@@ -91,6 +103,9 @@ export const PLAN_DETAILS = {
       'Gestor Financeiro completo',
       'Filtros e exportações avançadas',
       'Acesso antecipado a novos recursos',
+      'Planejamento, orçamento, fechamento e simulador',
+      'Importação CSV/OFX e ações em massa',
+      'Busca global, regras automáticas e aportes em metas',
     ],
   },
 };
@@ -110,6 +125,10 @@ export const PLAN_COMPARISON = [
   { label: 'Gestor Financeiro', free: 'Indicadores básicos do mês atual', premium: 'Completo, com projeções' },
   { label: 'Insights e sugestões', free: 'Não incluído', premium: 'Avançados' },
   { label: 'Exportação', free: 'CSV do mês atual', premium: 'Avançada, múltiplos períodos' },
+  { label: 'Planejamento', free: 'Previsão do mês', premium: 'Orçamentos, fechamento, alertas e simulador' },
+  { label: 'Importação bancária', free: 'Não incluída', premium: 'CSV e OFX' },
+  { label: 'Automação', free: 'Recorrências limitadas', premium: 'Regras de categoria e metas automáticas' },
+  { label: 'Busca', free: 'No Movimento', premium: 'Global com filtros avançados' },
 ];
 
 /** Preços propostos — validar antes do lançamento (ROADMAP_MONETIZACAO.txt, secao 1). */
