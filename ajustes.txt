@@ -593,3 +593,12 @@ Validação:
 - Suíte da aplicação: 84 testes aprovados em 12 arquivos.
 - npm run lint: aprovado sem erros ou avisos.
 - npm run build: build de produção aprovado.
+
+Complemento para abas abertas antes da correção:
+
+- Assets removidos solicitados por builds antigos agora recebem um módulo
+  JavaScript de recuperação, e não apenas uma resposta 404.
+- O módulo recarrega o aplicativo e possui exportação compatível com React.lazy.
+- Isso permite recuperar inclusive clientes antigos que ainda não carregaram
+  o mecanismo lazyWithRetry.
+- Uma janela de segurança de 30 segundos evita ciclos de recarregamento.

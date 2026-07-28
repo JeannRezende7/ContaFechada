@@ -15,12 +15,12 @@
   status = 200
 
 # Existing hashed assets are served directly by Netlify. If an old PWA asks
-# for a hash removed by a newer deploy, return a real 404 instead of rewriting
-# index.html as JavaScript (which produces a misleading MIME text/html error).
+# for a hash removed by a newer deploy, return a valid JavaScript recovery
+# module. Its side effect reloads even clients that predate lazyWithRetry.
 [[redirects]]
   from = "/assets/*"
-  to = "/404.html"
-  status = 404
+  to = "/chunk-recovery.js"
+  status = 200
 
 [[redirects]]
   from = "/*"
@@ -39,6 +39,11 @@
 
 [[headers]]
   for = "/registerSW.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/chunk-recovery.js"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
