@@ -17,6 +17,17 @@ export function setDashboardMemoryCache(uid, monthKey, data) {
   dashboardMemory.set(dashboardCacheKey(uid, monthKey), data);
 }
 
+export function clearDashboardMemoryCache(uid) {
+  if (!uid) {
+    dashboardMemory.clear();
+    return;
+  }
+  const prefix = `${uid}:`;
+  for (const key of dashboardMemory.keys()) {
+    if (key.startsWith(prefix)) dashboardMemory.delete(key);
+  }
+}
+
 function computeIndicators(lancamentos, monthKey) {
   let saldoMes = 0;
   let totalAPagar = 0;

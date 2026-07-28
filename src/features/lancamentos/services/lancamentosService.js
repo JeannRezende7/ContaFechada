@@ -5,6 +5,7 @@ import {
   deleteAllUserDocs,
   deleteUserDocsByIds,
   batchUpdateUserDocs,
+  batchUpdateUserDocsWithData,
   listUserDocs,
   listUserDocsInRange,
   listUserDocsWhereEquals,
@@ -76,6 +77,32 @@ export async function setCategoriaForRecorrencia(uid, recorrenciaId, categoriaId
   const gerados = await listUserDocsWhereEquals(uid, COLLECTION, 'origemRecorrenciaId', recorrenciaId);
   if (gerados.length === 0) return;
   await batchUpdateUserDocs(uid, COLLECTION, gerados.map((l) => l.id), { categoriaId });
+}
+
+/**
+ * Updates recurrence instances already generated from `fromMonthKey` onward.
+ * Each due date is recalculated because changing the template's due day needs
+ * month-specific clamping (for example, day 31 becomes February 28/29).
+ */
+export async function updateGeneratedFromRecorrencia(uid, recorrenciaId, data, fromMonthKey) {
+  const gerados = await listUserDocsWhereEquals(uid, COLLECTION, 'origemRecorrenciaId', recorrenciaId);
+  const updatesById = {};
+
+  for (const item of gerados) {
+    if (!item.mesReferencia || item.mesReferencia < fromMonthKey) continue;
+    const dia = clampDayToMonth(item.mesReferencia, data.diaVencimento);
+    updatesById[item.id] = {
+      descricao: data.descricao,
+      valor: data.valor,
+      dataVencimento: `${item.mesReferencia}-${String(dia).padStart(2, '0')}`,
+      categoriaId: data.categoriaId ?? null,
+      observacoes: data.observacoes ?? null,
+    };
+  }
+
+  if (Object.keys(updatesById).length === 0) return 0;
+  await batchUpdateUserDocsWithData(uid, COLLECTION, updatesById);
+  return Object.keys(updatesById).length;
 }
 
 /**

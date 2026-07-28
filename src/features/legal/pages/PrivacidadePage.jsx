@@ -49,7 +49,18 @@ export default function PrivacidadePage() {
           </section>
 
           <section>
-            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">3. Com quem compartilhamos</h2>
+            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">3. Funcionamento offline</h2>
+            <p>
+              Para carregar mais rápido e permitir consulta com conexão instável, o app mantém uma cópia local
+              no armazenamento do navegador dos dados já sincronizados neste dispositivo. Sair da
+              conta limpa os caches rápidos da sessão, mas a cópia offline pode permanecer no navegador. Em Opções,
+              você pode usar “Limpar dados deste dispositivo” para apagar essa cópia sem excluir os dados da nuvem.
+              Ao excluir a conta, o app também tenta remover automaticamente o cache local.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">4. Com quem compartilhamos</h2>
             <p>
               Não vendemos nem compartilhamos seus dados financeiros com terceiros para fins de publicidade. Dados
               são compartilhados apenas com os provedores necessários para o funcionamento do serviço: Google
@@ -59,7 +70,7 @@ export default function PrivacidadePage() {
           </section>
 
           <section>
-            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">4. Seus direitos (LGPD)</h2>
+            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">5. Seus direitos (LGPD)</h2>
             <p>Você pode, a qualquer momento, direto no app (em Opções):</p>
             <ul className="list-disc pl-5 mt-1.5 flex flex-col gap-1">
               <li>Exportar uma cópia de todos os seus dados pessoais em formato legível.</li>
@@ -72,7 +83,7 @@ export default function PrivacidadePage() {
           </section>
 
           <section>
-            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">5. Retenção de dados</h2>
+            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">6. Retenção de dados</h2>
             <p>
               Mantemos seus dados enquanto sua conta existir. Ao excluir a conta, os dados são apagados
               permanentemente do Firestore e sua conta de autenticação é removida.
@@ -80,7 +91,7 @@ export default function PrivacidadePage() {
           </section>
 
           <section>
-            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">6. Analytics</h2>
+            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">7. Analytics</h2>
             <p>
               Podemos usar o Firebase Analytics para entender uso agregado do app (ex: quais telas são mais
               visitadas, taxa de conversão do plano Premium) — não usamos isso para identificar você individualmente
@@ -89,7 +100,7 @@ export default function PrivacidadePage() {
           </section>
 
           <section>
-            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">7. Alterações</h2>
+            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">8. Alterações</h2>
             <p>Podemos atualizar esta política conforme o produto evolui. Mudanças relevantes serão comunicadas dentro do app.</p>
           </section>
         </div>

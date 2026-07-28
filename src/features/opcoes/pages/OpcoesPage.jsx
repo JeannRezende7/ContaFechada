@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck } from 'lucide-react';
+import { Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -12,7 +12,8 @@ import {
   deleteAllGestorLancamentos,
 } from '../../gestor/services/gestorService.js';
 import { exportUserData, deleteAllUserData, downloadJson } from '../services/dataPortabilityService.js';
-import { deleteAccount } from '../../../firebase/auth.js';
+import { deleteAccount, signOutUser } from '../../../firebase/auth.js';
+import { clearDeviceData } from '../../../utils/deviceCache.js';
 import { track, EVENTS } from '../../../utils/analytics.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
 
@@ -76,6 +77,27 @@ export default function OpcoesPage() {
     }
   }
 
+  async function handleLimparDispositivo() {
+    const confirmado = await confirm(
+      'Limpar os dados financeiros armazenados neste dispositivo? Seus dados continuarão seguros na nuvem e serão baixados novamente no próximo login. ' +
+        'Alterações feitas offline que ainda não foram sincronizadas podem ser perdidas. O app será desconectado e recarregado.'
+    );
+    if (!confirmado) return;
+
+    setLoading('dispositivo');
+    try {
+      await clearDeviceData(user.uid);
+      await signOutUser();
+      window.location.reload();
+    } catch (error) {
+      setLoading(null);
+      await confirm(`Não foi possível limpar este dispositivo: ${error.message}`);
+      // clearDeviceData terminates Firestore before attempting the cleanup.
+      // Reload even on failure so the app receives a fresh instance.
+      window.location.reload();
+    }
+  }
+
   // Fase 11: "Criar fluxo de exclusao de conta". Apaga o Firestore primeiro
   // e só então a conta do Firebase Auth — na ordem inversa, os dados
   // ficariam órfãos, sem dono provável pelas Firestore Rules pra apagá-los.
@@ -89,10 +111,17 @@ export default function OpcoesPage() {
 
     setLoading('conta');
     try {
-      await deleteAllUserData(user.uid);
+      const uid = user.uid;
+      await deleteAllUserData(uid);
       await deleteAccount();
-      // deleteAccount() dispara onAuthStateChanged(null) — o ProtectedRoute
-      // redireciona pra /entrar sozinho, sem precisar navegar manualmente aqui.
+      try {
+        await clearDeviceData(uid);
+      } catch (cacheError) {
+        await confirm(
+          `Sua conta foi excluída, mas o cache deste dispositivo não pôde ser limpo: ${cacheError.message}`
+        );
+      }
+      window.location.replace('/entrar');
     } catch (err) {
       setLoading(null);
       await confirm(`Não foi possível excluir a conta agora: ${err.message}`);
@@ -150,6 +179,28 @@ export default function OpcoesPage() {
                 gestorUsaMovimento ? 'translate-x-5' : 'translate-x-0'
               }`}
             />
+          </button>
+        </div>
+
+        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex items-start gap-3">
+            <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
+              <HardDrive size={15} strokeWidth={1.75} />
+            </span>
+            <div>
+              <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Limpar dados deste dispositivo</p>
+              <p className="text-xs text-ink-300 mt-0.5">
+                Remove o cache offline local, sem apagar os dados salvos na nuvem.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleLimparDispositivo}
+            disabled={loading === 'dispositivo'}
+            className="shrink-0 flex items-center gap-1.5 rounded-pill bg-ink-50 dark:bg-ink-900 text-ink-500 px-3.5 py-2 text-sm font-medium hover:bg-ink-100 transition-colors disabled:opacity-50"
+          >
+            <HardDrive size={15} strokeWidth={2} />
+            {loading === 'dispositivo' ? 'Limpando...' : 'Limpar'}
           </button>
         </div>
 

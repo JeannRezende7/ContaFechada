@@ -7,47 +7,16 @@ import {
   startTrial as startTrialDoc,
 } from '../features/premium/services/subscriptionService.js';
 import { toSubscriptionState } from '../features/premium/utils/subscriptionState.js';
+import {
+  readSubscriptionCache,
+  writeSubscriptionCache,
+} from '../features/premium/services/subscriptionCache.js';
 import { track, EVENTS } from '../utils/analytics.js';
 
 const PremiumContext = createContext(null);
 const Paywall = lazy(() => import('../features/premium/components/Paywall.jsx'));
 
 const FREE_STATE = toSubscriptionState(null);
-
-function cacheKey(uid) {
-  return `contafechada-premium-${uid}`;
-}
-
-/** Firestore Timestamps aren't JSON-serializable — cache the millis instead, `toSubscriptionState` accepts either. */
-function toCacheable(doc) {
-  return {
-    plan: doc.plan,
-    subscriptionStatus: doc.subscriptionStatus,
-    subscriptionProvider: doc.subscriptionProvider,
-    currentPeriodEnd: doc.currentPeriodEnd?.toMillis?.() ?? null,
-    trialEndsAt: doc.trialEndsAt?.toMillis?.() ?? null,
-    cancelAtPeriodEnd: doc.cancelAtPeriodEnd,
-    founder: doc.founder,
-  };
-}
-
-function readCache(uid) {
-  try {
-    const raw = localStorage.getItem(cacheKey(uid));
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeCache(uid, doc) {
-  try {
-    localStorage.setItem(cacheKey(uid), JSON.stringify(toCacheable(doc)));
-  } catch {
-    // localStorage indisponível (modo privado, quota cheia) — cache é só uma
-    // otimização de experiência offline, nunca a fonte de verdade.
-  }
-}
 
 /**
  * `guardFeature(feature, ctx)` returns true/false synchronously — if false,
@@ -91,7 +60,7 @@ export function PremiumProvider({ children }) {
     // premium user never sees a false "free" flash while the network call
     // below is in flight — this is what "evitar paywall incorreto enquanto
     // o plano carrega" means in practice.
-    const cached = readCache(uid);
+    const cached = readSubscriptionCache(uid);
     if (cached) applyState(toSubscriptionState(cached));
     setLoading(true);
 
@@ -99,7 +68,7 @@ export function PremiumProvider({ children }) {
       .then((doc) => {
         if (cancelled) return;
         applyState(toSubscriptionState(doc));
-        writeCache(uid, doc);
+        writeSubscriptionCache(uid, doc);
       })
       .catch(() => {
         // Rede indisponível: mantém o estado do cache (se houver) em vez de
@@ -120,7 +89,7 @@ export function PremiumProvider({ children }) {
     const doc = await getSubscriptionDoc(uid);
     const next = toSubscriptionState(doc);
     applyState(next);
-    if (doc) writeCache(uid, doc);
+    if (doc) writeSubscriptionCache(uid, doc);
     return next;
   }, [uid, applyState]);
 

@@ -100,7 +100,7 @@ Ações recomendadas:
 - Revisar cada eslint-disable e manter somente os necessários.
 
 
-4. ALTO IMPACTO — AMPLIAR OS TESTES
+4. ALTO IMPACTO — AMPLIAR OS TESTES [CONCLUÍDO EM 28/07/2026]
 ------------------------------------
 
 Situação atual:
@@ -178,7 +178,7 @@ Ações recomendadas:
 - Remover tmp/imagegen depois que a marca final estiver aprovada.
 
 
-7. MANUTENÇÃO — DIVIDIR COMPONENTES GRANDES
+7. MANUTENÇÃO — DIVIDIR COMPONENTES GRANDES [CONCLUÍDO EM 28/07/2026]
 --------------------------------------------
 
 Principais candidatos:
@@ -228,7 +228,7 @@ Ordem sugerida:
 6. Testar web, PWA e Android antes de publicar.
 
 
-9. PWA E DADOS OFFLINE
+9. PWA E DADOS OFFLINE [CONCLUÍDO EM 28/07/2026]
 -----------------------
 
 O cache persistente do Firestore é útil para funcionamento offline, mas dados
@@ -446,4 +446,119 @@ Validação:
 
 - npm run lint: aprovado sem erros ou avisos.
 - npm test: 51 testes aprovados.
+- npm run build: build de produção aprovado.
+
+
+16. PONTO 7 — CONCLUÍDO EM 28/07/2026
+-------------------------------------
+
+Dashboard:
+
+- DashboardPage foi reduzido de 420 para 257 linhas.
+- Extraídos componentes para comparação mensal, gasto diário recomendado,
+  destaques financeiros, desafio de economia, insights e links de navegação.
+- A página ficou responsável pelo carregamento, estado e composição dos dados.
+- Os blocos visuais ficaram em components/DashboardSections.jsx.
+
+Lançamentos:
+
+- LancamentosPage foi reduzido de 495 para 387 linhas.
+- Extraídos componentes para abas, pesquisa, ações, lista/estado vazio e
+  recorrências ativas.
+- Regras de negócio, mutações e controle dos modais continuam centralizados
+  na página, enquanto a renderização repetitiva foi isolada.
+- Os blocos visuais ficaram em components/LancamentosSections.jsx.
+
+Resultado:
+
+- Criados 10 componentes menores e coesos.
+- Nenhuma regra financeira ou comportamento de interface foi alterado.
+- 74 testes aprovados.
+- npm run lint: aprovado sem erros ou avisos.
+- npm run build: build de produção aprovado.
+
+
+15. PONTO 4 — CONCLUÍDO EM 28/07/2026
+-------------------------------------
+
+Cobertura adicionada:
+
+- CRUD e consultas mensais de lançamentos.
+- Divisão de parcelamentos, arredondamento dos centavos e ajuste do vencimento
+  para meses com menos dias.
+- Importação de faturas, expansão das parcelas futuras e deduplicação.
+- Atualização e exclusão seletiva dos lançamentos gerados por recorrências.
+- Criação e geração idempotente de recorrências por mês.
+- Recorrências inativas, ainda não iniciadas ou já geradas.
+- Cálculos do gestor financeiro: renda, despesas, percentual comprometido,
+  saldo restante de parcelamentos e compromissos recorrentes.
+- Leitura de fatura Nubank: contexto, compras, parcelas, estornos, pagamentos
+  ignorados e virada de ano.
+- Exportação completa dos dados do usuário.
+- Exclusão autenticada dos dados privados e tratamento de erros do backend.
+- Geração e escape correto de arquivos CSV.
+
+Resultado:
+
+- Adicionados 6 arquivos de teste e 23 novos casos.
+- Suíte da aplicação: 74 testes aprovados em 9 arquivos.
+- Testes das regras do Firestore permanecem separados no Firebase Emulator.
+- npm run lint: aprovado sem erros ou avisos.
+- npm run build: build de produção aprovado.
+
+
+17. PONTO 9 — CONCLUÍDO EM 28/07/2026
+-------------------------------------
+
+Privacidade e troca de usuário:
+
+- O logout agora remove o cache em memória do dashboard e o cache local da
+  assinatura do usuário que encerrou a sessão.
+- O cache da assinatura permanece isolado por uid.
+- A troca de usuário no mesmo navegador não reaproveita os atalhos de cache
+  da sessão anterior.
+
+Limpeza completa do dispositivo:
+
+- Adicionada em Opções a ação “Limpar dados deste dispositivo”.
+- A ação explica que os dados da nuvem não serão apagados.
+- O usuário é avisado sobre alterações offline ainda não sincronizadas.
+- O Firestore é encerrado antes da remoção do IndexedDB.
+- Caso outra aba impeça a limpeza, o app apresenta uma orientação clara.
+- Após a limpeza, o usuário é desconectado e o app é recarregado.
+- A exclusão de conta também tenta limpar automaticamente o cache local.
+
+PWA e documentação:
+
+- A Política de Privacidade agora explica o armazenamento offline local.
+- O service worker continua atualizando automaticamente.
+- Ativada a remoção dos caches de versões antigas do service worker.
+- Novas versões assumem o controle das páginas abertas imediatamente.
+
+Validação:
+
+- Adicionados 6 testes para isolamento por usuário e limpeza de cache.
+- Suíte da aplicação: 80 testes aprovados em 11 arquivos.
+- npm run lint: aprovado sem erros ou avisos.
+- npm run build: build de produção aprovado.
+
+
+18. EDIÇÃO DE RECORRÊNCIAS — CONCLUÍDO EM 28/07/2026
+----------------------------------------------------
+
+- Ao salvar a edição de uma recorrência ativa, o app pergunta se os
+  lançamentos já gerados também devem ser atualizados.
+- O usuário pode manter os lançamentos existentes e aplicar a mudança somente
+  às próximas gerações.
+- Ao escolher atualizar os já lançados, o app solicita o mês inicial.
+- Meses anteriores ao escolhido são preservados.
+- A atualização aplica descrição, valor, categoria, observações e vencimento.
+- Mudanças no dia de vencimento respeitam o último dia de cada mês.
+- A operação usa escrita em lote e continua segura para grandes históricos.
+
+Validação:
+
+- Adicionado teste para corte por mês e recálculo do vencimento.
+- Suíte da aplicação: 81 testes aprovados em 11 arquivos.
+- npm run lint: aprovado sem erros ou avisos.
 - npm run build: build de produção aprovado.

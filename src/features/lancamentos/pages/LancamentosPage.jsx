@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { Plus, Sprout, Repeat, X, ArrowUpCircle, ArrowDownCircle, Wallet, Trash2, Receipt, Search, Download } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Wallet, Receipt } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import {
   listLancamentosByRange,
@@ -10,7 +10,7 @@ import {
   deleteGeneratedFromRecorrencia,
   setLancamentoStatus,
   createParcelamento,
-  setCategoriaForRecorrencia,
+  updateGeneratedFromRecorrencia,
 } from '../services/lancamentosService.js';
 import {
   listRecorrencias,
@@ -27,12 +27,17 @@ import UsageIndicator from '../../premium/components/UsageIndicator.jsx';
 import { getTodayISODate } from '../../../utils/formatDate.js';
 import { getCurrentMonthKey, shiftMonthKey, daysInMonth } from '../../../utils/monthKey.js';
 import { getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
-import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { buildLancamentoMatcher } from '../utils/searchLancamentos.js';
 import { buildCsv, downloadCsv } from '../../../utils/exportCsv.js';
-import LancamentoRow from '../components/LancamentoRow.jsx';
 import LancamentoModal from '../components/LancamentoModal.jsx';
 import RecorrenciaModal from '../components/RecorrenciaModal.jsx';
+import {
+  ActiveRecurrences,
+  LancamentosActions,
+  LancamentosList,
+  LancamentosSearch,
+  LancamentoTabs,
+} from '../components/LancamentosSections.jsx';
 import PeriodNav from '../../../components/ui/PeriodNav.jsx';
 import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
@@ -248,10 +253,10 @@ export default function LancamentosPage() {
     reload();
   }
 
-  async function handleSaveRecorrencia(id, data, { atualizarCategoriaGerados = false } = {}) {
+  async function handleSaveRecorrencia(id, data, { updateGeneratedFromMonth = null } = {}) {
     await updateRecorrencia(uid, id, data);
-    if (atualizarCategoriaGerados) {
-      await setCategoriaForRecorrencia(uid, id, data.categoriaId);
+    if (updateGeneratedFromMonth) {
+      await updateGeneratedFromRecorrencia(uid, id, data, updateGeneratedFromMonth);
     }
     setRecorrenciaModalOpen(false);
     reload();
@@ -293,24 +298,7 @@ export default function LancamentosPage() {
     <>
       <Topbar title="Lançamentos" icon={Receipt} />
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setTab('despesa')}
-            className={`flex-1 rounded-xl py-2.5 md:py-3 text-sm md:text-base font-medium transition-colors ${
-              tab === 'despesa' ? 'bg-ink-900 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
-            }`}
-          >
-            Despesas
-          </button>
-          <button
-            onClick={() => setTab('receita')}
-            className={`flex-1 rounded-xl py-2.5 md:py-3 text-sm md:text-base font-medium transition-colors ${
-              tab === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
-            }`}
-          >
-            Renda
-          </button>
-        </div>
+        <LancamentoTabs tab={tab} onChange={setTab} />
 
         <PeriodNav
           periodType={periodType}
@@ -335,139 +323,43 @@ export default function LancamentosPage() {
           />
         </div>
 
-        <div className="relative mb-4">
-          <Search size={16} strokeWidth={2} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-300" />
-          <input
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder="Pesquisar: pix, mercado, junho, acima de 500..."
-            className="w-full rounded-pill border border-ink-100 bg-white dark:bg-ink-900 dark:border-ink-700 text-ink-900 dark:text-ink-50 pl-10 pr-4 py-2.5 text-sm focus:border-ledger-500 transition-colors"
-          />
-        </div>
-
-        <div className="flex justify-between items-center mb-4 gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <p className="text-sm text-ink-300 shrink-0">{lancamentosFiltrados.length} lançamento(s)</p>
-            {lancamentosDoTipo.length > 0 && (
-              <button
-                onClick={handleDeleteEmMassa}
-                aria-label="Excluir lançamentos deste período"
-                className="text-ink-300 hover:text-signal-500 transition-colors shrink-0"
-              >
-                <Trash2 size={14} strokeWidth={2} />
-              </button>
-            )}
-            {lancamentosFiltrados.length > 0 && (
-              <button
-                onClick={handleExportCsv}
-                aria-label="Exportar para CSV"
-                className="text-ink-300 hover:text-ledger-600 transition-colors shrink-0"
-              >
-                <Download size={14} strokeWidth={2} />
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setEditing(null);
-                setModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 rounded-pill bg-ledger-500 text-white pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
-            >
-              <Plus size={16} strokeWidth={2.25} />
-              Novo <span className="hidden sm:inline text-ledger-200">(N)</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          {lancamentosFiltrados.map((l) => (
-            <LancamentoRow
-              key={l.id}
-              lancamento={l}
-              categoria={categoriasById[l.categoriaId]}
-              onStatusChange={handleStatusChange}
-              onClick={(item) => {
-                setEditing(item);
-                setModalOpen(true);
-              }}
-            />
-          ))}
-          {lancamentosDoTipo.length === 0 && (
-            <div className="flex flex-col items-center gap-3 text-center py-14 px-4">
-              <span className="w-12 h-12 rounded-full bg-ledger-50 text-ledger-500 flex items-center justify-center">
-                <Sprout size={22} strokeWidth={1.75} />
-              </span>
-              <p className="text-sm text-ink-300 max-w-[220px]">
-                Nenhum lançamento neste período ainda. Que tal começar cadastrando um?
-              </p>
-              <button
-                onClick={() => {
-                  setEditing(null);
-                  setModalOpen(true);
-                }}
-                className="text-sm font-medium text-ledger-600 hover:underline"
-              >
-                + Novo lançamento
-              </button>
-            </div>
-          )}
-          {lancamentosDoTipo.length > 0 && lancamentosFiltrados.length === 0 && (
-            <p className="text-sm text-ink-300 text-center py-8">
-              Nenhum lançamento encontrado para &ldquo;{busca}&rdquo;.
-            </p>
-          )}
-        </div>
+        <LancamentosSearch busca={busca} onChange={setBusca} />
+        <LancamentosActions
+          filteredCount={lancamentosFiltrados.length}
+          totalCount={lancamentosDoTipo.length}
+          onDeleteAll={handleDeleteEmMassa}
+          onExport={handleExportCsv}
+          onNew={() => {
+            setEditing(null);
+            setModalOpen(true);
+          }}
+        />
+        <LancamentosList
+          items={lancamentosFiltrados}
+          totalCount={lancamentosDoTipo.length}
+          busca={busca}
+          categoriasById={categoriasById}
+          onStatusChange={handleStatusChange}
+          onSelect={(item) => {
+            setEditing(item);
+            setModalOpen(true);
+          }}
+          onNew={() => {
+            setEditing(null);
+            setModalOpen(true);
+          }}
+        />
 
         <UsageIndicator feature={FEATURES.RECORRENCIAS} count={recorrenciasAtivasCount} label="recorrências ativas" />
 
-        {ativos.length > 0 && (
-          <details className="mt-8 group">
-            <summary className="flex items-center gap-1.5 text-sm text-ink-300 cursor-pointer select-none list-none">
-              <Repeat size={14} strokeWidth={2} />
-              Recorrências ativas ({ativos.length})
-            </summary>
-            <div className="flex flex-col gap-2 mt-3">
-              {ativos.map((r) => (
-                <div
-                  key={r.id}
-                  onClick={() => {
-                    setEditingRecorrencia(r);
-                    setRecorrenciaModalOpen(true);
-                  }}
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 bg-white dark:bg-ink-700 rounded-card shadow-card
-                             cursor-pointer hover:shadow-card-hover hover:-translate-y-px transition-all"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-ink-900 dark:text-ink-50 truncate">{r.descricao}</p>
-                    <p className="text-xs text-ink-300">Todo dia {r.diaVencimento}</p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span
-                      className={`money text-sm font-semibold ${
-                        r.tipo === 'receita' ? 'text-ledger-600' : 'text-ink-900 dark:text-ink-50'
-                      }`}
-                    >
-                      {formatCurrency(r.valor)}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEncerrarRecorrenciaInline(r);
-                      }}
-                      aria-label="Encerrar recorrência"
-                      className="flex items-center gap-1 text-xs text-signal-500 hover:bg-signal-50 rounded-pill px-2 py-1 transition-colors"
-                    >
-                      <X size={13} strokeWidth={2.25} />
-                      Encerrar
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </details>
-        )}
+        <ActiveRecurrences
+          items={ativos}
+          onSelect={(item) => {
+            setEditingRecorrencia(item);
+            setRecorrenciaModalOpen(true);
+          }}
+          onEnd={handleEncerrarRecorrenciaInline}
+        />
       </div>
 
       <LancamentoModal

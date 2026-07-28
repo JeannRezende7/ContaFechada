@@ -1,5 +1,6 @@
 import { signInWithPopup, signOut, onAuthStateChanged, reauthenticateWithPopup, deleteUser } from 'firebase/auth';
 import { auth, googleProvider } from './config.js';
+import { clearSessionCaches } from '../utils/deviceCache.js';
 
 /** Opens the Google OAuth popup and signs the user in. */
 export function signInWithGoogle() {
@@ -7,8 +8,10 @@ export function signInWithGoogle() {
 }
 
 /** Signs the current user out. */
-export function signOutUser() {
-  return signOut(auth);
+export async function signOutUser() {
+  const uid = auth.currentUser?.uid;
+  await signOut(auth);
+  clearSessionCaches(uid);
 }
 
 /**

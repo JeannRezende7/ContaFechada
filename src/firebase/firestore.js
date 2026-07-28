@@ -117,6 +117,19 @@ export async function batchUpdateUserDocs(uid, subcollection, ids, data) {
   }
 }
 
+/** Applies different partial data to each document, chunked under Firestore's batch limit. */
+export async function batchUpdateUserDocsWithData(uid, subcollection, updatesById) {
+  const entries = Object.entries(updatesById);
+  const CHUNK = 400;
+  for (let i = 0; i < entries.length; i += CHUNK) {
+    const batch = writeBatch(db);
+    for (const [id, data] of entries.slice(i, i + CHUNK)) {
+      batch.update(userDoc(uid, subcollection, id), data);
+    }
+    await batch.commit();
+  }
+}
+
 export async function getUserDoc(uid, subcollection, docId) {
   const snap = await getDoc(userDoc(uid, subcollection, docId));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
