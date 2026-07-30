@@ -64,16 +64,20 @@ Firestore
 
 ---
 
-# Fase 0 — Preparação e decisões
+# Fase 0 — Preparação e decisões [CONCLUÍDA em 2026-07-30, com 2 pendências fora de código]
+
+Decisões formalizadas em [FASE0_DECISOES.md](FASE0_DECISOES.md).
 
 ## Entregas
 
-- Definir prazo de retenção dos dados na nuvem após cancelamento.
-- Definir período de tolerância offline do Premium.
-- Definir política de conflito entre aparelhos.
-- Definir quais funções pertencem ao gratuito e ao Premium.
-- Criar ambientes Firebase separados para desenvolvimento e produção.
-- Registrar métricas atuais de leituras, gravações e usuários ativos.
+- [x] Definir prazo de retenção dos dados na nuvem após cancelamento.
+- [x] Definir período de tolerância offline do Premium.
+- [x] Definir política de conflito entre aparelhos.
+- [x] Definir quais funções pertencem ao gratuito e ao Premium.
+- [ ] Criar ambientes Firebase separados para desenvolvimento e produção —
+      PENDENTE: exige acesso ao Firebase Console, só o dono do projeto pode fazer.
+- [ ] Registrar métricas atuais de leituras, gravações e usuários ativos —
+      PENDENTE: idem, consultar o painel de uso do Firebase Console.
 
 ## Decisões recomendadas
 
@@ -85,11 +89,18 @@ Firestore
 
 ## Critério de conclusão
 
-- Regras comerciais, técnicas e de retenção documentadas.
+- [x] Regras comerciais, técnicas e de retenção documentadas.
 
 ---
 
-# Fase 1 — Camada de repositórios
+# Fase 1 — Camada de repositórios [CONCLUÍDA em 2026-07-30]
+
+Implementada em `src/repositories/` (contratos em `contracts.js`,
+implementação Firebase em `firebase/*Repository.js`, seleção de plataforma
+em `provider.js`). Achado importante: o app já não tinha telas chamando o
+Firestore direto — todo serviço de feature já passava por um wrapper
+genérico (`src/firebase/firestore.js`), o que reduziu bastante o risco
+desta fase frente à estimativa original.
 
 ## Objetivo
 
@@ -97,7 +108,7 @@ Impedir que as telas conheçam diretamente o Firestore ou o SQLite.
 
 ## Entregas
 
-- Criar contratos para:
+- [x] Criar contratos para:
   - lançamentos;
   - categorias;
   - regras de categorização;
@@ -108,9 +119,13 @@ Impedir que as telas conheçam diretamente o Firestore ou o SQLite.
   - fechamentos;
   - gestor financeiro;
   - configurações.
-- Adaptar os serviços Firebase atuais para implementar esses contratos.
-- Criar um provedor que selecione o repositório conforme a plataforma.
-- Remover chamadas diretas ao Firestore das páginas e componentes.
+- [x] Adaptar os serviços Firebase atuais para implementar esses contratos.
+- [x] Criar um provedor que selecione o repositório conforme a plataforma
+      (`getRepositories()` em `provider.js` — hoje sempre retorna a
+      implementação Firebase; pronto para a Fase 3 plugar SQLite).
+- [x] Remover chamadas diretas ao Firestore das páginas e componentes —
+      todas as páginas/componentes que importavam um `*Service.js` de
+      feature direto agora importam `repositories`.
 
 ## Exemplo
 
@@ -125,13 +140,20 @@ await lancamentos.remove(id);
 
 ## Critério de conclusão
 
-- Todas as telas continuam funcionando com Firebase por meio dos repositórios.
-- Nenhuma regra de negócio depende diretamente do SDK do Firestore.
-- Testes existentes continuam aprovados.
+- [x] Todas as telas continuam funcionando com Firebase por meio dos repositórios.
+- [x] Nenhuma regra de negócio depende diretamente do SDK do Firestore.
+- [x] Testes existentes continuam aprovados.
 
 ---
 
-# Fase 2 — Identidade local e IDs universais
+# Fase 2 — Identidade local e IDs universais [PREPARAÇÃO CONCLUÍDA em 2026-07-30]
+
+Implementada em `src/utils/deviceId.js` e `src/firebase/firestore.js`,
+ainda 100% sobre Firebase — esta fase só prepara o esquema de dados
+(id/metadados) para a Fase 3/4, não altera nenhum comportamento visível
+hoje. Ver critério de conclusão abaixo: o app ainda exige `uid` para
+qualquer escrita, isso só muda com SQLite (Fase 3) e o modo sem conta
+(Fase 4).
 
 ## Objetivo
 
@@ -139,9 +161,11 @@ Permitir criação de dados sem conta e garantir que sejam sincronizáveis depoi
 
 ## Entregas
 
-- Gerar e persistir um `deviceId`.
-- Usar UUID nos novos registros.
-- Acrescentar metadados locais:
+- [x] Gerar e persistir um `deviceId`.
+- [x] Usar UUID nos novos registros — `createUserDoc`/`setUserDoc`/
+      `batchSetUserDocs` agora geram o id no cliente (`crypto.randomUUID()`)
+      em vez do id automático do Firestore.
+- [x] Acrescentar metadados locais:
 
 ```js
 {
@@ -155,9 +179,13 @@ Permitir criação de dados sem conta e garantir que sejam sincronizáveis depoi
 }
 ```
 
-- Garantir que importações e recorrências sejam idempotentes.
-- Padronizar datas em UTC para metadados de sincronização.
-- Manter datas financeiras no formato local já usado pelo produto.
+- [x] Garantir que importações e recorrências sejam idempotentes — já valia
+      antes desta fase (ids determinísticos em `lancamentosService.js`/
+      `recorrenciasService.js`), preservado sem mudanças.
+- [x] Padronizar datas em UTC para metadados de sincronização —
+      `serverTimestamp()` do Firestore já é UTC por natureza.
+- [x] Manter datas financeiras no formato local já usado pelo produto —
+      inalterado (`dataVencimento` etc. continuam `'YYYY-MM-DD'`).
 
 ## Estados de sincronização
 
@@ -168,14 +196,56 @@ Permitir criação de dados sem conta e garantir que sejam sincronizáveis depoi
 - `conflict`: requer resolução.
 - `error`: falha persistente.
 
+Hoje todo registro grava `syncStatus: 'synced'` na hora da criação/edição,
+porque toda escrita ainda vai direto pro Firestore — não existe fila local
+ainda (essa é a Fase 6). Os demais estados (`local`, `pending`, `syncing`,
+`conflict`, `error`) ficam reservados para quando o caminho de escrita
+local (Fase 3/6) existir.
+
 ## Critério de conclusão
 
-- Registros podem ser criados sem `uid`.
-- IDs locais não colidem com IDs vindos da nuvem.
+- [ ] Registros podem ser criados sem `uid` — AINDA NÃO: o app continua
+      100% Firebase Auth + Firestore por usuário; só passa a valer depois
+      da Fase 3 (SQLite) e da Fase 4 (modo sem conta).
+- [x] IDs locais não colidem com IDs vindos da nuvem — todo id agora é um
+      UUID v4 gerado no cliente, o mesmo esquema que um registro criado
+      offline vai usar.
 
 ---
 
-# Fase 3 — Banco SQLite no Android
+# Fase 3 — Banco SQLite no Android [INICIADA em 2026-07-30 — schema/migrations/2 domínios prontos, integração Capacitor NÃO TESTADA]
+
+Este ambiente de desenvolvimento não tem Android Studio, `adb` nem
+`ANDROID_HOME` (mesma limitação já registrada em ROADMAP_MONETIZACAO.txt
+para o Google Play Billing) — nada aqui pôde ser validado num
+dispositivo/emulador real. O que é lógica pura (schema, migrations,
+adapters de repositório) foi escrito E testado de verdade contra SQLite via
+o módulo `node:sqlite` do Node; a ponte com o plugin Capacitor em si
+(`src/db/drivers/capacitorSqliteDriver.js`) segue a API pública documentada
+mas está marcada como não testada no próprio arquivo.
+
+Implementado:
+- `src/db/schema.js` — DDL de todas as 12 tabelas + índices.
+- `src/db/migrations/` + `migrationRunner.js` — versionamento, testado
+  (aplica, é idempotente, e uma migration quebrada faz rollback sem deixar
+  schema parcial).
+- `src/db/drivers/driver.js` — contrato comum; `nodeSqliteDriver.js` (só
+  testes) e `capacitorSqliteDriver.js` (produção, não testado).
+- `src/repositories/sqlite/categoriasRepository.js` e
+  `lancamentosRepository.js` — implementam o mesmo contrato de
+  `repositories/contracts.js`, testados contra SQLite real.
+
+NÃO feito ainda nesta rodada:
+- Adapters SQLite para os outros 8 domínios (regras de categorização,
+  recorrências, metas, valor livre, planejamento, fechamentos, gestor
+  financeiro, configurações).
+- `lancamentosRepository` do SQLite só cobre o CRUD e as consultas por
+  período — `createParcelamento`, `importLancamentos`, `updateEmMassa` e as
+  operações ligadas a recorrência ainda não foram portadas.
+- `src/repositories/provider.js` continua sempre retornando a implementação
+  Firebase — o SQLite não está "ligado" (deliberado: alternar a fonte de
+  dados de verdade sem poder testar num Android real seria arriscado
+  demais).
 
 ## Objetivo
 
@@ -183,12 +253,17 @@ Tornar o SQLite a fonte principal da versão Android.
 
 ## Entregas
 
-- Adicionar integração SQLite compatível com Capacitor.
-- Criar migrations versionadas do banco.
-- Criar tabelas e índices para consultas frequentes.
-- Implementar transações para operações em lote.
-- Criar adaptadores SQLite para os repositórios.
-- Manter IndexedDB apenas para a versão web.
+- [x] Adicionar integração SQLite compatível com Capacitor —
+      dependência `@capacitor-community/sqlite` instalada; driver de
+      produção escrito, NÃO TESTADO contra dispositivo real.
+- [x] Criar migrations versionadas do banco.
+- [x] Criar tabelas e índices para consultas frequentes.
+- [x] Implementar transações para operações em lote — `driver.transaction()`,
+      usado pelo migration runner.
+- [~] Criar adaptadores SQLite para os repositórios — só Categorias e
+      Lançamentos (núcleo) por enquanto; os outros 8 domínios faltam.
+- [ ] Manter IndexedDB apenas para a versão web — ainda não mexido; hoje
+      web e Android continuam 100% Firebase/Firestore.
 
 ## Tabelas principais
 
@@ -215,13 +290,29 @@ Tornar o SQLite a fonte principal da versão Android.
 
 ## Critério de conclusão
 
-- Todos os módulos Android funcionam em modo avião após fechar e reabrir o app.
-- Criar, editar e excluir dados não requer Firebase.
-- Testes cobrem atualização de schema e recuperação após interrupção.
+- [ ] Todos os módulos Android funcionam em modo avião após fechar e reabrir
+      o app — impossível confirmar sem dispositivo/emulador real.
+- [ ] Criar, editar e excluir dados não requer Firebase — verdadeiro só para
+      Categorias/Lançamentos, e só na lógica (não plugado no app de verdade).
+- [x] Testes cobrem atualização de schema e recuperação após interrupção —
+      `migrationRunner.test.js` cobre idempotência e rollback de migration
+      quebrada.
 
 ---
 
-# Fase 4 — Modo gratuito sem conta
+# Fase 4 — Modo gratuito sem conta [BLOQUEADA — depende da Fase 3 terminar]
+
+Só foi criado `src/utils/localSession.js` (flag "modo gratuito local" em
+`localStorage`, independente do Firebase Auth, testada). Nada mais desta
+fase foi feito de propósito: toda tela do app (Lançamentos, Categorias,
+Metas, ...) chama `repositories.<dominio>.<metodo>(uid, ...)`, e hoje só 2
+dos 10 domínios têm adapter SQLite — ligar "Continuar gratuitamente" nas
+rotas agora abriria um app onde a maioria das telas quebra ao tentar
+ler/gravar. Faltam, nesta ordem, antes de retomar a Fase 4 de verdade:
+
+1. Portar os 8 domínios restantes pra `repositories/sqlite/`.
+2. `provider.js` escolher SQLite quando não houver `uid` autenticado.
+3. Validar tudo isso num dispositivo/emulador Android real.
 
 ## Objetivo
 
@@ -229,83 +320,126 @@ Permitir uso completo do núcleo financeiro sem autenticação.
 
 ## Entregas
 
-- Alterar o fluxo inicial:
+- [ ] Alterar o fluxo inicial:
   - “Continuar gratuitamente”;
   - “Entrar na minha conta”.
-- Remover `ProtectedRoute` do modo local Android.
-- Criar uma sessão local independente do Firebase Auth.
-- Adaptar onboarding para explicar o armazenamento no aparelho.
-- Adicionar avisos sobre desinstalação e perda do dispositivo.
-- Disponibilizar exportação e importação local.
-- Adicionar “Apagar dados deste aparelho”.
+- [ ] Remover `ProtectedRoute` do modo local Android.
+- [x] Criar uma sessão local independente do Firebase Auth —
+      `src/utils/localSession.js`, testado; ainda não usado por nenhuma rota.
+- [ ] Adaptar onboarding para explicar o armazenamento no aparelho.
+- [ ] Adicionar avisos sobre desinstalação e perda do dispositivo.
+- [ ] Disponibilizar exportação e importação local.
+- [ ] Adicionar “Apagar dados deste aparelho”.
 
 ## Critério de conclusão
 
-- Uma instalação nova cria lançamentos sem internet e sem conta.
-- O usuário entende que o plano gratuito não possui backup automático.
+- [ ] Uma instalação nova cria lançamentos sem internet e sem conta.
+- [ ] O usuário entende que o plano gratuito não possui backup automático.
 
 ---
 
-# Fase 5 — Migração segura dos dados atuais
+# Fase 5 — Migração segura dos dados atuais [INICIADA em 2026-07-30 — lógica pronta e testada para 2 domínios, não plugada no app]
 
-## Objetivo
-
-Copiar dados já existentes no Firestore para o SQLite sem perdas.
+Implementada em `src/db/migration/migrateFromFirestore.js`, testada de
+verdade (SQLite via `node:sqlite` + Firestore simulado com fixtures,
+incluindo Timestamp). Só cobre os domínios que já têm adapter SQLite (Fase
+3): categorias e lançamentos — os outros 8 ficam para quando ganharem
+adapter próprio. Ninguém chama esta função a partir do app ainda (não há
+tela/hook de "detectar usuário existente" ligando nela) — falta a Fase 3
+terminar de portar os domínios restantes antes disso fazer sentido de
+verdade.
 
 ## Fluxo
 
-1. Detectar usuário existente autenticado.
-2. Verificar se a migração local já foi concluída.
-3. Baixar todas as coleções do usuário.
-4. Validar quantidade e somatórios.
-5. Gravar tudo em uma transação SQLite.
-6. Comparar origem e destino.
-7. Marcar a migração como concluída.
-8. Manter os dados na nuvem.
+- [ ] Detectar usuário existente autenticado — não plugado no app ainda.
+- [x] Verificar se a migração local já foi concluída —
+      `getFirestoreMigrationState`, guarda versão/data em `sync_state`.
+- [x] Baixar todas as coleções do usuário — só categorias/lançamentos por
+      ora, via os repositórios Firebase da Fase 1.
+- [x] Validar quantidade e somatórios — contagem e soma de `valor` antes x
+      depois; diverge = `MigrationValidationError`.
+- [x] Gravar tudo em uma transação SQLite — `driver.transaction()`.
+- [x] Comparar origem e destino.
+- [x] Marcar a migração como concluída — `sync_state` (`migration:firestore:*`).
+- [x] Manter os dados na nuvem — este módulo nunca chama nenhum delete no
+      Firestore.
 
 ## Proteções
 
-- Nunca apagar a origem automaticamente.
-- Criar backup JSON antes da migração.
-- Permitir repetir a migração.
-- Registrar versão e data da migração.
-- Mostrar resumo ao usuário.
+- [x] Nunca apagar a origem automaticamente.
+- [~] Criar backup JSON antes da migração — os dados buscados são
+      retornados em `result.backup` antes de qualquer escrita; salvar isso
+      como arquivo (ex.: reaproveitando `downloadJson`) fica a cargo de quem
+      chamar, propositalmente, pra este módulo continuar testável sem
+      navegador.
+- [x] Permitir repetir a migração — `force: true`, idempotente
+      (`INSERT OR REPLACE` pelo mesmo id do Firestore, nunca duplica).
+- [x] Registrar versão e data da migração.
+- [x] Mostrar resumo ao usuário — `result.summary`; falta a tela que exibe
+      isso (depende da Fase 3/4 estarem prontas pra essa tela fazer sentido).
 
 ## Critério de conclusão
 
-- Contagens e valores financeiros coincidem antes e depois da migração.
-- Interromper o app no meio da migração não deixa dados parciais.
+- [x] Contagens e valores financeiros coincidem antes e depois da migração
+      — testado, inclusive o caso de divergência (joga erro, não marca
+      concluída).
+- [x] Interromper o app no meio da migração não deixa dados parciais —
+      mesma garantia de transação já testada em `migrationRunner.test.js`.
 
 ---
 
-# Fase 6 — Fila de sincronização Premium
+# Fase 6 — Fila de sincronização Premium [INICIADA em 2026-07-30 — mecânica da fila pronta e testada, nada ligado no app]
 
-## Objetivo
-
-Enviar alterações locais com segurança quando houver Premium e internet.
+Implementada em `src/db/sync/` (`syncQueue.js`, `backoff.js`,
+`processSyncQueue.js`) + `src/firebase/syncUploader.js` (adapter real pro
+Firestore). Tudo testado — a fila em si contra SQLite real, o envio contra
+um `uploader` fake e contra `firebase/firestore.js` mockado (mesmo padrão
+dos outros testes do projeto). O que falta é orquestração de verdade: nada
+no app hoje chama `enqueue` quando um dado muda, nem roda
+`processSyncQueue` periodicamente — isso depende de `repositories/sqlite`
+ser a fonte ativa (Fase 3/4), e de saber se o usuário é Premium e está
+online (`PremiumContext`/`navigator.onLine`, não verificados aqui).
 
 ## Entregas
 
-- Implementar tabela `sync_queue`.
-- Registrar operações de criação, edição e exclusão.
-- Enviar operações em lotes.
-- Aplicar retry com espera progressiva.
-- Usar chaves idempotentes.
-- Criar exclusões lógicas com `deletedAt`.
-- Mostrar quantidade de operações pendentes.
-- Pausar sincronização sem internet ou sem Premium.
+- [x] Implementar tabela `sync_queue` — Fase 3.
+- [x] Registrar operações de criação, edição e exclusão —
+      `enqueue(driver, { entidade, registroId, operacao, payload })`.
+- [x] Enviar operações em lotes — `processSyncQueue({ batchSize })`.
+- [x] Aplicar retry com espera progressiva — `backoff.js` +
+      `markFailed` (dobra o intervalo a cada tentativa, até um teto).
+- [x] Usar chaves idempotentes — upload via `setUserDoc` no próprio id do
+      registro (nunca `createUserDoc`, que geraria outro id a cada retry).
+- [ ] Criar exclusões lógicas com `deletedAt` — os repositórios SQLite
+      (Fase 3) ainda fazem hard delete; a fila já sabe processar uma
+      operação `delete`, mas nada ainda a dispara com soft-delete de origem.
+- [x] Mostrar quantidade de operações pendentes — `countPending(driver)`;
+      falta a tela que exibe isso.
+- [ ] Pausar sincronização sem internet ou sem Premium — não verificado
+      aqui; quem for chamar `processSyncQueue` periodicamente precisa
+      checar `navigator.onLine` e `isPremium` antes.
 
 ## Regras
 
-- A interface nunca espera a nuvem para salvar.
-- Uma operação só sai da fila após confirmação.
-- Repetir uma operação não cria documentos duplicados.
-- Operações do mesmo registro podem ser consolidadas.
+- [x] A interface nunca espera a nuvem para salvar — `enqueue` só grava
+      local; enviar de verdade é um passo `processSyncQueue` à parte.
+- [x] Uma operação só sai da fila após confirmação — `markSynced` só roda
+      depois do `uploader` resolver com sucesso.
+- [x] Repetir uma operação não cria documentos duplicados — mesma garantia
+      de id da Fase 2, mais `setUserDoc` no upload.
+- [x] Operações do mesmo registro podem ser consolidadas — `enqueue`
+      consolida create+update, create+delete, update+update e update+delete
+      contra qualquer entrada ainda `pending` (testado); uma entrada já
+      `syncing` não é mexida, uma nova mudança vira uma entrada própria.
 
 ## Critério de conclusão
 
-- Alterações feitas offline chegam à nuvem quando a conexão retorna.
-- Fechar o aplicativo não perde a fila.
+- [ ] Alterações feitas offline chegam à nuvem quando a conexão retorna —
+      a mecânica existe e está testada; falta ligar num app que realmente
+      escreve local primeiro (Fase 3/4) pra valer de ponta a ponta.
+- [x] Fechar o aplicativo não perde a fila — é uma tabela SQLite comum,
+      sobrevive a fechar/reabrir o processo (mesma garantia de qualquer
+      outra tabela do schema).
 
 ---
 

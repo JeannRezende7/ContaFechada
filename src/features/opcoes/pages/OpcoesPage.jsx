@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive } from 'lucide-react';
+import { Eye, EyeOff, ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogOut } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -128,6 +128,35 @@ export default function OpcoesPage() {
     <>
       <Topbar title="Opções" icon={Settings} />
       <div className="p-4 md:p-8 max-w-2xl mx-auto flex flex-col gap-4">
+        <section className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center gap-3">
+          {user?.photoURL ? (
+            <img
+              src={user.photoURL}
+              alt=""
+              className="w-11 h-11 rounded-full ring-2 ring-paper dark:ring-ink-900 shadow-card shrink-0"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <span className="w-11 h-11 rounded-full bg-ink-100 dark:bg-ink-900 flex items-center justify-center text-ink-500 dark:text-ink-100 text-base font-semibold shrink-0">
+              {user?.displayName?.[0]?.toUpperCase() ?? '?'}
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-ink-900 dark:text-ink-50 truncate">
+              {user?.displayName || 'Minha conta'}
+            </p>
+            {user?.email && <p className="text-xs text-ink-300 truncate mt-0.5">{user.email}</p>}
+          </div>
+          <button
+            type="button"
+            onClick={signOutUser}
+            className="shrink-0 flex items-center gap-1.5 rounded-pill bg-ink-50 dark:bg-ink-900 text-ink-500 dark:text-ink-100 px-3.5 py-2 text-sm font-medium hover:bg-signal-50 hover:text-signal-500 transition-colors"
+          >
+            <LogOut size={15} strokeWidth={2} />
+            Sair
+          </button>
+        </section>
+
         <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div className="flex items-start gap-3">
             <span className="w-8 h-8 rounded-full bg-ledger-50 text-ledger-600 flex items-center justify-center">{privacy.enabled ? <EyeOff size={15} /> : <Eye size={15} />}</span>

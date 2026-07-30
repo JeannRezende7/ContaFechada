@@ -1,14 +1,11 @@
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, LogOut, Menu, Search, Settings, Sun, Moon } from 'lucide-react';
-import { signOutUser } from '../../firebase/auth.js';
-import { useAuth } from '../../contexts/AuthContext.jsx';
+import { Eye, EyeOff, Menu, Search, Settings, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext.jsx';
 import { usePrivacy } from '../../contexts/PrivacyContext.jsx';
 import ConnectionStatus from '../ui/ConnectionStatus.jsx';
 import { useMobileMenu } from '../../contexts/MobileMenuContext.jsx';
 
 export default function Topbar({ title, icon: Icon }) {
-  const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const privacy = usePrivacy();
   const { openMenu } = useMobileMenu();
@@ -37,19 +34,6 @@ export default function Topbar({ title, icon: Icon }) {
         <button onClick={privacy.toggle} aria-label={privacy.enabled ? 'Mostrar valores' : 'Ocultar valores'} className="flex items-center text-ink-300 hover:text-ledger-600">
           {privacy.enabled ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
-        {user?.photoURL ? (
-          <img
-            src={user.photoURL}
-            alt=""
-            className="w-8 h-8 md:w-9 md:h-9 rounded-full ring-2 ring-paper dark:ring-ink-900 shadow-card"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <span className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-ink-100 dark:bg-ink-700 flex items-center justify-center text-ink-500 dark:text-ink-100 text-xs md:text-sm font-semibold">
-            {user?.displayName?.[0]?.toUpperCase() ?? '?'}
-          </span>
-        )}
-
         <button
           onClick={toggleTheme}
           aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
@@ -70,14 +54,6 @@ export default function Topbar({ title, icon: Icon }) {
           <Settings size={18} strokeWidth={1.75} className="md:w-5 md:h-5" />
         </Link>
 
-        <button
-          onClick={signOutUser}
-          aria-label="Sair"
-          className="flex items-center gap-1.5 text-sm md:text-base text-ink-300 hover:text-signal-500 transition-colors"
-        >
-          <LogOut size={16} strokeWidth={1.75} className="md:w-[18px] md:h-[18px]" />
-          <span className="hidden sm:inline">Sair</span>
-        </button>
       </div>
     </header>
   );
