@@ -79,7 +79,7 @@ export default function ImportarExtratoModal({ open, uid, categorias, onClose, o
         <p className="mb-4 text-xs text-ink-300">Revise os itens e ajuste as categorias antes de confirmar.</p>
 
         {status === 'idle' && (
-          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-100 py-10 hover:border-ledger-500">
+          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-100 dark:border-ink-700 py-10 hover:border-ledger-500">
             <FileUp className="text-ink-300" />
             <span className="text-sm text-ink-500">Escolher extrato</span>
             <input className="hidden" type="file" accept=".csv,.ofx,text/csv,application/x-ofx" onChange={handleFile} />

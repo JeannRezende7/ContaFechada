@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CheckCircle2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
-import { completeOnboarding, skipOnboarding } from '../services/onboardingService.js';
+import { repositories } from '../../../repositories/index.js';
 
 const INITIAL = {
   incomeDescription: 'Renda principal', incomeValue: '', incomeDay: '5',
@@ -15,13 +15,13 @@ export default function OnboardingWizard({ uid, open, onClose }) {
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
 
   async function skip() {
-    await skipOnboarding(uid);
+    await repositories.configuracoes.skipOnboarding(uid);
     onClose();
   }
   async function finish() {
     setSaving(true);
     try {
-      await completeOnboarding(uid, form);
+      await repositories.configuracoes.completeOnboarding(uid, form);
       onClose();
     } finally {
       setSaving(false);

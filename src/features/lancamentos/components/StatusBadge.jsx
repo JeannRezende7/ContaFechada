@@ -59,7 +59,7 @@ export default function StatusBadge({ status, tipo, onChange }) {
                 type="button"
                 onClick={() => pick(key)}
                 className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-left transition-colors ${
-                  key === status ? opt.className : 'text-ink-500 hover:bg-ink-50'
+                  key === status ? opt.className : 'text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900'
                 }`}
               >
                 <OptIcon size={13} strokeWidth={2.25} />

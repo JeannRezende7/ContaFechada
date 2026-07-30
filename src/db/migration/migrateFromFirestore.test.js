@@ -101,5 +101,16 @@ describe('migrateFromFirestore', () => {
 
     await expect(migrateFromFirestore({ driver, uid: 'u1', firebaseRepositories })).rejects.toThrow(MigrationValidationError);
     expect(await getFirestoreMigrationState(driver)).toBeNull();
+    expect(await driver.all('SELECT * FROM lancamentos')).toEqual([]);
+  });
+
+  it('does not write anything when fetching one of the domains fails', async () => {
+    const firebaseRepositories = makeFirebaseRepositories({
+      categorias: [{ id: 'cat-1', nome: 'Mercado', tipo: 'despesa' }],
+    });
+    firebaseRepositories.lancamentos.listAll.mockRejectedValue(new Error('network'));
+    await expect(migrateFromFirestore({ driver, uid: 'u1', firebaseRepositories })).rejects.toThrow('network');
+    expect(await driver.all('SELECT * FROM categorias')).toEqual([]);
+    expect(await getFirestoreMigrationState(driver)).toBeNull();
   });
 });

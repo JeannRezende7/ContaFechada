@@ -34,7 +34,7 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
               max="2100-12-31"
               value={customRange?.de ?? ''}
               onChange={(e) => isSaneISODate(e.target.value) && onChangeCustomRange({ ...customRange, de: e.target.value })}
-              className="[color-scheme:light] w-full min-w-0 text-sm md:text-base bg-white text-ink-900 rounded-lg border border-ink-100 px-2 py-1.5"
+              className="[color-scheme:light] dark:[color-scheme:dark] w-full min-w-0 text-sm md:text-base bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 rounded-lg border border-ink-100 dark:border-ink-700 px-2 py-1.5"
             />
           </div>
           <span className="text-ink-300 text-sm mt-4">–</span>
@@ -46,7 +46,7 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
               max="2100-12-31"
               value={customRange?.ate ?? ''}
               onChange={(e) => isSaneISODate(e.target.value) && onChangeCustomRange({ ...customRange, ate: e.target.value })}
-              className="[color-scheme:light] w-full min-w-0 text-sm md:text-base bg-white text-ink-900 rounded-lg border border-ink-100 px-2 py-1.5"
+              className="[color-scheme:light] dark:[color-scheme:dark] w-full min-w-0 text-sm md:text-base bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 rounded-lg border border-ink-100 dark:border-ink-700 px-2 py-1.5"
             />
           </div>
         </div>
@@ -56,7 +56,7 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
             type="button"
             onClick={() => onChangeAnchor(shiftAnchor(periodType, anchor, -1))}
             aria-label="Anterior"
-            className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-pill text-ink-500 hover:bg-ink-50 active:scale-95 transition"
+            className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-pill text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900 active:scale-95 transition"
           >
             <ChevronLeft size={20} strokeWidth={1.75} className="md:w-6 md:h-6" />
           </button>
@@ -68,7 +68,7 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
             type="button"
             onClick={() => onChangeAnchor(shiftAnchor(periodType, anchor, 1))}
             aria-label="Próximo"
-            className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-pill text-ink-500 hover:bg-ink-50 active:scale-95 transition"
+            className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-pill text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900 active:scale-95 transition"
           >
             <ChevronRight size={20} strokeWidth={1.75} className="md:w-6 md:h-6" />
           </button>

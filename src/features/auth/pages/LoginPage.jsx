@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithGoogle } from '../../../firebase/auth.js';
 import GoogleButton from '../components/GoogleButton.jsx';
+import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { isNativeLocalDatabaseAvailable } from '../../../db/localDatabase.js';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { startLocalMode } = useAuth();
 
   async function handleSignIn() {
     setError(null);
@@ -27,6 +30,24 @@ export default function LoginPage() {
       <h2 className="font-display text-xl font-semibold mb-1">Vamos organizar as contas?</h2>
       <p className="text-ink-300 text-sm mb-6">Sem senha, sem complicação — entre com sua conta Google.</p>
       <GoogleButton onClick={handleSignIn} loading={loading} />
+      {isNativeLocalDatabaseAvailable() && (
+        <>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => {
+              startLocalMode();
+              navigate('/');
+            }}
+            className="mt-3 w-full rounded-xl border border-ink-100 px-4 py-3 text-sm font-medium dark:border-ink-700"
+          >
+            Continuar gratuitamente sem conta
+          </button>
+          <p className="mt-2 text-center text-xs text-ink-300">
+            Seus dados ficarão somente neste aparelho, sem backup automático. Exporte uma cópia antes de desinstalar ou trocar de celular.
+          </p>
+        </>
+      )}
       {error && <p className="text-signal-500 text-sm mt-3">{error}</p>}
     </div>
   );

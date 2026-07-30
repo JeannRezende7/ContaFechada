@@ -1,6 +1,6 @@
 import { countPending } from './syncQueue.js';
 import { listConflictLog } from './downloadRemoteChanges.js';
-import { getLastSyncAt } from './runSyncCycle.js';
+import { getLastSyncAt, getSyncMetrics } from './runSyncCycle.js';
 
 /**
  * Fase 13 do roadmap local-first: saúde de sincronização DESTE aparelho —
@@ -15,9 +15,11 @@ import { getLastSyncAt } from './runSyncCycle.js';
  * neste ambiente de desenvolvimento, e não têm código correspondente aqui.
  */
 export async function getSyncHealth({ driver, entidades }) {
-  const [filaPendente, conflitosRecentes] = await Promise.all([
+  const [filaPendente, conflitosRecentes, metricas, queueStatusRows] = await Promise.all([
     countPending(driver),
     listConflictLog(driver, { limit: 20 }),
+    getSyncMetrics(driver),
+    driver.all('SELECT status, COUNT(*) as count FROM sync_queue GROUP BY status'),
   ]);
 
   const ultimaSincronizacaoPorEntidade = {};
@@ -25,5 +27,26 @@ export async function getSyncHealth({ driver, entidades }) {
     ultimaSincronizacaoPorEntidade[entidade] = await getLastSyncAt(driver, entidade);
   }
 
-  return { filaPendente, conflitosRecentes, ultimaSincronizacaoPorEntidade };
+  const filaPorStatus = Object.fromEntries(queueStatusRows.map((row) => [row.status, row.count]));
+  const duracaoMediaMs = metricas.cycles ? Math.round(metricas.durationMsTotal / metricas.cycles) : null;
+  const lastThree = (metricas.recentSamples ?? []).slice(-3);
+  const filaCrescendo =
+    lastThree.length === 3 &&
+    lastThree[0].queuePending < lastThree[1].queuePending &&
+    lastThree[1].queuePending < lastThree[2].queuePending;
+  const alertas = [
+    ...(filaCrescendo ? [{ type: 'queue_growth', severity: 'warning', message: 'A fila cresceu nos últimos 3 ciclos.' }] : []),
+    ...((filaPorStatus.error ?? 0) > 0
+      ? [{ type: 'queue_errors', severity: 'error', message: `${filaPorStatus.error} operação(ões) exige(m) nova tentativa.` }]
+      : []),
+  ];
+
+  return {
+    filaPendente,
+    filaPorStatus,
+    conflitosRecentes,
+    ultimaSincronizacaoPorEntidade,
+    metricas: { ...metricas, duracaoMediaMs },
+    alertas,
+  };
 }

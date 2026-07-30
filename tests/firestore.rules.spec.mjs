@@ -54,6 +54,13 @@ afterAll(async () => {
 });
 
 describe('Firestore owner data', () => {
+  it('denies unauthenticated reads and writes', async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    const ref = doc(db, 'users/user-a/lancamentos/item-1');
+    await assertFails(getDoc(ref));
+    await assertFails(setDoc(ref, { valor: 10 }));
+  });
+
   it('allows the owner and denies another user', async () => {
     const ownerDb = testEnv.authenticatedContext('user-a').firestore();
     const otherDb = testEnv.authenticatedContext('user-b').firestore();
@@ -62,6 +69,8 @@ describe('Firestore owner data', () => {
     await assertSucceeds(setDoc(doc(ownerDb, path), { valor: 10 }));
     await assertSucceeds(getDoc(doc(ownerDb, path)));
     await assertFails(getDoc(doc(otherDb, path)));
+    await assertFails(updateDoc(doc(otherDb, path), { valor: 999 }));
+    await assertFails(deleteDoc(doc(otherDb, path)));
 
     const planningPath = 'users/user-a/planejamento/2026-07';
     await assertSucceeds(setDoc(doc(ownerDb, planningPath), {
@@ -149,6 +158,47 @@ describe('subscription protection', () => {
       plan: 'premium',
       subscriptionStatus: 'active',
       founder: true,
+    }));
+  });
+
+  it('denies adding backend-only fields to the trial transition', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), 'users/user-a/private/subscription'),
+        initialSubscription({ createdAt: Timestamp.now() })
+      );
+    });
+    const db = testEnv.authenticatedContext('user-a').firestore();
+    await assertFails(updateDoc(doc(db, 'users/user-a/private/subscription'), {
+      plan: 'premium',
+      subscriptionStatus: 'trialing',
+      subscriptionProvider: 'web',
+      subscriptionId: null,
+      cancelAtPeriodEnd: false,
+      trialStartedAt: serverTimestamp(),
+      trialEndsAt: Timestamp.fromMillis(Date.now() + 14 * 86_400_000),
+      cloudCopyDeletedAt: serverTimestamp(),
+    }));
+  });
+
+  it('denies a second trial transition', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), 'users/user-a/private/subscription'),
+        initialSubscription({
+          plan: 'premium',
+          subscriptionStatus: 'trialing',
+          subscriptionProvider: 'web',
+          trialStartedAt: Timestamp.now(),
+          trialEndsAt: Timestamp.fromMillis(Date.now() + 14 * 86_400_000),
+          createdAt: Timestamp.now(),
+        })
+      );
+    });
+    const db = testEnv.authenticatedContext('user-a').firestore();
+    await assertFails(updateDoc(doc(db, 'users/user-a/private/subscription'), {
+      trialStartedAt: serverTimestamp(),
+      trialEndsAt: Timestamp.fromMillis(Date.now() + 14 * 86_400_000),
     }));
   });
 

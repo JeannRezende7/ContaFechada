@@ -27,6 +27,10 @@ export function getAdminDb() {
   return getFirestore(getAdminApp());
 }
 
+export function getAdminAuth() {
+  return getAuth(getAdminApp());
+}
+
 /** Verifies the Firebase ID token from an `Authorization: Bearer <token>` header. Throws if missing/invalid. */
 export async function verifyIdToken(authorizationHeader) {
   const token = authorizationHeader?.replace(/^Bearer\s+/i, '');

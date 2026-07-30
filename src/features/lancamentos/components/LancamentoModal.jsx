@@ -281,7 +281,7 @@ export default function LancamentoModal({
                 value={form.dataVencimento}
                 onChange={(e) => isSaneISODate(e.target.value) && update('dataVencimento', e.target.value)}
                 placeholder="Hoje"
-                className="[color-scheme:light] w-full bg-white text-ink-900 rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+                className="[color-scheme:light] dark:[color-scheme:dark] w-full bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 rounded-xl border border-ink-100 dark:border-ink-700 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
               />
             )}
           </div>
@@ -295,7 +295,7 @@ export default function LancamentoModal({
               type="month"
               value={form.mesInicio}
               onChange={(e) => update('mesInicio', e.target.value)}
-              className="[color-scheme:light] w-full bg-white text-ink-900 rounded-xl border border-ink-100 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+              className="[color-scheme:light] dark:[color-scheme:dark] w-full bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 rounded-xl border border-ink-100 dark:border-ink-700 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
             />
           </div>
         )}
@@ -373,7 +373,7 @@ export default function LancamentoModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50"
+            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900"
           >
             Cancelar
           </button>

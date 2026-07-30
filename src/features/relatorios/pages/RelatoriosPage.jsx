@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
+import { useTheme } from '../../../contexts/ThemeContext.jsx';
 import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
 import PremiumBadge from '../../premium/components/PremiumBadge.jsx';
 import { getGastosPorCategoria, getEvolucaoMensal } from '../services/relatoriosService.js';
@@ -53,6 +54,9 @@ export default function RelatoriosPage() {
   const { user } = useAuth();
   const uid = user?.uid;
   const { canUse, isPremium, openPaywall, getLimit } = usePremium();
+  const { theme } = useTheme();
+  const chartSurfaceColor = theme === 'dark' ? '#334155' : '#F8FAFC';
+  const chartGridColor = theme === 'dark' ? '#475569' : '#E2E8F0';
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey());
   const [tipo, setTipo] = useState('despesa');
   const [categoriaData, setCategoriaData] = useState({ items: [], totalGeral: 0 });
@@ -144,7 +148,7 @@ export default function RelatoriosPage() {
                       innerRadius="62%"
                       outerRadius="90%"
                       paddingAngle={2}
-                      stroke="#F8FAFC"
+                      stroke={chartSurfaceColor}
                       strokeWidth={2}
                     >
                       {chartData.map((entry) => (
@@ -207,7 +211,7 @@ export default function RelatoriosPage() {
             <div className="w-full h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={evolucao} barGap={4} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-                  <CartesianGrid vertical={false} stroke="#E2E8F0" />
+                  <CartesianGrid vertical={false} stroke={chartGridColor} />
                   <XAxis
                     dataKey="label"
                     tickLine={false}
@@ -215,7 +219,7 @@ export default function RelatoriosPage() {
                     tick={{ fill: '#94A3B8', fontSize: 12 }}
                   />
                   <YAxis hide />
-                  <Tooltip content={<EvolucaoTooltip />} cursor={{ fill: '#F8FAFC' }} />
+                  <Tooltip content={<EvolucaoTooltip />} cursor={{ fill: chartSurfaceColor }} />
                   <Legend
                     formatter={(value) => (value === 'receitas' ? 'Entradas' : 'Saídas')}
                     wrapperStyle={{ fontSize: 13 }}

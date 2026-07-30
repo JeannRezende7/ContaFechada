@@ -90,7 +90,7 @@ export default function ImportarFaturaModal({ open, uid, categorias = [], onClos
         <p className="text-xs text-ink-300 mb-4">Hoje só reconheço faturas do Nubank.</p>
 
         {status === 'idle' && (
-          <label className="flex flex-col items-center gap-2 border-2 border-dashed border-ink-100 rounded-xl py-10 cursor-pointer hover:border-ledger-500 transition-colors">
+          <label className="flex flex-col items-center gap-2 border-2 border-dashed border-ink-100 dark:border-ink-700 rounded-xl py-10 cursor-pointer hover:border-ledger-500 transition-colors">
             <Upload size={24} strokeWidth={1.75} className="text-ink-300" />
             <span className="text-sm text-ink-500">Escolher arquivo PDF</span>
             <input type="file" accept="application/pdf" onChange={handleFile} className="hidden" />
@@ -152,7 +152,7 @@ export default function ImportarFaturaModal({ open, uid, categorias = [], onClos
                       type="checkbox"
                       checked={checked}
                       readOnly
-                      className="rounded border-ink-100 text-ledger-500 focus:ring-ledger-500 shrink-0 pointer-events-none"
+                      className="rounded border-ink-100 dark:border-ink-700 text-ledger-500 focus:ring-ledger-500 shrink-0 pointer-events-none"
                     />
                     <span
                       className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
@@ -211,7 +211,7 @@ export default function ImportarFaturaModal({ open, uid, categorias = [], onClos
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50"
+            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900"
           >
             {status === 'done' ? 'Fechar' : 'Cancelar'}
           </button>

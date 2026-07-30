@@ -9,9 +9,10 @@ import { VitePWA } from 'vite-plugin-pwa';
 // undefined and crashing at runtime).
 const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url)));
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   define: {
     __APP_VERSION__: JSON.stringify(version),
+    __NATIVE_ANDROID_BUILD__: JSON.stringify(mode === 'android'),
   },
   plugins: [
     react(),
@@ -80,4 +81,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

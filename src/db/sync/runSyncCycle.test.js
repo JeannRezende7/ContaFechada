@@ -67,7 +67,8 @@ describe('runSyncCycle', () => {
     });
 
     expect(result.skipped).toBe(false);
-    expect(result.upload).toEqual({ processed: 1, succeeded: 1, failed: 0 });
+    expect(result.upload).toEqual({ processed: 1, succeeded: 1, failed: 0, bytesUploaded: 12 });
+    expect(result.metrics).toMatchObject({ cycles: 1, bytesUploaded: 12, errors: 0 });
     expect(uploader.upsert).toHaveBeenCalledWith('lancamentos', 'l1', { valor: 10 });
     expect(await getLastSyncAt(driver, 'categorias')).not.toBeNull();
     expect(await getLastSyncAt(driver, 'lancamentos')).not.toBeNull();

@@ -109,7 +109,7 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
             <button
               type="button"
               onClick={() => setPendingGeneratedUpdate(null)}
-              className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50"
+              className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900"
             >
               Voltar
             </button>
@@ -195,7 +195,7 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50"
+            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900"
           >
             Cancelar
           </button>

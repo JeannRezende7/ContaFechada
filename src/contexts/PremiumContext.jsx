@@ -29,7 +29,7 @@ const FREE_STATE = toSubscriptionState(null);
  * pop a paywall on their own.
  */
 export function PremiumProvider({ children }) {
-  const { user } = useAuth();
+  const { user, isLocalSession } = useAuth();
   const uid = user?.uid;
 
   const [state, setState] = useState(FREE_STATE);
@@ -48,7 +48,7 @@ export function PremiumProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!uid) {
+    if (!uid || isLocalSession) {
       applyState(FREE_STATE);
       setLoading(false);
       setPaywall(null);
@@ -83,28 +83,28 @@ export function PremiumProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [uid, applyState]);
+  }, [uid, isLocalSession, applyState]);
 
   const refreshSubscription = useCallback(async () => {
-    if (!uid) return FREE_STATE;
+    if (!uid || isLocalSession) return FREE_STATE;
     const doc = await getSubscriptionDoc(uid);
     const next = toSubscriptionState(doc);
     applyState(next);
     if (doc) writeSubscriptionCache(uid, doc);
     return next;
-  }, [uid, applyState]);
+  }, [uid, isLocalSession, applyState]);
 
   // Teste Premium (Fase 7): 14 dias, uma única vez por uid — a regra em
   // firestore.rules garante o "uma vez" no servidor (o client não consegue
   // repetir a transição), então basta pedir consentimento explícito aqui e
   // deixar a escrita seguir o caminho normal do Firestore.
   const startTrial = useCallback(async () => {
-    if (!uid) return;
+    if (!uid || isLocalSession) return;
     const doc = await startTrialDoc(uid);
     applyState(toSubscriptionState(doc));
-    writeCache(uid, doc);
+    writeSubscriptionCache(uid, doc);
     track(EVENTS.TRIAL_STARTED);
-  }, [uid, applyState]);
+  }, [uid, isLocalSession, applyState]);
 
   const canUse = useCallback(
     (feature, ctx = {}) => checkGate(feature, { ...ctx, isPremium: state.isPremium }).allowed,

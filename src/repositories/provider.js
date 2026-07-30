@@ -8,6 +8,8 @@ import { planejamentoRepository } from './firebase/planejamentoRepository.js';
 import { fechamentosRepository } from './firebase/fechamentosRepository.js';
 import { gestorRepository } from './firebase/gestorRepository.js';
 import { configuracoesRepository } from './firebase/configuracoesRepository.js';
+import { isNativeLocalDatabaseAvailable, getLocalDatabase } from '../db/localDatabase.js';
+import { createSqliteRepositories } from './sqlite/repositories.js';
 
 /** @type {import('./contracts.js').Repositories} */
 const firebaseRepositories = {
@@ -32,9 +34,39 @@ const firebaseRepositories = {
  *
  * @returns {import('./contracts.js').Repositories}
  */
-export function getRepositories() {
-  return firebaseRepositories;
+let activeRepositories = firebaseRepositories;
+let initialization;
+
+export async function initializeRepositories() {
+  if (!isNativeLocalDatabaseAvailable()) {
+    activeRepositories = firebaseRepositories;
+    return activeRepositories;
+  }
+  if (!initialization) {
+    initialization = getLocalDatabase()
+      .then((driver) => {
+        activeRepositories = createSqliteRepositories(driver);
+        return activeRepositories;
+      })
+      .catch((error) => {
+        initialization = undefined;
+        throw error;
+      });
+  }
+  return initialization;
 }
 
-/** @type {import('./contracts.js').Repositories} */
-export const repositories = getRepositories();
+export function getRepositories() {
+  return activeRepositories;
+}
+
+const repositoryNames = Object.keys(firebaseRepositories);
+export const repositories = Object.fromEntries(repositoryNames.map((name) => [
+  name,
+  new Proxy({}, {
+    get(_target, property) {
+      const method = activeRepositories[name]?.[property];
+      return typeof method === 'function' ? method.bind(activeRepositories[name]) : method;
+    },
+  }),
+]));

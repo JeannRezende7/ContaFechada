@@ -80,7 +80,7 @@ export default function RegrasCategorizacao({ uid, categorias }) {
             <input
               defaultValue={rule.termo}
               onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== rule.termo && repositories.regrasCategorizacao.update(uid, rule.id, { termo: e.target.value.trim() }).then(reload)}
-              className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-1 py-1 text-sm hover:border-ink-100"
+              className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-1 py-1 text-sm hover:border-ink-100 dark:hover:border-ink-700"
             />
             <select
               value={rule.categoriaId}

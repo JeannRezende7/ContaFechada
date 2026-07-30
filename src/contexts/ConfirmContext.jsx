@@ -6,7 +6,7 @@ const ConfirmContext = createContext(null);
 const CHOICE_TONE = {
   danger: 'bg-signal-500 text-white hover:bg-signal-600 hover:shadow-card-hover',
   primary: 'bg-ledger-500 text-white hover:bg-ledger-600 hover:shadow-card-hover',
-  neutral: 'text-ink-500 hover:bg-ink-50',
+  neutral: 'text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900',
 };
 
 /**
@@ -77,7 +77,7 @@ export function ConfirmProvider({ children }) {
                 <button
                   autoFocus
                   onClick={() => handle(false)}
-                  className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50"
+                  className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900"
                 >
                   Cancelar
                 </button>

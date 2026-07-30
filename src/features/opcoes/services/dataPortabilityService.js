@@ -1,5 +1,6 @@
 import { listUserDocs, getUserDoc, deleteAllUserDocs, deleteUserDoc } from '../../../firebase/firestore.js';
 import { auth } from '../../../firebase/config.js';
+import { USER_FINANCIAL_COLLECTIONS } from '../../../../shared/userDataCollections.js';
 
 /**
  * Every top-level collection a user's data lives in, kept in one place so
@@ -8,7 +9,7 @@ import { auth } from '../../../firebase/config.js';
  * — adding a new collection to the app means updating this one list, not
  * two separate ones.
  */
-const COLLECTIONS = ['lancamentos', 'categorias', 'regrasCategorizacao', 'recorrencias', 'metas', 'gestorLancamentos', 'planejamento', 'valorLivre', 'fechamentos'];
+const COLLECTIONS = USER_FINANCIAL_COLLECTIONS;
 
 /**
  * Everything the user has stored, as one plain object — downloaded as JSON

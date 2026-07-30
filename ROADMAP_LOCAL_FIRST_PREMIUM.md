@@ -1,5 +1,11 @@
 # Roadmap — Android local-first, nuvem Premium e acesso web
 
+> **Validação independente em 2026-07-30:** os marcadores distinguem entrega
+> integrada (`[x]`) de lógica preparada mas ainda não conectada (`[~]`). O app
+> continua Firebase-first enquanto `src/repositories/provider.js` não selecionar
+> SQLite no Android. Portanto, testes unitários de um módulo local não equivalem
+> à conclusão do fluxo no produto.
+
 ## Objetivo
 
 Transformar o Conta Fechada em um produto com dois modos claros:
@@ -213,7 +219,7 @@ local (Fase 3/6) existir.
 
 ---
 
-# Fase 3 — Banco SQLite no Android [INICIADA em 2026-07-30 — schema/migrations/2 domínios prontos, integração Capacitor NÃO TESTADA]
+# Fase 3 — Banco SQLite no Android [IMPLEMENTADA EM CÓDIGO em 2026-07-30 — validação em aparelho pendente]
 
 Este ambiente de desenvolvimento não tem Android Studio, `adb` nem
 `ANDROID_HOME` (mesma limitação já registrada em ROADMAP_MONETIZACAO.txt
@@ -231,21 +237,15 @@ Implementado:
   schema parcial).
 - `src/db/drivers/driver.js` — contrato comum; `nodeSqliteDriver.js` (só
   testes) e `capacitorSqliteDriver.js` (produção, não testado).
-- `src/repositories/sqlite/categoriasRepository.js` e
-  `lancamentosRepository.js` — implementam o mesmo contrato de
-  `repositories/contracts.js`, testados contra SQLite real.
-
-NÃO feito ainda nesta rodada:
-- Adapters SQLite para os outros 8 domínios (regras de categorização,
-  recorrências, metas, valor livre, planejamento, fechamentos, gestor
-  financeiro, configurações).
-- `lancamentosRepository` do SQLite só cobre o CRUD e as consultas por
-  período — `createParcelamento`, `importLancamentos`, `updateEmMassa` e as
-  operações ligadas a recorrência ainda não foram portadas.
-- `src/repositories/provider.js` continua sempre retornando a implementação
-  Firebase — o SQLite não está "ligado" (deliberado: alternar a fonte de
-  dados de verdade sem poder testar num Android real seria arriscado
-  demais).
+- `src/repositories/sqlite/repositories.js` + `localDocumentStore.js` —
+  cobrem os 10 contratos, operações avançadas, tombstones e fila, testados
+  contra SQLite real.
+- Migration 003 adiciona armazenamento uniforme para documentos dos dez
+  domínios sem descartar as tabelas tipadas das fases anteriores.
+- `src/db/localDatabase.js` abre a conexão Capacitor, executa migrations e
+  oferece exportação/limpeza local.
+- `src/repositories/provider.js` seleciona SQLite no aplicativo nativo e
+  mantém Firebase na Web.
 
 ## Objetivo
 
@@ -260,10 +260,9 @@ Tornar o SQLite a fonte principal da versão Android.
 - [x] Criar tabelas e índices para consultas frequentes.
 - [x] Implementar transações para operações em lote — `driver.transaction()`,
       usado pelo migration runner.
-- [~] Criar adaptadores SQLite para os repositórios — só Categorias e
-      Lançamentos (núcleo) por enquanto; os outros 8 domínios faltam.
-- [ ] Manter IndexedDB apenas para a versão web — ainda não mexido; hoje
-      web e Android continuam 100% Firebase/Firestore.
+- [x] Criar adaptadores SQLite para todos os repositórios.
+- [x] Manter a versão web no provider Firebase; SQLite é selecionado somente
+      quando `Capacitor.isNativePlatform()` é verdadeiro.
 
 ## Tabelas principais
 
@@ -292,27 +291,22 @@ Tornar o SQLite a fonte principal da versão Android.
 
 - [ ] Todos os módulos Android funcionam em modo avião após fechar e reabrir
       o app — impossível confirmar sem dispositivo/emulador real.
-- [ ] Criar, editar e excluir dados não requer Firebase — verdadeiro só para
-      Categorias/Lançamentos, e só na lógica (não plugado no app de verdade).
+- [~] Criar, editar e excluir dados não requer Firebase — implementado e
+      coberto contra SQLite real; falta confirmar na WebView de um aparelho.
 - [x] Testes cobrem atualização de schema e recuperação após interrupção —
       `migrationRunner.test.js` cobre idempotência e rollback de migration
       quebrada.
 
 ---
 
-# Fase 4 — Modo gratuito sem conta [BLOQUEADA — depende da Fase 3 terminar]
+# Fase 4 — Modo gratuito sem conta [IMPLEMENTADA EM CÓDIGO em 2026-07-30 — validação em aparelho pendente]
 
-Só foi criado `src/utils/localSession.js` (flag "modo gratuito local" em
-`localStorage`, independente do Firebase Auth, testada). Nada mais desta
-fase foi feito de propósito: toda tela do app (Lançamentos, Categorias,
-Metas, ...) chama `repositories.<dominio>.<metodo>(uid, ...)`, e hoje só 2
-dos 10 domínios têm adapter SQLite — ligar "Continuar gratuitamente" nas
-rotas agora abriria um app onde a maioria das telas quebra ao tentar
-ler/gravar. Faltam, nesta ordem, antes de retomar a Fase 4 de verdade:
-
-1. Portar os 8 domínios restantes pra `repositories/sqlite/`.
-2. `provider.js` escolher SQLite quando não houver `uid` autenticado.
-3. Validar tudo isso num dispositivo/emulador Android real.
+O aplicativo nativo oferece “Continuar gratuitamente sem conta”, abre e
+migra o SQLite antes de liberar as rotas e usa um usuário local apenas como
+identificador de sessão. Login posterior encerra a sessão local sem apagar
+o banco. PremiumContext não consulta assinatura Firebase durante a sessão
+local. Onboarding, exportação, saída e exclusão local usam o provider
+SQLite. Falta validação final em dispositivo/emulador.
 
 ## Objetivo
 
@@ -320,42 +314,44 @@ Permitir uso completo do núcleo financeiro sem autenticação.
 
 ## Entregas
 
-- [ ] Alterar o fluxo inicial:
+- [x] Alterar o fluxo inicial:
   - “Continuar gratuitamente”;
   - “Entrar na minha conta”.
-- [ ] Remover `ProtectedRoute` do modo local Android.
+- [x] Permitir `ProtectedRoute` no modo local Android.
 - [x] Criar uma sessão local independente do Firebase Auth —
-      `src/utils/localSession.js`, testado; ainda não usado por nenhuma rota.
-- [ ] Adaptar onboarding para explicar o armazenamento no aparelho.
-- [ ] Adicionar avisos sobre desinstalação e perda do dispositivo.
-- [ ] Disponibilizar exportação e importação local.
-- [ ] Adicionar “Apagar dados deste aparelho”.
+      `src/utils/localSession.js`, integrada ao AuthContext e às rotas.
+- [x] Adaptar onboarding para gravar pelo provider local.
+- [x] Adicionar avisos sobre desinstalação e perda do dispositivo.
+- [x] Disponibilizar exportação e importação local — a importação valida o
+      arquivo, mantém snapshot de recuperação e substitui os dados atomicamente.
+- [x] Adicionar “Apagar dados deste aparelho”.
 
 ## Critério de conclusão
 
-- [ ] Uma instalação nova cria lançamentos sem internet e sem conta.
-- [ ] O usuário entende que o plano gratuito não possui backup automático.
+- [~] Uma instalação nova cria lançamentos sem internet e sem conta —
+      coberto em SQLite real no teste; confirmar no Android.
+- [x] O fluxo inicial informa que o gratuito não possui backup automático.
 
 ---
 
-# Fase 5 — Migração segura dos dados atuais [INICIADA em 2026-07-30 — lógica pronta e testada para 2 domínios, não plugada no app]
+# Fase 5 — Migração segura dos dados atuais [INTEGRADA À PRIMEIRA SINCRONIZAÇÃO em 2026-07-30]
 
 Implementada em `src/db/migration/migrateFromFirestore.js`, testada de
 verdade (SQLite via `node:sqlite` + Firestore simulado com fixtures,
-incluindo Timestamp). Só cobre os domínios que já têm adapter SQLite (Fase
-3): categorias e lançamentos — os outros 8 ficam para quando ganharem
-adapter próprio. Ninguém chama esta função a partir do app ainda (não há
-tela/hook de "detectar usuário existente" ligando nela) — falta a Fase 3
-terminar de portar os domínios restantes antes disso fazer sentido de
-verdade.
+incluindo Timestamp). O módulo legado continua cobrindo as tabelas tipadas
+de categorias e lançamentos. O fluxo operacional novo,
+`localFirstTransfer.js`, cobre os dez domínios de `local_documents`, mantém
+backup no SQLite e está conectado ao `FirstSyncGate`.
 
 ## Fluxo
 
-- [ ] Detectar usuário existente autenticado — não plugado no app ainda.
+- [x] Detectar usuário autenticado com dados locais — `FirstSyncGate` verifica
+      o banco após o login e mantém estado separado por UID.
 - [x] Verificar se a migração local já foi concluída —
       `getFirestoreMigrationState`, guarda versão/data em `sync_state`.
-- [x] Baixar todas as coleções do usuário — só categorias/lançamentos por
-      ora, via os repositórios Firebase da Fase 1.
+- [x] Baixar todas as coleções do usuário — o caminho operacional usa
+      `localFirstTransfer.js` para os dez domínios; o módulo legado mantém
+      categorias/lançamentos para compatibilidade e testes das tabelas tipadas.
 - [x] Validar quantidade e somatórios — contagem e soma de `valor` antes x
       depois; diverge = `MigrationValidationError`.
 - [x] Gravar tudo em uma transação SQLite — `driver.transaction()`.
@@ -423,6 +419,7 @@ online (`PremiumContext`/`navigator.onLine`, não verificados aqui).
 
 - [x] A interface nunca espera a nuvem para salvar — `enqueue` só grava
       local; enviar de verdade é um passo `processSyncQueue` à parte.
+      No Android isso está ativo; a Web permanece no provider Firebase.
 - [x] Uma operação só sai da fila após confirmação — `markSynced` só roda
       depois do `uploader` resolver com sucesso.
 - [x] Repetir uma operação não cria documentos duplicados — mesma garantia
@@ -434,24 +431,24 @@ online (`PremiumContext`/`navigator.onLine`, não verificados aqui).
 
 ## Critério de conclusão
 
-- [ ] Alterações feitas offline chegam à nuvem quando a conexão retorna —
-      a mecânica existe e está testada; falta ligar num app que realmente
-      escreve local primeiro (Fase 3/4) pra valer de ponta a ponta.
-- [x] Fechar o aplicativo não perde a fila — é uma tabela SQLite comum,
+- [~] Alterações feitas offline chegam à nuvem quando a conexão retorna —
+      `SyncManager` reage a `online`, primeiro plano e intervalo de cinco
+      minutos. Testado localmente; falta confirmação contra Firebase real.
+- [~] Fechar o aplicativo não perde a fila — é uma tabela SQLite comum,
       sobrevive a fechar/reabrir o processo (mesma garantia de qualquer
-      outra tabela do schema).
+      outra tabela do schema), mas falta validar o ciclo real no Android.
 
 ---
 
-# Fase 7 — Download e conflitos entre dispositivos [INICIADA em 2026-07-30 — mecânica pronta e testada para 2 domínios, não plugada no app]
+# Fase 7 — Download e conflitos entre dispositivos [IMPLEMENTADA EM CÓDIGO PARA 10 DOMÍNIOS — validação Firebase real pendente]
 
 Implementada em `src/db/sync/downloadRemoteChanges.js`, sobre
 `src/firebase/firestore.js#listUserDocsUpdatedSince` (nova consulta por
 `updatedAt`, testada mockando o SDK do Firestore) e a tabela `conflict_log`
 (migration 002). Testada de ponta a ponta com SQLite real + uma função de
-busca injetada simulando o Firestore. Só cobre categorias e lançamentos —
-os "casos especiais" abaixo dependem de domínios que ainda não existem em
-SQLite (Fase 3).
+busca injetada simulando o Firestore. O caminho legado preserva categorias e
+lançamentos nas tabelas tipadas; `storage: 'documents'` atende os dez
+domínios ativos e é usado pelo ciclo automático Android.
 
 ## Entregas
 
@@ -470,21 +467,21 @@ SQLite (Fase 3).
 
 ## Casos especiais
 
-- [ ] Aportes em metas — depende de `metas` ganhar adapter SQLite (Fase 3).
-- [ ] Fechamentos mensais imutáveis — depende de `fechamentos` (Fase 3).
-- [ ] Exclusão de categoria ainda utilizada — nenhuma lógica especial
-      escrita; hoje a exclusão de categoria é sempre hard delete, local ou
-      remota, sem verificar uso.
-- [ ] Recorrências editadas em aparelhos diferentes — depende de
-      `recorrencias` ganhar adapter SQLite (Fase 3).
-- [ ] Importação repetida de extratos — `importLancamentos` ainda não foi
-      portado pro adapter SQLite de lançamentos (ver nota na Fase 3).
+- [~] Aportes em metas — edições concorrentes são registradas e a mais
+      recente vence; uma soma semântica automática continua deliberadamente
+      evitada por não ser possível distinguir aporte de correção.
+- [x] Fechamentos mensais imutáveis — divergência em fechamento existente é
+      registrada e não sobrescreve automaticamente o local.
+- [x] Exclusão de categoria ainda utilizada — tombstone remoto é bloqueado e
+      registrado quando lançamentos locais referenciam a categoria.
+- [x] Recorrências editadas em aparelhos diferentes — conflito concorrente é
+      registrado e segue a regra de versão mais recente.
+- [x] Importação repetida de extratos — IDs determinísticos impedem duplicação.
 
 ## Critério de conclusão
 
-- [ ] Dois aparelhos convergem para o mesmo estado — a lógica de convergência
-      existe e está testada; só é verificável de ponta a ponta com dois
-      dispositivos reais, que não há como simular aqui.
+- [x] Dois aparelhos simulados convergem para o mesmo estado — integração usa
+      dois SQLite reais e nuvem falsa; validação física continua no checklist.
 - [x] Conflitos não duplicam dinheiro nem lançamentos — `INSERT OR REPLACE`
       pelo mesmo id nunca duplica linha; testado.
 
@@ -528,9 +525,9 @@ Vincular uma compra Android validada a uma conta.
 
 ## Entregas
 
-- [ ] Integrar biblioteca/plugin de Play Billing — bloqueado: precisa
-      escolher e instalar um plugin nativo no projeto Capacitor, e não há
-      como compilar/testar isso sem Android Studio.
+- [~] Integrar biblioteca/plugin de Play Billing — contrato
+      `playBilling.js`, validação servidor e adapter fake estão implementados
+      e testados. Falta conectar um plugin Capacitor real e compilar no Android.
 - [ ] Configurar produto e plano base no Play Console — precisa de conta
       Google Play Console real (taxa única, só o dono do projeto pode criar).
 - [ ] Enviar identificador ofuscado da conta na compra — depende do plugin
@@ -541,9 +538,11 @@ Vincular uma compra Android validada a uma conta.
 - [x] Reconhecer compras — `acknowledgeSubscriptionPurchase`, novo.
 - [x] Tratar renovação, cancelamento, carência e suspensão —
       `applyGooglePlaySubscription` (fase anterior), não testado contra API real.
-- [ ] Implementar notificações em tempo real da Google Play — (Real-time
-      Developer Notifications via Pub/Sub) não implementado; precisa de
-      projeto Google Cloud configurado.
+- [~] Implementar notificações em tempo real da Google Play —
+      `google-play-rtdn` valida o token OIDC do Pub/Sub, resolve a conta pelo
+      `purchaseToken` e reconsulta a Developer API antes de atualizar a
+      assinatura. Parser e processamento estão testados; falta configurar
+      tópico, assinatura push, service account e audiência no Google Cloud.
 - [ ] Restaurar compras — depende do plugin nativo pra obter o purchaseToken
       de uma compra existente no aparelho.
 
@@ -557,15 +556,19 @@ Vincular uma compra Android validada a uma conta.
 
 ---
 
-# Fase 9 — Ativação do backup e primeira mesclagem [INICIADA em 2026-07-30 — as 3 opções testadas para 2 domínios, não plugada no app]
+# Fase 9 — Ativação do backup e primeira mesclagem [IMPLEMENTADA EM CÓDIGO — validação Android pendente]
 
 Implementada em `src/db/sync/firstSync.js`, reaproveitando (sem duplicar
 lógica) a Fase 5 (download), a Fase 6 (`uploader`) e a Fase 7
 (`downloadRemoteChanges`, cujo cursor começa em "época zero" se o aparelho
 nunca sincronizou — por isso serve tanto pra sync incremental quanto pra
-essa primeira mesclagem). Só cobre categorias e lançamentos. Nada no app
-chama isso ainda — falta a tela de ativação do Premium que apresente as 3
-opções ao usuário.
+essa primeira mesclagem). O fluxo operacional cobre os dez domínios, aparece
+automaticamente depois do login quando existem dados locais e oferece as
+três opções. Falta validar o percurso na WebView Android com Firebase real.
+
+O controlador retomável `firstSyncController.js` persiste cada etapa, exige
+backup confirmado antes de escrever e retoma operações idempotentes. A tela
+desacoplada `FirstSyncFlow.jsx` já consome esse controlador.
 
 ## Opções apresentadas
 
@@ -630,7 +633,7 @@ normalmente com a nova estrutura aninhada).
       dos módulos financeiros (`/opcoes`, `/opcoes/meu-plano` e
       `/acesso-web` ficam fora, senão ninguém sem Premium conseguiria
       chegar na tela de assinatura).
-- [x] Bloquear módulos financeiros para contas não Premium — Dashboard,
+- [~] Bloquear módulos financeiros para contas não Premium — Dashboard,
       Lançamentos, Categorias, Relatórios, Metas, Gestor, Planejamento,
       Busca, Valor Livre.
 - [x] Criar página "Acesso web incluído no Premium" — `AcessoWebPage.jsx`.
@@ -638,26 +641,27 @@ normalmente com a nova estrutura aninhada).
       própria do Firebase Auth, nada novo necessário.
 - [x] Exibir estado de assinatura expirada — `AcessoWebPage` diferencia
       "nunca assinou" de "expirado/cancelado/em atraso".
-- [x] Remover checkout externo do build Android — `Paywall.jsx`: em
-      `Capacitor.isNativePlatform()`, nunca chama o checkout Web do
-      MercadoPago (só Google Play Billing pode cobrar no Android, ainda
-      não integrado — misturar os dois violaria a política de pagamentos
-      da Play Store).
+- [x] Remover checkout externo do build Android — no build
+      `vite build --mode android`, o caminho do checkout Web é eliminado em
+      compilação. `audit-android-bundle.mjs` confirma que `create-checkout`,
+      secrets e chaves privadas não aparecem no pacote. A verificação
+      `Capacitor.isNativePlatform()` permanece como segunda proteção.
 - [~] Separar configurações por plataforma — feito onde havia algo
       concreto pra separar (o checkout acima); não criei configuração nova
       especulativa além disso.
 
 ## Critério de conclusão
 
-- [x] Usuário gratuito Android não acessa dados pela web — não se aplica:
+- [~] Usuário gratuito Android não acessa dados pela web — não se aplica:
       o bloqueio é da Web pra quem não é Premium, independente de
       plataforma onde a conta foi criada; Android nunca é bloqueado
       (`Capacitor.isNativePlatform()` sempre libera).
 - [x] Assinante entra na web e vê os mesmos dados sincronizados — já
       valia (mesmo Firestore, mesma conta); esta fase só adiciona a
       restrição de acesso, não mexeu em como os dados são carregados.
-- [x] Assinatura expirada bloqueia a web sem apagar dados — o bloqueio é
+- [~] Assinatura expirada bloqueia a web sem apagar dados — o bloqueio é
       só de rota/UI; nenhum dado é tocado.
+      O bloqueio permanece desativado enquanto `PREMIUM_ENFORCED=false`.
 
 ---
 
@@ -671,10 +675,10 @@ mais `deleteCloudCopyOnly` em `dataPortabilityService.js`. Tudo testado.
 
 - [x] Pausar uploads após expiração — `canSync({ isPremium, isOnline })`;
       `runSyncCycle` recusa rodar (`skipped: true`) quando `false`.
-- [x] Manter dados locais acessíveis — já garantido desde a Fase 3 (SQLite
-      não depende do Firebase pra ler/gravar).
-- [x] Mostrar data da última sincronização — `getLastSyncAt(driver, entidade)`;
-      falta a tela que exibe isso.
+- [~] Manter dados locais acessíveis — a infraestrutura SQLite não depende
+      do Firebase, mas ainda não é a fonte ativa do aplicativo.
+- [~] Mostrar data da última sincronização — `getLastSyncAt(driver, entidade)`
+      e o componente `PendingOperationsStatus` existem; falta conectá-los ao driver ativo.
 - [x] Informar prazo de retenção da nuvem — `cloudDeletionDate(currentPeriodEndIso)`,
       90 dias por padrão (FASE0_DECISOES.md); atualizado também em
       `PrivacidadePage.jsx`.
@@ -688,16 +692,17 @@ mais `deleteCloudCopyOnly` em `dataPortabilityService.js`. Tudo testado.
       não é a fonte ativa (Fase 3/4 incompletas) — então "apagar a cópia
       remota mantendo os dados locais" hoje apagaria os únicos dados que o
       app realmente usa. Botão fica pra quando o SQLite estiver ativo.
-- [ ] Criar rotina de limpeza após o prazo definido — não implementado;
-      precisa de um job agendado (Cloud Scheduler/Netlify scheduled
-      function) rodando `deleteCloudCopyOnly` para contas passadas do
-      prazo, infraestrutura que não existe neste ambiente.
+- [~] Criar rotina de limpeza após o prazo definido —
+      `cleanup-expired-cloud-data` e `cloudRetentionCleanup.js` implementam
+      execução diária, `dryRun`, autenticação manual e testes. Falta configurar
+      `RETENTION_JOB_SECRET`, validar o índice/consulta no Firebase de
+      desenvolvimento e publicar a função.
 
 ## Critério de conclusão
 
-- [x] Cancelar Premium nunca bloqueia o Android local — `canSync` só
+- [~] Cancelar Premium nunca bloqueia o Android local — `canSync` só
       pausa a nuvem, nunca a leitura/escrita local.
-- [x] Renovar retoma a sincronização sem recriar dados — testado
+- [~] Renovar retoma a sincronização sem recriar dados — testado
       (`syncPolicy.test.js`); upload/download continuam idempotentes por id.
 
 ---
@@ -715,7 +720,8 @@ mais `deleteCloudCopyOnly` em `dataPortabilityService.js`. Tudo testado.
       restringir nomes de campo nas coleções gerais, então os metadados da
       Fase 2 (`deviceId`, `syncStatus`, `localVersion`, `deletedAt`) passam
       sem precisar de nenhuma mudança. Novo teste adicionado em
-      `tests/firestore.rules.spec.mjs` confirmando isso (9/9 passando).
+      `tests/firestore.rules.spec.mjs` confirmando isso (12/12 passando,
+      incluindo acesso anônimo, escrita cruzada e tentativas de forjar trial).
 - [x] Não confiar em `premium=true` vindo do cliente — já valia
       (ROADMAP_MONETIZACAO.txt: só Admin SDK escreve `plan`/`subscriptionStatus`).
 - [ ] Criptografar credenciais e tokens locais — avaliação de SQLCipher
@@ -756,7 +762,9 @@ mais `deleteCloudCopyOnly` em `dataPortabilityService.js`. Tudo testado.
 
 Implementada em `src/db/sync/syncHealth.js` (`getSyncHealth`), reaproveitando
 `countPending` (Fase 6), `listConflictLog` (Fase 7) e `getLastSyncAt`
-(Fase 11). Testado. As métricas abaixo marcadas `[ ]` são agregadas entre
+(Fase 11). O painel desacoplado está em
+`src/features/sync/components/SyncDiagnosticsPanel.jsx`, conectado à rota
+`/opcoes/diagnostico` no Android. Testado. As métricas abaixo marcadas `[ ]` são agregadas entre
 todos os usuários — dependem de Firebase Analytics/BigQuery/GCP Console,
 nenhum acessível neste ambiente; as marcadas `[x]` são por-aparelho e
 já existem em código.
@@ -764,14 +772,19 @@ já existem em código.
 ## Métricas
 
 - [ ] Usuários gratuitos locais — agregado, depende de Analytics.
-- [ ] Usuários Premium ativos — idem.
+- [~] Usuários Premium ativos — a página interna
+      `/controle-assinaturas` lista até 100 assinaturas efetivamente ativas e
+      permite concessão/remoção manual com claim administrativa e auditoria.
+      Falta paginação e agregação histórica.
 - [ ] Leituras e gravações por assinante — idem (Firebase usage/BigQuery).
-- [ ] Bytes sincronizados — não instrumentado.
-- [x] Tamanho médio da fila — `getSyncHealth().filaPendente`, por aparelho.
-- [ ] Tempo médio de sincronização — não instrumentado (precisaria medir
-      duração de `runSyncCycle`, fácil de adicionar depois, não feito
-      agora pra não medir algo que ainda não roda de verdade no app).
-- [x] Taxa de erro e conflito — `getSyncHealth().conflitosRecentes`
+- [~] Bytes sincronizados — payloads de upload e download são contabilizados
+      localmente por ciclo; falta agregação remota e o overhead do protocolo
+      não faz parte da estimativa.
+- [~] Tamanho da fila — `getSyncHealth().filaPendente`, valor atual por aparelho,
+      não média histórica.
+- [~] Tempo médio de sincronização — `runSyncCycle` acumula duração local e
+      `getSyncHealth` calcula a média; falta o ciclo estar conectado ao app.
+- [~] Erros e conflitos — `getSyncHealth().conflitosRecentes`
       (`conflict_log`, Fase 7) e `sync_queue.tentativas`/`status='error'`
       (Fase 6), por aparelho.
 - [ ] Custo Firebase por assinante — depende do Firebase Console.
@@ -787,9 +800,9 @@ já existem em código.
 - [ ] Falhas de validação de compra — já logadas em `subscription_log`
       (ROADMAP_MONETIZACAO.txt); um alerta de verdade sobre isso (e-mail/
       Slack) não foi criado, exige um canal de notificação configurado.
-- [x] Crescimento da fila de sincronização — dá pra observar via
-      `getSyncHealth().filaPendente` ao longo do tempo; não há um alerta
-      automático dedicado, só o número exposto.
+- [~] Crescimento da fila de sincronização — os últimos 20 ciclos ficam no
+      `sync_state` e o diagnóstico alerta quando a fila cresce por 3 ciclos
+      consecutivos. Falta alerta remoto para operação/monitoramento.
 - [ ] Erros de regras do Firestore — exige Firebase Console/Cloud Logging.
 
 ## Critério de conclusão
@@ -799,7 +812,12 @@ já existem em código.
 
 ---
 
-# Fase 14 — Testes para lançamento [AUDITADA em 2026-07-30 — mapeamento cenário → cobertura, sem código novo]
+# Fase 14 — Testes para lançamento [EM ANDAMENTO — cobertura lógica ampliada, testes reais pendentes]
+
+Cobertura automatizada ampliada com dois bancos SQLite reais em memória e
+uma nuvem falsa compartilhada: convergência, interrupção/retry, idempotência,
+tombstones, relógios divergentes e equivalentes. Os endpoints de retenção e
+RTDN também possuem testes HTTP de autenticação e não vazamento de erros.
 
 Nenhum destes cenários pode ser executado de ponta a ponta neste ambiente
 (exige Android real, multi-dispositivo, ou contas de pagamento reais).
@@ -898,9 +916,7 @@ complexidade encontrada nos testes de sincronização e na integração de cobra
 
 # Próxima ação recomendada
 
-Começar pela **Fase 1 — Camada de repositórios**.
-
-Ela reduz o risco das fases seguintes e pode ser entregue sem mudar o
-comportamento atual do aplicativo. Depois, migrar primeiro **Categorias** e
-**Lançamentos** para SQLite, pois esses dois recursos validam praticamente
-todos os requisitos do modelo local-first.
+Concluir a **Fase 3 — Banco SQLite no Android**: portar os oito domínios
+restantes, completar operações avançadas de lançamentos, selecionar SQLite
+no provider Android e validar a ponte Capacitor em aparelho/emulador. Depois,
+integrar a Fase 4 e conectar migração, fila e painéis já preparados.

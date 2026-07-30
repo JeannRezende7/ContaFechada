@@ -16,6 +16,7 @@ export async function processSyncQueue({ driver, uploader, batchSize = 50 }) {
   const batch = await listPending(driver, { limit: batchSize });
   let succeeded = 0;
   let failed = 0;
+  let bytesUploaded = 0;
 
   for (const operation of batch) {
     await markSyncing(driver, operation.id);
@@ -24,8 +25,26 @@ export async function processSyncQueue({ driver, uploader, batchSize = 50 }) {
         await uploader.remove(operation.entidade, operation.registroId);
       } else {
         await uploader.upsert(operation.entidade, operation.registroId, operation.payload);
+        bytesUploaded += new TextEncoder().encode(JSON.stringify(operation.payload ?? {})).byteLength;
       }
       await markSynced(driver, operation.id);
+      const stillQueued = await driver.get(
+        'SELECT id FROM sync_queue WHERE entidade=? AND registro_id=? LIMIT 1',
+        [operation.entidade, operation.registroId]
+      );
+      if (!stillQueued) {
+        if (operation.operacao === 'delete') {
+          await driver.run(
+            'DELETE FROM local_documents WHERE dominio=? AND id=? AND deleted_at IS NOT NULL',
+            [operation.entidade, operation.registroId]
+          );
+        } else {
+          await driver.run(
+            "UPDATE local_documents SET sync_status='synced' WHERE dominio=? AND id=?",
+            [operation.entidade, operation.registroId]
+          );
+        }
+      }
       succeeded++;
     } catch (error) {
       await markFailed(driver, operation.id, error);
@@ -33,5 +52,5 @@ export async function processSyncQueue({ driver, uploader, batchSize = 50 }) {
     }
   }
 
-  return { processed: batch.length, succeeded, failed };
+  return { processed: batch.length, succeeded, failed, bytesUploaded };
 }

@@ -24,7 +24,7 @@ describe('processSyncQueue', () => {
 
     const result = await processSyncQueue({ driver, uploader });
 
-    expect(result).toEqual({ processed: 2, succeeded: 2, failed: 0 });
+    expect(result).toEqual({ processed: 2, succeeded: 2, failed: 0, bytesUploaded: 24 });
     expect(uploader.upsert).toHaveBeenCalledWith('lancamentos', 'l1', { valor: 10 });
     expect(uploader.upsert).toHaveBeenCalledWith('lancamentos', 'l2', { valor: 20 });
     expect(await countPending(driver)).toBe(0);
@@ -46,7 +46,7 @@ describe('processSyncQueue', () => {
 
     const result = await processSyncQueue({ driver, uploader });
 
-    expect(result).toEqual({ processed: 1, succeeded: 0, failed: 1 });
+    expect(result).toEqual({ processed: 1, succeeded: 0, failed: 1, bytesUploaded: 0 });
     expect(await countPending(driver)).toBe(1);
     const [op] = await driver.all('SELECT * FROM sync_queue');
     expect(op.status).toBe('pending');
@@ -61,7 +61,7 @@ describe('processSyncQueue', () => {
 
     const result = await processSyncQueue({ driver, uploader, batchSize: 2 });
 
-    expect(result).toEqual({ processed: 2, succeeded: 2, failed: 0 });
+    expect(result).toEqual({ processed: 2, succeeded: 2, failed: 0, bytesUploaded: 4 });
     expect(await countPending(driver)).toBe(3);
   });
 
@@ -74,5 +74,30 @@ describe('processSyncQueue', () => {
 
     const secondCall = await processSyncQueue({ driver, uploader });
     expect(secondCall.processed).toBe(0);
+  });
+
+  it('marks local documents as synced and purges confirmed tombstones', async () => {
+    const now = new Date().toISOString();
+    await driver.run(
+      `INSERT INTO local_documents
+       (dominio,id,dados,created_at,updated_at,deleted_at,device_id,sync_status,local_version)
+       VALUES ('metas','m1','{}',?,?,NULL,'d1','pending',1),
+              ('metas','m2','{}',?,?,?,'d1','pending',2)`,
+      [now, now, now, now, now]
+    );
+    await enqueue(driver, { entidade: 'metas', registroId: 'm1', operacao: 'update', payload: {} });
+    await enqueue(driver, { entidade: 'metas', registroId: 'm2', operacao: 'delete' });
+    const uploader = { upsert: vi.fn().mockResolvedValue(), remove: vi.fn().mockResolvedValue() };
+
+    await processSyncQueue({ driver, uploader });
+
+    expect((await driver.get(
+      'SELECT sync_status FROM local_documents WHERE dominio=? AND id=?',
+      ['metas', 'm1']
+    )).sync_status).toBe('synced');
+    expect(await driver.get(
+      'SELECT id FROM local_documents WHERE dominio=? AND id=?',
+      ['metas', 'm2']
+    )).toBeNull();
   });
 });

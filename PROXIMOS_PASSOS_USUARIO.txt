@@ -1,0 +1,316 @@
+CONTA FECHADA — PRÓXIMOS PASSOS EXTERNOS
+Data: 30/07/2026
+
+Este arquivo contém somente tarefas que precisam de aparelho, credenciais,
+contas externas, consoles ou decisões de publicação.
+
+============================================================
+1. GUARDAR O ESTADO ATUAL DO PROJETO
+============================================================
+
+[ ] Revisar as alterações locais no Git.
+[ ] Separar ou coordenar alterações de outras pessoas, se existirem.
+[ ] Criar um commit antes de iniciar configurações externas.
+[ ] Manter service accounts, tokens e arquivos de credenciais fora do Git.
+
+Validação local disponível:
+
+  npm run check:prelaunch
+
+Com regras do Firestore:
+
+  npm run check:prelaunch:rules
+
+
+============================================================
+2. PREPARAR UM ANDROID PARA TESTES
+============================================================
+
+[ ] Instalar ou atualizar Android Studio.
+[ ] Instalar JDK 21.
+[ ] Configurar ANDROID_HOME e ferramentas do SDK.
+[ ] Criar um emulador Android ou conectar um aparelho com depuração USB.
+[ ] Confirmar que o comando "adb devices" reconhece o aparelho.
+
+Preparar o projeto:
+
+  npm run build:android
+  npm run audit:android-bundle
+  npx cap sync android
+  npx cap open android
+
+[ ] Compilar e instalar pelo Android Studio.
+[ ] Confirmar que o app abre sem erro de SQLite ou migration.
+
+
+============================================================
+3. TESTAR O MODO GRATUITO SEM CONTA
+============================================================
+
+[ ] Instalar o aplicativo como instalação nova.
+[ ] Desligar Wi-Fi e dados móveis.
+[ ] Escolher "Continuar gratuitamente sem conta".
+[ ] Concluir ou pular o onboarding.
+[ ] Criar, editar e excluir:
+    - lançamento;
+    - categoria;
+    - regra de categorização;
+    - recorrência;
+    - meta;
+    - planejamento;
+    - fechamento;
+    - dados do Gestor Financeiro;
+    - distribuição do Valor Livre.
+[ ] Fechar o aplicativo completamente e abrir novamente.
+[ ] Confirmar que todos os dados continuam presentes.
+[ ] Reiniciar o aparelho e repetir a conferência.
+[ ] Exportar o backup JSON em Opções.
+[ ] Importar o mesmo JSON e conferir os dados.
+[ ] Abrir Opções > Diagnóstico de sincronização.
+[ ] Exportar o diagnóstico JSON.
+[ ] Testar "Apagar dados locais" somente depois de guardar o backup.
+
+
+============================================================
+4. CONFIGURAR FIREBASE
+============================================================
+
+[ ] Confirmar o projeto Firebase correto.
+[ ] Confirmar Authentication com provedor Google.
+[ ] Cadastrar SHA-1 e SHA-256 do aplicativo Android.
+[ ] Baixar google-services.json e colocar no local esperado pelo Android.
+[ ] Configurar Firestore.
+[ ] Publicar as regras somente após revisar os testes.
+[ ] Configurar índices solicitados pelo Firestore.
+[ ] Ativar App Check.
+[ ] Usar Play Integrity no Android.
+[ ] Criar uma service account com o menor privilégio possível.
+[ ] Guardar a chave em um gerenciador de segredos.
+
+Antes de publicar regras:
+
+  npm run check:prelaunch:rules
+
+
+============================================================
+5. TESTAR LOGIN E PRIMEIRA SINCRONIZAÇÃO
+============================================================
+
+[ ] Criar dados no modo local sem conta.
+[ ] Ligar a internet.
+[ ] Entrar com uma conta Google de teste.
+[ ] Confirmar que aparece a tela de primeira sincronização.
+
+Testar separadamente, reinstalando ou restaurando o estado entre cenários:
+
+[ ] "Enviar dados deste aparelho".
+[ ] "Baixar dados da conta".
+[ ] "Mesclar os dois conjuntos".
+
+Em cada cenário:
+
+[ ] Confirmar que o backup interno foi criado.
+[ ] Interromper o aplicativo no meio da operação.
+[ ] Abrir novamente e confirmar a retomada.
+[ ] Conferir contagens, valores, IDs e ausência de duplicatas.
+[ ] Conferir Opções > Diagnóstico de sincronização.
+[ ] Sair da conta e confirmar que o banco não foi apagado acidentalmente.
+
+
+============================================================
+6. TESTAR DOIS APARELHOS
+============================================================
+
+[ ] Usar dois aparelhos/emuladores com a mesma conta Premium de teste.
+[ ] Criar um registro no aparelho A e confirmar chegada no B.
+[ ] Editar o mesmo registro nos dois aparelhos.
+[ ] Confirmar a regra de alteração mais recente.
+[ ] Testar relógio do aparelho propositalmente divergente.
+[ ] Excluir e recriar dados.
+[ ] Testar tombstones.
+[ ] Testar categoria ainda utilizada.
+[ ] Testar fechamento mensal divergente.
+[ ] Testar aportes e edições concorrentes em metas.
+[ ] Testar recorrências editadas nos dois aparelhos.
+[ ] Reimportar o mesmo extrato e confirmar ausência de duplicatas.
+[ ] Testar perda e retorno da internet.
+[ ] Confirmar que a fila esvazia depois da reconexão.
+
+
+============================================================
+7. CONFIGURAR NETLIFY
+============================================================
+
+[ ] Configurar as variáveis de ambiente necessárias:
+    - FIREBASE_SERVICE_ACCOUNT;
+    - MERCADOPAGO_ACCESS_TOKEN;
+    - segredo do webhook Mercado Pago;
+    - GOOGLE_PLAY_SERVICE_ACCOUNT;
+    - ANDROID_PACKAGE_NAME;
+    - GOOGLE_PUBSUB_AUDIENCE;
+    - GOOGLE_PUBSUB_SERVICE_ACCOUNT_EMAIL;
+    - RETENTION_JOB_SECRET.
+[ ] Marcar segredos como variáveis protegidas.
+[ ] Confirmar que nenhum segredo usa prefixo VITE_.
+[ ] Fazer deploy inicialmente em ambiente de preview/staging.
+[ ] Testar respostas 401, 403, 405, 413 e 500.
+[ ] Confirmar logs sem dados sensíveis.
+[ ] Confirmar apenas uma rotina diária de retenção configurada.
+
+
+============================================================
+8. CRIAR O PRIMEIRO ADMINISTRADOR
+============================================================
+
+[ ] Baixar uma service account Firebase em ambiente seguro.
+[ ] Não colocar a chave dentro do repositório.
+[ ] Definir GOOGLE_APPLICATION_CREDENTIALS.
+
+PowerShell:
+
+  $env:GOOGLE_APPLICATION_CREDENTIALS="C:\caminho\service-account.json"
+  npm run admin:set -- seu-email@exemplo.com
+
+[ ] Sair e entrar novamente no aplicativo Web.
+[ ] Abrir /controle-assinaturas.
+[ ] Testar:
+    - listagem;
+    - busca;
+    - paginação;
+    - concessão por UID;
+    - concessão por e-mail;
+    - prazo;
+    - fundador;
+    - remoção;
+    - histórico.
+[ ] Confirmar que uma conta sem claim admin recebe 403.
+
+Para remover um administrador:
+
+  npm run admin:set -- seu-email@exemplo.com --remove
+
+
+============================================================
+9. CONFIGURAR GOOGLE CLOUD E RTDN
+============================================================
+
+[ ] Ativar Google Play Android Developer API.
+[ ] Vincular a service account ao projeto e à Play Console.
+[ ] Criar tópico Pub/Sub para RTDN.
+[ ] Criar assinatura push apontando para a função google-play-rtdn.
+[ ] Configurar autenticação OIDC.
+[ ] Configurar audiência e e-mail esperados.
+[ ] Conceder somente os papéis necessários.
+[ ] Testar mensagem RTDN real.
+[ ] Testar mensagem duplicada e confirmar idempotência.
+[ ] Testar token ausente, token inválido e audiência incorreta.
+[ ] Confirmar que erros não expõem UID, token ou credenciais.
+
+
+============================================================
+10. CONFIGURAR GOOGLE PLAY CONSOLE
+============================================================
+
+[ ] Concluir cadastro e verificação da conta Play Console.
+[ ] Criar o aplicativo com package com.contafechada.app.
+[ ] Preencher política de privacidade.
+[ ] Preencher Segurança de dados.
+[ ] Criar assinatura, produto e plano base.
+[ ] Configurar preços e países.
+[ ] Criar faixa de teste interno.
+[ ] Adicionar contas de testadores.
+[ ] Enviar um Android App Bundle de teste.
+[ ] Conectar o plugin nativo de Play Billing quando definido.
+[ ] Testar:
+    - compra;
+    - acknowledgement;
+    - renovação;
+    - cancelamento;
+    - expiração;
+    - período de carência;
+    - pagamento recusado;
+    - restauração;
+    - troca de aparelho;
+    - RTDN.
+
+
+============================================================
+11. TESTAR RETENÇÃO DE 90 DIAS
+============================================================
+
+[ ] Usar primeiro somente dryRun.
+[ ] Conferir o relatório auditável.
+[ ] Confirmar que assinaturas ativas nunca são selecionadas.
+[ ] Confirmar cálculo a partir do fim do período pago.
+[ ] Conferir quantidade elegível e coleções afetadas.
+[ ] Guardar o relatório da execução.
+[ ] Executar exclusão real somente com dados de teste.
+[ ] Confirmar que o SQLite do aparelho não é apagado.
+[ ] Confirmar que assinatura e conta Auth não são removidas pela retenção.
+
+
+============================================================
+12. CONFIGURAR MONITORAMENTO E CUSTOS
+============================================================
+
+[ ] Criar orçamento mensal no Google Cloud.
+[ ] Configurar alertas de custo.
+[ ] Monitorar respostas 401, 403, 413 e 5xx.
+[ ] Monitorar falhas de RTDN e validação de compra.
+[ ] Monitorar crescimento anormal de leituras Firestore.
+[ ] Monitorar erros da rotina de retenção.
+[ ] Definir responsáveis por receber alertas.
+[ ] Definir procedimento de rotação de segredos.
+
+
+============================================================
+13. TESTES FINAIS DE LANÇAMENTO
+============================================================
+
+[ ] Executar:
+
+  npm run check:prelaunch:rules
+
+[ ] Executar TESTES_MANUAIS_LOCAL_FIRST.md.
+[ ] Revisar MODO_LOCAL_ANDROID.md.
+[ ] Revisar RECUPERACAO_LOCAL_FIRST.md.
+[ ] Testar acessibilidade com leitor de tela.
+[ ] Testar fontes grandes e navegação por teclado.
+[ ] Testar tema claro e escuro.
+[ ] Testar aparelho pequeno e tablet.
+[ ] Testar atualização por cima de uma versão anterior.
+[ ] Testar reinstalação.
+[ ] Confirmar política de backup e rollback.
+[ ] Confirmar que checkout Web e painel admin não estão no Android.
+[ ] Confirmar que nenhum segredo está em dist ou no APK/AAB.
+
+
+============================================================
+14. PUBLICAÇÃO GRADUAL
+============================================================
+
+[ ] Publicar primeiro para equipe interna.
+[ ] Depois publicar para grupo pequeno de testadores.
+[ ] Acompanhar logs, custos, filas, conflitos, compras e RTDN.
+[ ] Corrigir problemas antes de ampliar a faixa.
+[ ] Ativar PREMIUM_ENFORCED somente depois da aprovação completa.
+[ ] Manter rollback preparado.
+
+
+ORDEM RECOMENDADA RESUMIDA
+
+1. Commit seguro.
+2. Android Studio/aparelho.
+3. Modo gratuito offline.
+4. Firebase.
+5. Primeira sincronização.
+6. Dois aparelhos.
+7. Netlify.
+8. Primeiro administrador.
+9. Google Cloud/RTDN.
+10. Play Console/Billing.
+11. Retenção dryRun.
+12. Monitoramento.
+13. Checklist final.
+14. Publicação gradual.
+

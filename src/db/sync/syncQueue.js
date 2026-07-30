@@ -12,6 +12,7 @@ import { nextRetryDelayMs } from './backoff.js';
  */
 
 const MAX_ATTEMPTS = 8;
+const VALID_OPERATIONS = new Set(['create', 'update', 'delete']);
 
 function rowToOperation(row) {
   return {
@@ -51,6 +52,11 @@ function consolidate(existingOperacao, incomingOperacao) {
 
 /** Enfileira uma alteração local. Só consolida contra entradas ainda `pending` — uma já `syncing` termina o envio em curso sem interferência. */
 export async function enqueue(driver, { entidade, registroId, operacao, payload }) {
+  if (!entidade || !registroId) throw new TypeError('entidade e registroId são obrigatórios');
+  if (!VALID_OPERATIONS.has(operacao)) throw new TypeError(`operação de sincronização inválida: ${operacao}`);
+  if (operacao !== 'delete' && (!payload || typeof payload !== 'object' || Array.isArray(payload))) {
+    throw new TypeError('payload de create/update deve ser um objeto');
+  }
   const existing = await driver.get(
     "SELECT * FROM sync_queue WHERE entidade = ? AND registro_id = ? AND status = 'pending'",
     [entidade, registroId]
@@ -92,7 +98,7 @@ export async function listPending(driver, { limit = 50 } = {}) {
 }
 
 export async function markSyncing(driver, id) {
-  await driver.run("UPDATE sync_queue SET status = 'syncing' WHERE id = ?", [id]);
+  await driver.run("UPDATE sync_queue SET status = 'syncing' WHERE id = ? AND status = 'pending'", [id]);
 }
 
 /** Só sai da fila depois de confirmação — nunca antes. */

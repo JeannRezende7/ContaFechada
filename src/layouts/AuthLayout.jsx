@@ -12,7 +12,7 @@ export default function AuthLayout() {
           </span>
           <p className="text-ink-100 text-sm mt-1.5">Sua planilha financeira mensal, mês a mês</p>
         </div>
-        <div className="bg-paper text-ink-900 rounded-card shadow-pop p-6">
+        <div className="bg-paper text-ink-900 dark:bg-ink-700 dark:text-ink-50 rounded-card shadow-pop p-6">
           <Outlet />
         </div>
       </div>

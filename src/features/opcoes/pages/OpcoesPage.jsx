@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogOut } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
@@ -11,19 +11,43 @@ import { clearDeviceData } from '../../../utils/deviceCache.js';
 import { track, EVENTS } from '../../../utils/analytics.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import { usePrivacy } from '../../../contexts/PrivacyContext.jsx';
+import {
+  clearLocalData,
+  exportLocalData,
+  getLatestRecoverySnapshot,
+  importLocalData,
+  isNativeLocalDatabaseAvailable,
+  restoreLatestRecoverySnapshot,
+} from '../../../db/localDatabase.js';
 
 export default function OpcoesPage() {
-  const { user } = useAuth();
+  const { user, isLocalSession, endLocalMode } = useAuth();
   const confirm = useConfirm();
   const { isPremium } = usePremium();
   const [loading, setLoading] = useState(null);
   const [gestorUsaMovimento, setGestorUsaMovimentoState] = useState(true);
+  const [recoverySnapshot, setRecoverySnapshot] = useState(null);
   const privacy = usePrivacy();
+  const importInputRef = useRef(null);
+
+  async function handleSignOut() {
+    if (isLocalSession) {
+      endLocalMode();
+      window.location.replace('/entrar');
+      return;
+    }
+    await signOutUser();
+  }
 
   useEffect(() => {
     if (!user) return;
     repositories.gestor.getUsaMovimento(user.uid).then(setGestorUsaMovimentoState);
   }, [user]);
+
+  useEffect(() => {
+    if (!isNativeLocalDatabaseAvailable()) return;
+    getLatestRecoverySnapshot().then(setRecoverySnapshot).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!isPremium) track(EVENTS.PREMIUM_CARD_VIEWED, { placement: 'opcoes' });
@@ -66,7 +90,7 @@ export default function OpcoesPage() {
   async function handleExportarDados() {
     setLoading('exportar');
     try {
-      const data = await exportUserData(user.uid);
+      const data = isLocalSession ? await exportLocalData() : await exportUserData(user.uid);
       downloadJson(`conta-fechada-meus-dados-${user.uid}.json`, data);
     } finally {
       setLoading(null);
@@ -74,6 +98,14 @@ export default function OpcoesPage() {
   }
 
   async function handleLimparDispositivo() {
+    if (isLocalSession) {
+      if (!(await confirm('Apagar permanentemente todos os dados locais deste aparelho? Faça uma exportação antes se quiser conservar uma cópia.'))) return;
+      setLoading('dispositivo');
+      await clearLocalData();
+      endLocalMode();
+      window.location.replace('/entrar');
+      return;
+    }
     const confirmado = await confirm(
       'Limpar os dados financeiros armazenados neste dispositivo? Seus dados continuarão seguros na nuvem e serão baixados novamente no próximo login. ' +
         'Alterações feitas offline que ainda não foram sincronizadas podem ser perdidas. O app será desconectado e recarregado.'
@@ -91,6 +123,39 @@ export default function OpcoesPage() {
       // clearDeviceData terminates Firestore before attempting the cleanup.
       // Reload even on failure so the app receives a fresh instance.
       window.location.reload();
+    }
+  }
+
+  async function handleImportarDados(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!(await confirm('Substituir todos os dados locais pelos dados deste backup? Uma cópia de recuperação será mantida internamente.'))) return;
+    setLoading('importar');
+    try {
+      const result = await importLocalData(JSON.parse(await file.text()));
+      await confirm(`${result.imported} registro(s) importado(s). O aplicativo será recarregado.`);
+      window.location.reload();
+    } catch (error) {
+      await confirm(`Não foi possível importar o backup: ${error.message}`);
+      setLoading(null);
+    }
+  }
+
+  function handleExportarSnapshot() {
+    if (!recoverySnapshot) return;
+    downloadJson(`conta-fechada-recuperacao-${Date.now()}.json`, recoverySnapshot.snapshot);
+  }
+
+  async function handleRestaurarSnapshot() {
+    if (!(await confirm('Restaurar o snapshot interno mais recente? Os dados atuais serão substituídos e também receberão um snapshot de segurança.'))) return;
+    setLoading('restaurar');
+    try {
+      await restoreLatestRecoverySnapshot();
+      window.location.reload();
+    } catch (error) {
+      setLoading(null);
+      await confirm(`Não foi possível restaurar: ${error.message}`);
     }
   }
 
@@ -143,13 +208,13 @@ export default function OpcoesPage() {
           )}
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-ink-900 dark:text-ink-50 truncate">
-              {user?.displayName || 'Minha conta'}
+              {isLocalSession ? 'Modo gratuito local' : (user?.displayName || 'Minha conta')}
             </p>
             {user?.email && <p className="text-xs text-ink-300 truncate mt-0.5">{user.email}</p>}
           </div>
           <button
             type="button"
-            onClick={signOutUser}
+            onClick={handleSignOut}
             className="shrink-0 flex items-center gap-1.5 rounded-pill bg-ink-50 dark:bg-ink-900 text-ink-500 dark:text-ink-100 px-3.5 py-2 text-sm font-medium hover:bg-signal-50 hover:text-signal-500 transition-colors"
           >
             <LogOut size={15} strokeWidth={2} />
@@ -164,6 +229,33 @@ export default function OpcoesPage() {
           </div>
           <button role="switch" aria-checked={privacy.enabled} onClick={privacy.toggle} className={`relative h-6 w-11 rounded-pill ${privacy.enabled ? 'bg-ledger-500' : 'bg-ink-100 dark:bg-ink-900'}`}><span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${privacy.enabled ? 'translate-x-5' : ''}`} /></button>
         </div>
+
+        {isLocalSession && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Importar backup local</p>
+            <p className="text-xs text-ink-300 mt-0.5">Substitui os dados deste aparelho por um JSON exportado pelo Conta Fechada.</p>
+          </div>
+          <input ref={importInputRef} type="file" accept="application/json,.json" onChange={handleImportarDados} className="sr-only" />
+          <button type="button" onClick={() => importInputRef.current?.click()} disabled={loading === 'importar'} className="shrink-0 rounded-pill bg-ink-50 px-3.5 py-2 text-sm font-medium dark:bg-ink-900">
+            {loading === 'importar' ? 'Importando…' : 'Importar'}
+          </button>
+        </div>}
+
+        {isNativeLocalDatabaseAvailable() && <Link to="/opcoes/diagnostico" className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+          <div><p className="text-sm font-medium">Diagnóstico de sincronização</p><p className="text-xs text-ink-300">Fila, erros, conflitos, métricas e exportação para suporte.</p></div>
+          <ChevronRight size={16} className="text-ink-300" />
+        </Link>}
+
+        {recoverySnapshot && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
+          <p className="text-sm font-medium">Snapshot de recuperação</p>
+          <p className="mt-0.5 text-xs text-ink-300">Cópia interna mais recente: {recoverySnapshot.key}</p>
+          <div className="mt-3 flex gap-2">
+            <button type="button" onClick={handleExportarSnapshot} className="rounded-pill bg-ink-50 px-3 py-2 text-xs font-medium dark:bg-ink-900">Exportar snapshot</button>
+            <button type="button" onClick={handleRestaurarSnapshot} disabled={loading === 'restaurar'} className="rounded-pill bg-signal-50 px-3 py-2 text-xs font-medium text-signal-500 disabled:opacity-50">
+              {loading === 'restaurar' ? 'Restaurando…' : 'Restaurar'}
+            </button>
+          </div>
+        </div>}
 
         <button onClick={() => window.dispatchEvent(new Event('contafechada:open-onboarding'))} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 text-left hover:shadow-card-hover">
           <div className="flex items-start gap-3"><span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><ListRestart size={15} /></span><div><p className="text-sm font-medium">Retomar configuração inicial</p><p className="text-xs text-ink-300">Revise renda, recorrências, categorias e sua primeira meta.</p></div></div>
@@ -225,9 +317,9 @@ export default function OpcoesPage() {
               <HardDrive size={15} strokeWidth={1.75} />
             </span>
             <div>
-              <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Limpar dados deste dispositivo</p>
+              <p className="text-sm font-medium text-ink-900 dark:text-ink-50">{isLocalSession ? 'Apagar dados locais' : 'Limpar dados deste dispositivo'}</p>
               <p className="text-xs text-ink-300 mt-0.5">
-                Remove o cache offline local, sem apagar os dados salvos na nuvem.
+                {isLocalSession ? 'Apaga permanentemente os dados deste aparelho.' : 'Remove o cache offline local, sem apagar os dados salvos na nuvem.'}
               </p>
             </div>
           </div>
@@ -316,7 +408,7 @@ export default function OpcoesPage() {
           </button>
         </div>
 
-        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        {!isLocalSession && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Excluir minha conta</p>
             <p className="text-xs text-ink-300 mt-0.5">Apaga permanentemente sua conta e todos os seus dados.</p>
@@ -329,7 +421,7 @@ export default function OpcoesPage() {
             <UserX size={15} strokeWidth={2} />
             {loading === 'conta' ? 'Excluindo...' : 'Excluir conta'}
           </button>
-        </div>
+        </div>}
 
         <p className="text-center text-xs text-ink-300 mt-8">
           Conta Fechada v{__APP_VERSION__} · desenvolvido por <span className="font-medium text-ink-500">LeliaLabs</span>

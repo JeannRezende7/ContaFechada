@@ -33,6 +33,13 @@ describe('syncQueue', () => {
     expect(await countPending(driver)).toBe(1);
   });
 
+  it('rejects malformed operations before touching the queue', async () => {
+    await expect(enqueue(driver, { entidade: '', registroId: 'l1', operacao: 'create', payload: {} })).rejects.toThrow();
+    await expect(enqueue(driver, { entidade: 'lancamentos', registroId: 'l1', operacao: 'rename', payload: {} })).rejects.toThrow();
+    await expect(enqueue(driver, { entidade: 'lancamentos', registroId: 'l1', operacao: 'update' })).rejects.toThrow();
+    expect(await countPending(driver)).toBe(0);
+  });
+
   it('consolidates create+update into a single create with the newest payload', async () => {
     await enqueue(driver, { entidade: 'lancamentos', registroId: 'l1', operacao: 'create', payload: { valor: 10 } });
     await enqueue(driver, { entidade: 'lancamentos', registroId: 'l1', operacao: 'update', payload: { valor: 20 } });

@@ -24,7 +24,7 @@ export default function LancamentoRow({ lancamento, categoria, onStatusChange, o
             onChange={() => onToggle(lancamento.id)}
             onClick={(event) => event.stopPropagation()}
             aria-label={`Selecionar ${lancamento.descricao}`}
-            className="h-4 w-4 rounded border-ink-100 text-ledger-500"
+            className="h-4 w-4 rounded border-ink-100 dark:border-ink-700 text-ledger-500"
           />
         )}
         <span

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useLayoutEffect, useState } from 'react';
 
 const ThemeContext = createContext(null);
 const STORAGE_KEY = 'contafechada-theme';
@@ -12,7 +12,7 @@ function getInitialTheme() {
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(getInitialTheme);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);

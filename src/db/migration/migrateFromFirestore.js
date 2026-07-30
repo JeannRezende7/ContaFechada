@@ -105,6 +105,8 @@ export async function migrateFromFirestore({ driver, uid, firebaseRepositories, 
     summaryBefore[domain] = summarizeFetched(domain, items);
   }
 
+  const completedAt = new Date().toISOString();
+  const summaryAfter = {};
   await driver.transaction(async (tx) => {
     for (const domain of SUPPORTED_DOMAINS) {
       const config = DOMAIN_CONFIG[domain];
@@ -112,32 +114,28 @@ export async function migrateFromFirestore({ driver, uid, firebaseRepositories, 
         await tx.run(config.insertSql, config.toRow(item));
       }
     }
+
+    const mismatches = [];
+    for (const domain of SUPPORTED_DOMAINS) {
+      summaryAfter[domain] = await summarizeSqlite(domain, tx);
+      const before = summaryBefore[domain];
+      const after = summaryAfter[domain];
+      const countMismatch = before.count !== after.count;
+      const sumMismatch = before.sum != null && Math.abs(before.sum - after.sum) > 0.005;
+      if (countMismatch || sumMismatch) mismatches.push({ domain, before, after });
+    }
+
+    if (mismatches.length > 0) throw new MigrationValidationError(mismatches);
+
+    await tx.run('INSERT OR REPLACE INTO sync_state (chave, valor) VALUES (?, ?)', [
+      MIGRATION_KEY_COMPLETED_AT,
+      completedAt,
+    ]);
+    await tx.run('INSERT OR REPLACE INTO sync_state (chave, valor) VALUES (?, ?)', [
+      MIGRATION_KEY_VERSION,
+      String(MIGRATION_VERSION),
+    ]);
   });
-
-  const summaryAfter = {};
-  const mismatches = [];
-  for (const domain of SUPPORTED_DOMAINS) {
-    summaryAfter[domain] = await summarizeSqlite(domain, driver);
-    const before = summaryBefore[domain];
-    const after = summaryAfter[domain];
-    const countMismatch = before.count !== after.count;
-    const sumMismatch = before.sum != null && Math.abs(before.sum - after.sum) > 0.005;
-    if (countMismatch || sumMismatch) mismatches.push({ domain, before, after });
-  }
-
-  if (mismatches.length > 0) {
-    throw new MigrationValidationError(mismatches);
-  }
-
-  const completedAt = new Date().toISOString();
-  await driver.run('INSERT OR REPLACE INTO sync_state (chave, valor) VALUES (?, ?)', [
-    MIGRATION_KEY_COMPLETED_AT,
-    completedAt,
-  ]);
-  await driver.run('INSERT OR REPLACE INTO sync_state (chave, valor) VALUES (?, ?)', [
-    MIGRATION_KEY_VERSION,
-    String(MIGRATION_VERSION),
-  ]);
 
   return { skipped: false, completedAt, version: MIGRATION_VERSION, backup: fetched, summary: summaryAfter };
 }

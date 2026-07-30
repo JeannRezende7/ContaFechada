@@ -6,7 +6,6 @@ import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { repositories } from '../../../repositories/index.js';
-import { createCheckout } from '../services/checkoutService.js';
 import { track, EVENTS } from '../../../utils/analytics.js';
 import PlanComparisonTable from './PlanComparisonTable.jsx';
 
@@ -153,13 +152,14 @@ export default function Paywall({ open, context, onClose }) {
     // Billing (ainda não integrado, ver ROADMAP_MONETIZACAO.txt Fase 9), não
     // pelo checkout Web do MercadoPago. Misturar os dois violaria a política
     // de pagamentos da Play Store pra assinaturas digitais.
-    if (Capacitor.isNativePlatform()) {
+    if (__NATIVE_ANDROID_BUILD__ || Capacitor.isNativePlatform()) {
       setPurchaseState('coming_soon');
       return;
     }
 
     setPurchaseState('starting');
     try {
+      const { createCheckout } = await import('../services/checkoutService.js');
       const { checkoutUrl } = await createCheckout(selected);
       track(EVENTS.CHECKOUT_STARTED, { plan: selected });
       window.location.href = checkoutUrl;

@@ -29,7 +29,8 @@ describe('downloadRemoteChanges', () => {
 
     const result = await downloadRemoteChanges({ driver, uid: 'u1', entidade: 'lancamentos', fetchChangedSince });
 
-    expect(result).toEqual({ applied: 2, conflicts: [], cursor: '2026-07-11T10:00:00.000Z' });
+    expect(result).toMatchObject({ applied: 2, conflicts: [], cursor: '2026-07-11T10:00:00.000Z' });
+    expect(result.bytesDownloaded).toBeGreaterThan(0);
     expect(await getCursor(driver, 'lancamentos')).toBe('2026-07-11T10:00:00.000Z');
     expect(await driver.get('SELECT * FROM lancamentos WHERE id = ?', ['l1'])).toMatchObject({ descricao: 'Feira' });
   });
@@ -83,5 +84,42 @@ describe('downloadRemoteChanges', () => {
     expect(result.applied).toBe(0);
     expect(result.conflicts).toEqual([{ id: 'l1', motivo: 'relogio_incorreto', updatedAt: farFuture }]);
     expect(await driver.get('SELECT * FROM lancamentos WHERE id = ?', ['l1'])).toBeNull();
+  });
+
+  it('applies a remote tombstone without physically removing the local row', async () => {
+    const updatedAt = '2026-07-10T10:00:00.000Z';
+    const deletedAt = '2026-07-10T09:59:00.000Z';
+    const fetchChangedSince = vi.fn().mockResolvedValue([{ ...BASE, id: 'l1', updatedAt, deletedAt }]);
+
+    const result = await downloadRemoteChanges({ driver, uid: 'u1', entidade: 'lancamentos', fetchChangedSince });
+
+    expect(result.applied).toBe(1);
+    const row = await driver.get('SELECT * FROM lancamentos WHERE id = ?', ['l1']);
+    expect(row.deleted_at).toBe(deletedAt);
+  });
+
+  it('applies incremental changes to any local_documents domain', async () => {
+    const fetchChangedSince = vi.fn().mockResolvedValue([{
+      id: 'm1',
+      nome: 'Meta remota',
+      valorAlvo: 500,
+      updatedAt: '2026-07-10T10:00:00.000Z',
+      createdAt: '2026-07-01T10:00:00.000Z',
+    }]);
+    const result = await downloadRemoteChanges({
+      driver,
+      uid: 'u1',
+      entidade: 'metas',
+      storage: 'documents',
+      fetchChangedSince,
+    });
+
+    expect(result.applied).toBe(1);
+    const row = await driver.get(
+      'SELECT * FROM local_documents WHERE dominio=? AND id=?',
+      ['metas', 'm1']
+    );
+    expect(JSON.parse(row.dados)).toMatchObject({ nome: 'Meta remota', valorAlvo: 500 });
+    expect(row.sync_status).toBe('synced');
   });
 });

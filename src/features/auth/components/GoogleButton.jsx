@@ -3,8 +3,8 @@ export default function GoogleButton({ onClick, loading }) {
     <button
       onClick={onClick}
       disabled={loading}
-      className="w-full flex items-center justify-center gap-3 rounded-xl border border-ink-100
-                 bg-white py-3 text-sm font-medium text-ink-900 hover:shadow-card-hover hover:-translate-y-px
+      className="w-full flex items-center justify-center gap-3 rounded-xl border border-ink-100 dark:border-ink-900
+                 bg-white dark:bg-ink-900 py-3 text-sm font-medium text-ink-900 dark:text-ink-50 hover:shadow-card-hover hover:-translate-y-px
                  transition-all disabled:opacity-60 disabled:translate-y-0 disabled:shadow-none"
     >
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">

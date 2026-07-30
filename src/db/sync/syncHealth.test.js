@@ -26,8 +26,20 @@ describe('getSyncHealth', () => {
 
     expect(health).toEqual({
       filaPendente: 0,
+      filaPorStatus: {},
       conflitosRecentes: [],
       ultimaSincronizacaoPorEntidade: { categorias: null, lancamentos: null },
+      metricas: {
+        cycles: 0,
+        durationMsTotal: 0,
+        lastDurationMs: null,
+        bytesUploaded: 0,
+        bytesDownloaded: 0,
+        errors: 0,
+        recentSamples: [],
+        duracaoMediaMs: null,
+      },
+      alertas: [],
     });
   });
 
@@ -60,11 +72,31 @@ describe('getSyncHealth', () => {
     const health = await getSyncHealth({ driver, entidades: ['categorias', 'lancamentos'] });
 
     expect(health.filaPendente).toBe(2);
+    expect(health.filaPorStatus.pending).toBe(2);
+    expect(health.metricas.cycles).toBe(1);
+    expect(health.metricas.bytesDownloaded).toBeGreaterThan(0);
     expect(health.conflitosRecentes).toHaveLength(1);
     expect(health.conflitosRecentes[0]).toMatchObject({ entidade: 'lancamentos', motivo: 'relogio_incorreto' });
     // Both entities went through the sync cycle above, so both get a
     // last-sync timestamp — even categorias, which had nothing to apply.
     expect(health.ultimaSincronizacaoPorEntidade.lancamentos).not.toBeNull();
     expect(health.ultimaSincronizacaoPorEntidade.categorias).not.toBeNull();
+  });
+
+  it('alerts when the queue grows for three consecutive cycles', async () => {
+    await driver.run('INSERT INTO sync_state (chave, valor) VALUES (?, ?)', [
+      'syncMetrics',
+      JSON.stringify({
+        cycles: 3,
+        durationMsTotal: 30,
+        lastDurationMs: 10,
+        bytesUploaded: 0,
+        bytesDownloaded: 0,
+        errors: 0,
+        recentSamples: [{ queuePending: 1 }, { queuePending: 2 }, { queuePending: 4 }],
+      }),
+    ]);
+    const health = await getSyncHealth({ driver, entidades: [] });
+    expect(health.alertas).toContainEqual(expect.objectContaining({ type: 'queue_growth' }));
   });
 });

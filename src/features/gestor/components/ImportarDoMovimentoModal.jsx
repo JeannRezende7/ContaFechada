@@ -99,7 +99,7 @@ export default function ImportarDoMovimentoModal({ open, uid, categoriasById = {
                       type="checkbox"
                       checked={checked}
                       readOnly
-                      className="rounded border-ink-100 text-ledger-500 focus:ring-ledger-500 shrink-0 pointer-events-none"
+                      className="rounded border-ink-100 dark:border-ink-700 text-ledger-500 focus:ring-ledger-500 shrink-0 pointer-events-none"
                     />
                     <span
                       className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
@@ -150,7 +150,7 @@ export default function ImportarDoMovimentoModal({ open, uid, categoriasById = {
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50"
+            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900"
           >
             {status === 'done' ? 'Fechar' : 'Cancelar'}
           </button>

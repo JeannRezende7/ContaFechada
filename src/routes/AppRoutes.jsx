@@ -23,6 +23,10 @@ const PrivacidadePage = lazyWithRetry(() => import('../features/legal/pages/Priv
 const BuscaGlobalPage = lazyWithRetry(() => import('../features/busca/pages/BuscaGlobalPage.jsx'));
 const ValorLivrePage = lazyWithRetry(() => import('../features/valor-livre/pages/ValorLivrePage.jsx'));
 const AcessoWebPage = lazyWithRetry(() => import('../features/premium/pages/AcessoWebPage.jsx'));
+const AdminSubscriptionsPage = __NATIVE_ANDROID_BUILD__
+  ? null
+  : lazyWithRetry(() => import('../features/admin/pages/AdminSubscriptionsPage.jsx'));
+const SyncDiagnosticsRoute = lazyWithRetry(() => import('../features/sync/pages/SyncDiagnosticsRoute.jsx'));
 
 export default function AppRoutes() {
   return (
@@ -49,6 +53,8 @@ export default function AppRoutes() {
           <Route path="/opcoes" element={<OpcoesPage />} />
           <Route path="/opcoes/meu-plano" element={<MeuPlanoPage />} />
           <Route path="/acesso-web" element={<AcessoWebPage />} />
+          {!__NATIVE_ANDROID_BUILD__ && <Route path="/controle-assinaturas" element={<AdminSubscriptionsPage />} />}
+          <Route path="/opcoes/diagnostico" element={<SyncDiagnosticsRoute />} />
 
           {/* Módulos financeiros — exclusivos do Premium na Web; o Android
               gratuito continua liberado (RequirePremiumWeb passa direto). */}

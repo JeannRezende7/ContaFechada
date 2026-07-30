@@ -1,5 +1,6 @@
 import { listUserDocsUpdatedSince } from '../../firebase/firestore.js';
 import { DOMAIN_ROW_CONFIG, toIsoString } from '../domainRowMappers.js';
+import { createLocalDocumentStore } from '../../repositories/sqlite/localDocumentStore.js';
 
 /**
  * Fase 7 do roadmap local-first: traz alterações remotas (feitas em outro
@@ -44,12 +45,20 @@ async function recordConflict(tx, entidade, registroId, motivo, detalhes) {
  * @param {(entidade: string, sinceIso: string) => Promise<object[]>} [params.fetchChangedSince] -
  *   injeção para teste; em produção usa `listUserDocsUpdatedSince` do Firestore.
  */
-export async function downloadRemoteChanges({ driver, uid, entidade, maxClockSkewMs = 5 * 60 * 1000, fetchChangedSince }) {
+export async function downloadRemoteChanges({
+  driver,
+  uid,
+  entidade,
+  maxClockSkewMs = 5 * 60 * 1000,
+  fetchChangedSince,
+  storage = 'typed',
+}) {
   const config = DOMAIN_ROW_CONFIG[entidade];
   const fetcher = fetchChangedSince ?? ((ent, since) => listUserDocsUpdatedSince(uid, ent, since));
 
   const cursor = await getCursor(driver, entidade);
   const remoteItems = await fetcher(entidade, cursor);
+  const bytesDownloaded = new TextEncoder().encode(JSON.stringify(remoteItems)).byteLength;
 
   const now = Date.now();
   const conflicts = [];
@@ -57,6 +66,7 @@ export async function downloadRemoteChanges({ driver, uid, entidade, maxClockSke
   let newestSeen = cursor;
 
   await driver.transaction(async (tx) => {
+    const store = createLocalDocumentStore(tx);
     for (const remote of remoteItems) {
       const updatedAtIso = toIsoString(remote.updatedAt) ?? new Date().toISOString();
 
@@ -67,7 +77,45 @@ export async function downloadRemoteChanges({ driver, uid, entidade, maxClockSke
         continue;
       }
 
-      const local = await tx.get(`SELECT * FROM ${config.table} WHERE id = ?`, [remote.id]);
+      const local = storage === 'documents'
+        ? await tx.get('SELECT * FROM local_documents WHERE dominio=? AND id=?', [entidade, remote.id])
+        : await tx.get(`SELECT * FROM ${config.table} WHERE id = ?`, [remote.id]);
+      if (storage === 'documents' && local) {
+        const localData = JSON.parse(local.dados);
+        const {
+          id: _remoteId, createdAt: _remoteCreatedAt, updatedAt: _remoteUpdatedAt,
+          deletedAt: _remoteDeletedAt, deviceId: _remoteDeviceId,
+          syncStatus: _remoteSyncStatus, localVersion: _remoteLocalVersion,
+          ...remoteData
+        } = remote;
+        if (entidade === 'fechamentos' && !remote.deletedAt && JSON.stringify(localData) !== JSON.stringify(remoteData)) {
+          const conflict = { id: remote.id, motivo: 'fechamento_imutavel' };
+          conflicts.push(conflict);
+          await recordConflict(tx, entidade, remote.id, conflict.motivo, {
+            localUpdatedAt: local.updated_at,
+            remoteUpdatedAt: updatedAtIso,
+          });
+          continue;
+        }
+        if (entidade === 'categorias' && remote.deletedAt) {
+          const entries = await tx.all(
+            "SELECT dados FROM local_documents WHERE dominio='lancamentos' AND deleted_at IS NULL"
+          );
+          const inUse = entries.some((entry) => JSON.parse(entry.dados).categoriaId === remote.id);
+          if (inUse) {
+            const conflict = { id: remote.id, motivo: 'categoria_em_uso' };
+            conflicts.push(conflict);
+            await recordConflict(tx, entidade, remote.id, conflict.motivo, {});
+            continue;
+          }
+        }
+        if (['metas', 'recorrencias'].includes(entidade) && local.sync_status !== 'synced') {
+          await recordConflict(tx, entidade, remote.id, 'edicao_concorrente', {
+            localUpdatedAt: local.updated_at,
+            remoteUpdatedAt: updatedAtIso,
+          });
+        }
+      }
       if (local && new Date(local.updated_at).getTime() > new Date(updatedAtIso).getTime()) {
         // "Alteração mais recente vence": a edição local ainda não subiu é
         // mais nova que o que a nuvem tem — mantém a local (ela vai
@@ -78,7 +126,8 @@ export async function downloadRemoteChanges({ driver, uid, entidade, maxClockSke
         continue;
       }
 
-      await tx.run(config.insertSql, config.toRow(remote));
+      if (storage === 'documents') await store.putRemote(entidade, remote);
+      else await tx.run(config.insertSql, config.toRow(remote));
       applied++;
       if (updatedAtIso > newestSeen) newestSeen = updatedAtIso;
     }
@@ -88,7 +137,7 @@ export async function downloadRemoteChanges({ driver, uid, entidade, maxClockSke
     }
   });
 
-  return { applied, conflicts, cursor: newestSeen };
+  return { applied, conflicts, cursor: newestSeen, bytesDownloaded };
 }
 
 /** Ferramenta interna de diagnóstico (Fase 7): últimos conflitos registrados, mais recentes primeiro. */
