@@ -15,6 +15,7 @@ import {
   serverTimestamp,
   increment,
   writeBatch,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from './config.js';
 import { getDeviceId } from '../utils/deviceId.js';
@@ -297,6 +298,24 @@ export async function listUserDocsWhereEquals(uid, subcollection, field, value) 
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   });
+}
+
+/**
+ * Fase 7 (download de alterações remotas): registros com `updatedAt` maior
+ * ou igual a `sinceIso`, do mais antigo pro mais novo — a base do "baixar
+ * só o que mudou desde o último cursor". `updatedAt` é gravado como
+ * Timestamp do Firestore (Fase 2), então a comparação também precisa ser
+ * com um Timestamp, não uma string.
+ */
+export async function listUserDocsUpdatedSince(uid, subcollection, sinceIso, { source = 'default' } = {}) {
+  const col = userCollection(uid, subcollection);
+  const sinceTimestamp = Timestamp.fromDate(new Date(sinceIso));
+  const q = query(col, where('updatedAt', '>=', sinceTimestamp), orderBy('updatedAt', 'asc'));
+  const key = queryCacheKey(uid, subcollection, 'updatedSince', { sinceIso });
+  return cachedQuery(key, async () => {
+    const snap = await getDocsFromSource(q, source);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  }, { bypass: source !== 'default' });
 }
 
 /** Cheapest possible existence check — fetches at most 1 doc instead of the whole subcollection. */

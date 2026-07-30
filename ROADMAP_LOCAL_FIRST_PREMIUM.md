@@ -443,38 +443,73 @@ online (`PremiumContext`/`navigator.onLine`, não verificados aqui).
 
 ---
 
-# Fase 7 — Download e conflitos entre dispositivos
+# Fase 7 — Download e conflitos entre dispositivos [INICIADA em 2026-07-30 — mecânica pronta e testada para 2 domínios, não plugada no app]
 
-## Objetivo
-
-Trazer alterações remotas para o SQLite local.
+Implementada em `src/db/sync/downloadRemoteChanges.js`, sobre
+`src/firebase/firestore.js#listUserDocsUpdatedSince` (nova consulta por
+`updatedAt`, testada mockando o SDK do Firestore) e a tabela `conflict_log`
+(migration 002). Testada de ponta a ponta com SQLite real + uma função de
+busca injetada simulando o Firestore. Só cobre categorias e lançamentos —
+os "casos especiais" abaixo dependem de domínios que ainda não existem em
+SQLite (Fase 3).
 
 ## Entregas
 
-- Manter cursor da última sincronização por coleção.
-- Baixar somente registros modificados desde o último cursor.
-- Aplicar alterações em transação.
-- Implementar regra “alteração mais recente vence”.
-- Detectar relógio incorreto do aparelho.
-- Registrar conflitos relevantes.
-- Criar ferramenta interna para diagnóstico.
+- [x] Manter cursor da última sincronização por coleção — `sync_state`,
+      chave `cursor:<entidade>`.
+- [x] Baixar somente registros modificados desde o último cursor —
+      `listUserDocsUpdatedSince` (Firestore) + `getCursor` (SQLite).
+- [x] Aplicar alterações em transação.
+- [x] Implementar regra "alteração mais recente vence" — compara
+      `updated_at` local x remoto; local mais novo vence e fica registrado
+      como conflito (a edição local ainda reenvia pela fila, Fase 6).
+- [x] Detectar relógio incorreto do aparelho — um `updatedAt` remoto além
+      de `maxClockSkewMs` no futuro não é aplicado, vira conflito.
+- [x] Registrar conflitos relevantes — tabela `conflict_log` (migration 002).
+- [x] Criar ferramenta interna para diagnóstico — `listConflictLog(driver, { entidade })`.
 
 ## Casos especiais
 
-- Aportes em metas.
-- Fechamentos mensais imutáveis.
-- Exclusão de categoria ainda utilizada.
-- Recorrências editadas em aparelhos diferentes.
-- Importação repetida de extratos.
+- [ ] Aportes em metas — depende de `metas` ganhar adapter SQLite (Fase 3).
+- [ ] Fechamentos mensais imutáveis — depende de `fechamentos` (Fase 3).
+- [ ] Exclusão de categoria ainda utilizada — nenhuma lógica especial
+      escrita; hoje a exclusão de categoria é sempre hard delete, local ou
+      remota, sem verificar uso.
+- [ ] Recorrências editadas em aparelhos diferentes — depende de
+      `recorrencias` ganhar adapter SQLite (Fase 3).
+- [ ] Importação repetida de extratos — `importLancamentos` ainda não foi
+      portado pro adapter SQLite de lançamentos (ver nota na Fase 3).
 
 ## Critério de conclusão
 
-- Dois aparelhos convergem para o mesmo estado.
-- Conflitos não duplicam dinheiro nem lançamentos.
+- [ ] Dois aparelhos convergem para o mesmo estado — a lógica de convergência
+      existe e está testada; só é verificável de ponta a ponta com dois
+      dispositivos reais, que não há como simular aqui.
+- [x] Conflitos não duplicam dinheiro nem lançamentos — `INSERT OR REPLACE`
+      pelo mesmo id nunca duplica linha; testado.
 
 ---
 
-# Fase 8 — Google Play Billing
+# Fase 8 — Google Play Billing [MAJORITARIAMENTE JÁ COBERTA por ROADMAP_MONETIZACAO.txt Fase 9 — ver lá; só 1 gap fechado nesta rodada]
+
+Esta fase se sobrepõe quase inteiramente à Fase 9 de
+[ROADMAP_MONETIZACAO.txt](ROADMAP_MONETIZACAO.txt), escrita antes deste
+roadmap (18/07/2026) — mesmo backend, mesmo bloqueio: sem Android Studio,
+`adb` nem conta Google Play Console neste ambiente, não há como integrar o
+plugin nativo de Play Billing nem testar contra uma compra real. Consulte
+aquele arquivo pra o detalhamento completo do que já existe
+(`validate-android-purchase.js`, `subscriptionWriter.js`).
+
+Nesta rodada (30/07/2026), fechei um gap real que **não** dependia de
+Android Studio: o *acknowledgement* da compra (obrigatório em até 3 dias
+pela Play Billing Library, senão o Google reembolsa sozinho) estava
+marcado como pendente em `subscriptionWriter.js` — implementei em
+`netlify/lib/googlePlay.js` (`acknowledgeSubscriptionPurchase`), chamado
+por `validate-android-purchase.js` logo após conceder a assinatura
+(best-effort: falha ao confirmar não desfaz a assinatura já concedida, só
+loga). Testado com `fetch` mockado; o comportamento real do Google Play
+contra uma compra já confirmada continua não verificado (precisa de
+sandbox). `ROADMAP_MONETIZACAO.txt` atualizado com o mesmo detalhe.
 
 ## Objetivo
 
@@ -493,176 +528,325 @@ Vincular uma compra Android validada a uma conta.
 
 ## Entregas
 
-- Integrar biblioteca/plugin de Play Billing.
-- Configurar produto e plano base no Play Console.
-- Enviar identificador ofuscado da conta na compra.
-- Evoluir `validate-android-purchase`.
-- Validar compra exclusivamente no servidor.
-- Reconhecer compras.
-- Tratar renovação, cancelamento, carência e suspensão.
-- Implementar notificações em tempo real da Google Play.
-- Restaurar compras.
+- [ ] Integrar biblioteca/plugin de Play Billing — bloqueado: precisa
+      escolher e instalar um plugin nativo no projeto Capacitor, e não há
+      como compilar/testar isso sem Android Studio.
+- [ ] Configurar produto e plano base no Play Console — precisa de conta
+      Google Play Console real (taxa única, só o dono do projeto pode criar).
+- [ ] Enviar identificador ofuscado da conta na compra — depende do plugin
+      nativo acima existir.
+- [x] Evoluir `validate-android-purchase` — GET de status (Fase anterior)
+      + acknowledgement (novo nesta rodada).
+- [x] Validar compra exclusivamente no servidor — já era assim.
+- [x] Reconhecer compras — `acknowledgeSubscriptionPurchase`, novo.
+- [x] Tratar renovação, cancelamento, carência e suspensão —
+      `applyGooglePlaySubscription` (fase anterior), não testado contra API real.
+- [ ] Implementar notificações em tempo real da Google Play — (Real-time
+      Developer Notifications via Pub/Sub) não implementado; precisa de
+      projeto Google Cloud configurado.
+- [ ] Restaurar compras — depende do plugin nativo pra obter o purchaseToken
+      de uma compra existente no aparelho.
 
 ## Critério de conclusão
 
-- Reinstalar o app e entrar na mesma conta restaura o Premium.
-- Compra não validada no servidor não libera sincronização.
+- [ ] Reinstalar o app e entrar na mesma conta restaura o Premium —
+      bloqueado pela integração nativa.
+- [x] Compra não validada no servidor não libera sincronização — já era
+      verdade (`validate-android-purchase` é o único caminho que escreve
+      `plan`/`subscriptionStatus`, via Admin SDK).
 
 ---
 
-# Fase 9 — Ativação do backup e primeira mesclagem
+# Fase 9 — Ativação do backup e primeira mesclagem [INICIADA em 2026-07-30 — as 3 opções testadas para 2 domínios, não plugada no app]
 
-## Objetivo
-
-Transformar dados locais em dados sincronizados ao assinar.
+Implementada em `src/db/sync/firstSync.js`, reaproveitando (sem duplicar
+lógica) a Fase 5 (download), a Fase 6 (`uploader`) e a Fase 7
+(`downloadRemoteChanges`, cujo cursor começa em "época zero" se o aparelho
+nunca sincronizou — por isso serve tanto pra sync incremental quanto pra
+essa primeira mesclagem). Só cobre categorias e lançamentos. Nada no app
+chama isso ainda — falta a tela de ativação do Premium que apresente as 3
+opções ao usuário.
 
 ## Opções apresentadas
 
-- Enviar dados deste aparelho.
-- Baixar dados existentes da conta.
-- Mesclar os dois conjuntos.
+- [x] Enviar dados deste aparelho — `uploadLocalToFirestore`.
+- [x] Baixar dados existentes da conta — `downloadAccountData` (mesma
+      função da Fase 5, `migrateFromFirestore`, reexportada aqui por nome).
+- [x] Mesclar os dois conjuntos — `mergeLocalAndRemote`.
 
 ## Entregas
 
-- Mostrar contagens antes da operação.
-- Criar backup JSON local.
-- Detectar IDs duplicados.
-- Detectar possíveis lançamentos equivalentes.
-- Enviar em lotes.
-- Permitir retomar após falha.
-- Confirmar conclusão.
+- [x] Mostrar contagens antes da operação — `previewFirstSync` (local,
+      remoto, só-local, só-remoto, em-ambos), sem escrever nada.
+- [~] Criar backup JSON local — a Fase 5 já retorna os dados buscados em
+      `result.backup` antes de escrever; salvar isso como arquivo continua
+      responsabilidade de quem chama (mesma decisão da Fase 5).
+- [x] Detectar IDs duplicados — trivial por construção: local e remoto
+      convergem pelo mesmo id (Fase 2), `previewFirstSync` já conta
+      "emAmbos" separado de "só local"/"só remoto".
+- [x] Detectar possíveis lançamentos equivalentes —
+      `detectPossibleDuplicateLancamentos` (mesmo tipo/valor/data/descrição
+      sob ids diferentes); só sinaliza, nunca mescla ou apaga sozinho.
+- [x] Enviar em lotes — `uploadLocalToFirestore` já teve essa forma desde
+      a Fase 6 (`batchSize`).
+- [x] Permitir retomar após falha — upload idempotente (mesmo id sempre),
+      chamar de novo depois de uma falha nunca duplica.
+- [ ] Confirmar conclusão — falta a tela; a função já retorna um resumo
+      pronto pra exibir.
 
 ## Critério de conclusão
 
-- Ativar Premium não duplica ou apaga lançamentos.
-- O processo pode ser interrompido e retomado.
+- [x] Ativar Premium não duplica ou apaga lançamentos — testado (upload
+      idempotente por id; merge nunca sobrescreve o que só existe local
+      sem primeiro reconciliar via "mais recente vence" da Fase 7).
+- [x] O processo pode ser interrompido e retomado — mesma garantia de
+      idempotência; chamar de novo depois de uma falha é seguro.
 
 ---
 
-# Fase 10 — Web exclusiva para Premium
+# Fase 10 — Web exclusiva para Premium [INICIADA em 2026-07-30]
 
-## Objetivo
+**Decisão de produto (30/07/2026, confirmada com o dono do projeto):** esta
+fase contradizia `ROADMAP_MONETIZACAO.txt`, que lista "Acesso Web e
+Android" como benefício do Plano Gratuito. Decisão: seguir esta Fase 10 —
+a tabela do plano Gratuito em `ROADMAP_MONETIZACAO.txt` está desatualizada
+nesse ponto (sinalizado lá).
 
-Permitir acesso web somente para contas com assinatura ativa.
+Implementada em `src/routes/webPremiumGate.js` (regra pura, testada),
+`RequirePremiumWeb.jsx` (rota-layout) e `AcessoWebPage.jsx`. Respeita o
+mesmo `PREMIUM_ENFORCED` que já controla todo o resto do gating do
+projeto — hoje `false`, então **nada muda pra ninguém ainda**; o
+bloqueio de verdade só passa a valer quando o dono do projeto ligar essa
+chave (a mesma que já segura os limites de categorias/recorrências/etc).
+Verificado no navegador (app carrega e resolve a árvore de rotas
+normalmente com a nova estrutura aninhada).
 
 ## Entregas
 
-- Manter login obrigatório na web.
-- Criar rota de verificação Premium antes do aplicativo.
-- Bloquear módulos financeiros para contas não Premium.
-- Criar página “Acesso web incluído no Premium”.
-- Permitir recuperação de sessão.
-- Exibir estado de assinatura expirada.
-- Remover checkout externo do build Android.
-- Separar configurações por plataforma.
+- [x] Manter login obrigatório na web — já valia antes desta fase
+      (`ProtectedRoute`), inalterado.
+- [x] Criar rota de verificação Premium antes do aplicativo —
+      `RequirePremiumWeb` como rota-layout em `AppRoutes.jsx`, em volta só
+      dos módulos financeiros (`/opcoes`, `/opcoes/meu-plano` e
+      `/acesso-web` ficam fora, senão ninguém sem Premium conseguiria
+      chegar na tela de assinatura).
+- [x] Bloquear módulos financeiros para contas não Premium — Dashboard,
+      Lançamentos, Categorias, Relatórios, Metas, Gestor, Planejamento,
+      Busca, Valor Livre.
+- [x] Criar página "Acesso web incluído no Premium" — `AcessoWebPage.jsx`.
+- [x] Permitir recuperação de sessão — já coberto pela persistência
+      própria do Firebase Auth, nada novo necessário.
+- [x] Exibir estado de assinatura expirada — `AcessoWebPage` diferencia
+      "nunca assinou" de "expirado/cancelado/em atraso".
+- [x] Remover checkout externo do build Android — `Paywall.jsx`: em
+      `Capacitor.isNativePlatform()`, nunca chama o checkout Web do
+      MercadoPago (só Google Play Billing pode cobrar no Android, ainda
+      não integrado — misturar os dois violaria a política de pagamentos
+      da Play Store).
+- [~] Separar configurações por plataforma — feito onde havia algo
+      concreto pra separar (o checkout acima); não criei configuração nova
+      especulativa além disso.
 
 ## Critério de conclusão
 
-- Usuário gratuito Android não acessa dados pela web.
-- Assinante entra na web e vê os mesmos dados sincronizados.
-- Assinatura expirada bloqueia a web sem apagar dados.
+- [x] Usuário gratuito Android não acessa dados pela web — não se aplica:
+      o bloqueio é da Web pra quem não é Premium, independente de
+      plataforma onde a conta foi criada; Android nunca é bloqueado
+      (`Capacitor.isNativePlatform()` sempre libera).
+- [x] Assinante entra na web e vê os mesmos dados sincronizados — já
+      valia (mesmo Firestore, mesma conta); esta fase só adiciona a
+      restrição de acesso, não mexeu em como os dados são carregados.
+- [x] Assinatura expirada bloqueia a web sem apagar dados — o bloqueio é
+      só de rota/UI; nenhum dado é tocado.
 
 ---
 
-# Fase 11 — Cancelamento, downgrade e retenção
+# Fase 11 — Cancelamento, downgrade e retenção [INICIADA em 2026-07-30]
 
-## Objetivo
-
-Garantir continuidade local e tratamento transparente da nuvem.
+Implementada em `src/db/sync/syncPolicy.js` (`canSync`), `runSyncCycle.js`
+(orquestrador + última sincronização) e `retention.js` (data de exclusão),
+mais `deleteCloudCopyOnly` em `dataPortabilityService.js`. Tudo testado.
 
 ## Entregas
 
-- Pausar uploads após expiração.
-- Manter dados locais acessíveis.
-- Mostrar data da última sincronização.
-- Informar prazo de retenção da nuvem.
-- Permitir renovação e retomada.
-- Permitir exclusão antecipada da cópia remota.
-- Criar rotina de limpeza após o prazo definido.
+- [x] Pausar uploads após expiração — `canSync({ isPremium, isOnline })`;
+      `runSyncCycle` recusa rodar (`skipped: true`) quando `false`.
+- [x] Manter dados locais acessíveis — já garantido desde a Fase 3 (SQLite
+      não depende do Firebase pra ler/gravar).
+- [x] Mostrar data da última sincronização — `getLastSyncAt(driver, entidade)`;
+      falta a tela que exibe isso.
+- [x] Informar prazo de retenção da nuvem — `cloudDeletionDate(currentPeriodEndIso)`,
+      90 dias por padrão (FASE0_DECISOES.md); atualizado também em
+      `PrivacidadePage.jsx`.
+- [x] Permitir renovação e retomada — consequência direta de `canSync`:
+      assim que `isPremium` volta a `true`, o próximo ciclo roda normal;
+      nada precisa ser recriado (upload/download continuam idempotentes).
+- [~] Permitir exclusão antecipada da cópia remota — `deleteCloudCopyOnly(uid)`
+      existe e está testado (apaga só o Firestore, mantém a conta e a
+      assinatura intactas), mas **de propósito não exponho isso na UI
+      ainda**: hoje `repositories/provider.js` sempre usa Firebase — SQLite
+      não é a fonte ativa (Fase 3/4 incompletas) — então "apagar a cópia
+      remota mantendo os dados locais" hoje apagaria os únicos dados que o
+      app realmente usa. Botão fica pra quando o SQLite estiver ativo.
+- [ ] Criar rotina de limpeza após o prazo definido — não implementado;
+      precisa de um job agendado (Cloud Scheduler/Netlify scheduled
+      function) rodando `deleteCloudCopyOnly` para contas passadas do
+      prazo, infraestrutura que não existe neste ambiente.
 
 ## Critério de conclusão
 
-- Cancelar Premium nunca bloqueia o Android local.
-- Renovar retoma a sincronização sem recriar dados.
+- [x] Cancelar Premium nunca bloqueia o Android local — `canSync` só
+      pausa a nuvem, nunca a leitura/escrita local.
+- [x] Renovar retoma a sincronização sem recriar dados — testado
+      (`syncPolicy.test.js`); upload/download continuam idempotentes por id.
 
 ---
 
-# Fase 12 — Segurança e conformidade
+# Fase 12 — Segurança e conformidade [INICIADA em 2026-07-30 — só os itens que não dependem de Android Studio/Play Console/GCP]
 
 ## Entregas
 
-- Ativar Firebase App Check com Play Integrity.
-- Revisar regras do Firestore para o modelo sincronizado.
-- Não confiar em `premium=true` vindo do cliente.
-- Criptografar credenciais e tokens locais.
-- Avaliar proteção do SQLite em repouso.
-- Bloquear capturas de tela em páginas sensíveis, se desejado.
-- Atualizar política de privacidade e termos.
-- Preencher a seção Segurança de dados da Play Store.
-- Documentar exclusão de conta e dados.
-- Criar alertas de custos e orçamento no Google Cloud.
+- [ ] Ativar Firebase App Check com Play Integrity — bloqueado: exige
+      projeto Android nativo (Play Integrity é uma API do Google Play em
+      si) e Firebase Console, nenhum acessível aqui.
+- [x] Revisar regras do Firestore para o modelo sincronizado — revisado E
+      testado contra o emulador real (`npm run test:rules:emulator`, Java
+      17 disponível neste ambiente): as regras já usam `isOwner(uid)` sem
+      restringir nomes de campo nas coleções gerais, então os metadados da
+      Fase 2 (`deviceId`, `syncStatus`, `localVersion`, `deletedAt`) passam
+      sem precisar de nenhuma mudança. Novo teste adicionado em
+      `tests/firestore.rules.spec.mjs` confirmando isso (9/9 passando).
+- [x] Não confiar em `premium=true` vindo do cliente — já valia
+      (ROADMAP_MONETIZACAO.txt: só Admin SDK escreve `plan`/`subscriptionStatus`).
+- [ ] Criptografar credenciais e tokens locais — avaliação de SQLCipher
+      pendente; não implementado às cegas sem poder testar num Android real.
+- [ ] Avaliar proteção do SQLite em repouso — mesma pendência acima.
+- [ ] Bloquear capturas de tela em páginas sensíveis — recurso nativo
+      Android (`FLAG_SECURE`); bloqueado sem Android Studio.
+- [x] Atualizar política de privacidade e termos — `PrivacidadePage.jsx`:
+      menciona o `deviceId` técnico (Fase 2) e formaliza a retenção de 90
+      dias da cópia na nuvem após cancelamento (Fase 0/11). Continua
+      rascunho, precisa de revisão jurídica (nota já existente, inalterada).
+- [ ] Preencher a seção Segurança de dados da Play Store — preenchido no
+      Play Console em si, que não existe neste ambiente.
+- [x] Documentar exclusão de conta e dados — já coberto (`OpcoesPage.jsx`
+      + `PrivacidadePage.jsx`, seção 5); `deleteCloudCopyOnly` documentado
+      na Fase 11 acima.
+- [ ] Criar alertas de custos e orçamento no Google Cloud — exige acesso
+      ao Google Cloud Console.
 
 ## Critério de conclusão
 
-- Testes confirmam isolamento entre usuários.
-- O cliente não consegue conceder Premium a si mesmo.
-- Dados locais e remotos podem ser apagados separadamente.
+- [x] Testes confirmam isolamento entre usuários — já coberto por
+      `tests/firestore.rules.spec.mjs` ("allows the owner and denies
+      another user"), rodando de verdade contra o emulador.
+- [x] O cliente não consegue conceder Premium a si mesmo — regras do
+      Firestore bloqueiam qualquer `update`/`create` de assinatura fora da
+      transição inicial exata permitida; testado no mesmo arquivo.
+- [~] Dados locais e remotos podem ser apagados separadamente —
+      `deleteCloudCopyOnly` (apaga só o Firestore) existe e está testado,
+      mas ainda não exposto na UI (motivo explicado na Fase 11: os botões
+      "Zerar" de Opções ainda apontam pro Firebase, porque o SQLite ainda
+      não é a fonte ativa — só passam a apagar de fato "só o local" depois
+      que o provider trocar).
 
 ---
 
-# Fase 13 — Observabilidade e controle de custos
+# Fase 13 — Observabilidade e controle de custos [INICIADA em 2026-07-30 — só métricas locais/por-aparelho]
+
+Implementada em `src/db/sync/syncHealth.js` (`getSyncHealth`), reaproveitando
+`countPending` (Fase 6), `listConflictLog` (Fase 7) e `getLastSyncAt`
+(Fase 11). Testado. As métricas abaixo marcadas `[ ]` são agregadas entre
+todos os usuários — dependem de Firebase Analytics/BigQuery/GCP Console,
+nenhum acessível neste ambiente; as marcadas `[x]` são por-aparelho e
+já existem em código.
 
 ## Métricas
 
-- Usuários gratuitos locais.
-- Usuários Premium ativos.
-- Leituras e gravações por assinante.
-- Bytes sincronizados.
-- Tamanho médio da fila.
-- Tempo médio de sincronização.
-- Taxa de erro e conflito.
-- Custo Firebase por assinante.
-- Conversão gratuito → Premium.
-- Cancelamentos e recuperação de assinatura.
+- [ ] Usuários gratuitos locais — agregado, depende de Analytics.
+- [ ] Usuários Premium ativos — idem.
+- [ ] Leituras e gravações por assinante — idem (Firebase usage/BigQuery).
+- [ ] Bytes sincronizados — não instrumentado.
+- [x] Tamanho médio da fila — `getSyncHealth().filaPendente`, por aparelho.
+- [ ] Tempo médio de sincronização — não instrumentado (precisaria medir
+      duração de `runSyncCycle`, fácil de adicionar depois, não feito
+      agora pra não medir algo que ainda não roda de verdade no app).
+- [x] Taxa de erro e conflito — `getSyncHealth().conflitosRecentes`
+      (`conflict_log`, Fase 7) e `sync_queue.tentativas`/`status='error'`
+      (Fase 6), por aparelho.
+- [ ] Custo Firebase por assinante — depende do Firebase Console.
+- [ ] Conversão gratuito → Premium — já instrumentado como evento de
+      analytics (ROADMAP_MONETIZACAO.txt, Fase 10); calcular a métrica em
+      si depende do GA4/BigQuery.
+- [ ] Cancelamentos e recuperação de assinatura — idem.
 
 ## Alertas
 
-- Orçamento mensal do Google Cloud.
-- Pico anormal de leituras.
-- Falhas de validação de compra.
-- Crescimento da fila de sincronização.
-- Erros de regras do Firestore.
+- [ ] Orçamento mensal do Google Cloud — exige GCP Console.
+- [ ] Pico anormal de leituras — exige Firebase Console/monitoring.
+- [ ] Falhas de validação de compra — já logadas em `subscription_log`
+      (ROADMAP_MONETIZACAO.txt); um alerta de verdade sobre isso (e-mail/
+      Slack) não foi criado, exige um canal de notificação configurado.
+- [x] Crescimento da fila de sincronização — dá pra observar via
+      `getSyncHealth().filaPendente` ao longo do tempo; não há um alerta
+      automático dedicado, só o número exposto.
+- [ ] Erros de regras do Firestore — exige Firebase Console/Cloud Logging.
 
 ## Critério de conclusão
 
-- É possível calcular custo e receita por assinante.
+- [ ] É possível calcular custo e receita por assinante — depende das
+      métricas agregadas acima, todas bloqueadas por acesso externo.
 
 ---
 
-# Fase 14 — Testes para lançamento
+# Fase 14 — Testes para lançamento [AUDITADA em 2026-07-30 — mapeamento cenário → cobertura, sem código novo]
+
+Nenhum destes cenários pode ser executado de ponta a ponta neste ambiente
+(exige Android real, multi-dispositivo, ou contas de pagamento reais).
+Este mapeamento é honesto sobre o que já tem teste automatizado
+equivalente na lógica, e o que só um dispositivo real confirma.
 
 ## Cenários obrigatórios
 
-- Primeira abertura sem internet.
-- Uso gratuito sem conta.
-- Fechar e reabrir o aplicativo offline.
-- Assinar com dados locais existentes.
-- Falha de internet durante upload inicial.
-- Dois aparelhos editando o mesmo lançamento.
-- Exclusão offline.
-- Cancelamento e expiração.
-- Renovação.
-- Troca de celular.
-- Reinstalação.
-- Restauração de compra.
-- Login web Premium.
-- Bloqueio web não Premium.
-- Exclusão completa da conta.
-- Migração de usuário antigo.
+- [ ] Primeira abertura sem internet — bloqueado: depende da Fase 4
+      (modo sem conta) estar de pé num dispositivo real.
+- [ ] Uso gratuito sem conta — idem.
+- [~] Fechar e reabrir o aplicativo offline — a persistência em si é
+      testada (`migrationRunner.test.js`: aplicar migrations é idempotente
+      após "reabrir" um banco já existente); fechar/reabrir o app de
+      verdade só um dispositivo confirma.
+- [~] Assinar com dados locais existentes — lógica testada
+      (`firstSync.test.js`: preview, upload, merge); falta a tela que
+      dispara isso e um teste manual do fluxo completo.
+- [x] Falha de internet durante upload inicial — testado
+      (`processSyncQueue.test.js`: falha fica pendente com backoff, não
+      se perde).
+- [x] Dois aparelhos editando o mesmo lançamento — testado
+      (`downloadRemoteChanges.test.js`: "mais recente vence", conflito logado).
+- [ ] Exclusão offline — parcial: `remove()` local ainda é hard delete
+      (soft-delete com `deletedAt` é da Fase 6, não implementado); sem
+      isso, uma exclusão feita offline não tem como ser propagada pela
+      fila de sincronização ainda.
+- [~] Cancelamento e expiração — `subscriptionState.test.js` (já existia,
+      ROADMAP_MONETIZACAO.txt) cobre a lógica de status; `syncPolicy.test.js`
+      cobre a pausa de sync; fluxo completo não testado num app real.
+- [x] Renovação — `syncPolicy.test.js` ("allows syncing only when both
+      Premium and online" cobre a retomada).
+- [ ] Troca de celular — bloqueado: precisa de dois dispositivos reais.
+- [ ] Reinstalação — bloqueado: precisa de dispositivo real.
+- [ ] Restauração de compra — bloqueado: depende do Google Play Billing
+      (ROADMAP_MONETIZACAO.txt, Fase 9), não integrado.
+- [x] Login web Premium — testado (`webPremiumGate.test.js`).
+- [x] Bloqueio web não Premium — testado (`webPremiumGate.test.js`).
+- [x] Exclusão completa da conta — testado (`dataPortabilityService.test.js`).
+- [x] Migração de usuário antigo — testado (`migrateFromFirestore.test.js`).
 
 ## Critério de conclusão
 
-- Nenhum cenário causa perda ou duplicação financeira.
+- [~] Nenhum cenário causa perda ou duplicação financeira — verdadeiro
+      para todo cenário testável em lógica (marcado `[x]`/`[~]` acima);
+      os `[ ]` dependem de teste manual num dispositivo/conta real antes
+      do lançamento.
 
 ---
 

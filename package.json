@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "vitest run src",
+    "test": "vitest run src netlify",
     "test:rules": "vitest run tests/firestore.rules.spec.mjs",
     "test:rules:emulator": "npx --yes firebase-tools@14.22.0 emulators:exec --only firestore \"npm run test:rules\""
   },

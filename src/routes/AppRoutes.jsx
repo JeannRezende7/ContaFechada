@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute.jsx';
+import RequirePremiumWeb from './RequirePremiumWeb.jsx';
 import AuthLayout from '../layouts/AuthLayout.jsx';
 import AppLayout from '../layouts/AppLayout.jsx';
 import LoadingScreen from '../components/ui/LoadingScreen.jsx';
@@ -21,6 +22,7 @@ const TermosPage = lazyWithRetry(() => import('../features/legal/pages/TermosPag
 const PrivacidadePage = lazyWithRetry(() => import('../features/legal/pages/PrivacidadePage.jsx'));
 const BuscaGlobalPage = lazyWithRetry(() => import('../features/busca/pages/BuscaGlobalPage.jsx'));
 const ValorLivrePage = lazyWithRetry(() => import('../features/valor-livre/pages/ValorLivrePage.jsx'));
+const AcessoWebPage = lazyWithRetry(() => import('../features/premium/pages/AcessoWebPage.jsx'));
 
 export default function AppRoutes() {
   return (
@@ -42,17 +44,25 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/lancamentos" element={<LancamentosPage />} />
-          <Route path="/categorias" element={<CategoriasPage />} />
-          <Route path="/relatorios" element={<RelatoriosPage />} />
-          <Route path="/metas" element={<MetasPage />} />
-          <Route path="/gestor" element={<GestorFinanceiroPage />} />
-          <Route path="/planejamento" element={<PlanejamentoPage />} />
+          {/* Sempre acessíveis a quem está logado, mesmo sem Premium na
+              Web (Fase 10) — é daqui que dá pra assinar/gerenciar. */}
           <Route path="/opcoes" element={<OpcoesPage />} />
           <Route path="/opcoes/meu-plano" element={<MeuPlanoPage />} />
-          <Route path="/buscar" element={<BuscaGlobalPage />} />
-          <Route path="/valor-livre" element={<ValorLivrePage />} />
+          <Route path="/acesso-web" element={<AcessoWebPage />} />
+
+          {/* Módulos financeiros — exclusivos do Premium na Web; o Android
+              gratuito continua liberado (RequirePremiumWeb passa direto). */}
+          <Route element={<RequirePremiumWeb />}>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/lancamentos" element={<LancamentosPage />} />
+            <Route path="/categorias" element={<CategoriasPage />} />
+            <Route path="/relatorios" element={<RelatoriosPage />} />
+            <Route path="/metas" element={<MetasPage />} />
+            <Route path="/gestor" element={<GestorFinanceiroPage />} />
+            <Route path="/planejamento" element={<PlanejamentoPage />} />
+            <Route path="/buscar" element={<BuscaGlobalPage />} />
+            <Route path="/valor-livre" element={<ValorLivrePage />} />
+          </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/entrar" replace />} />

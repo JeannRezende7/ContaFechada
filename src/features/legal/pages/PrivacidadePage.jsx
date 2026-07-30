@@ -37,6 +37,9 @@ export default function PrivacidadePage() {
               lançamentos, categorias, recorrências, metas e as configurações do app. Se você assinar o Premium,
               também guardamos o status da sua assinatura (plano, período pago, se veio da Google Play ou da Web) —
               nunca dados de cartão, que ficam só com o processador de pagamento (MercadoPago) ou a Google Play.
+              Cada registro também carrega um identificador técnico do aparelho que o criou (não é um dado
+              pessoal, não identifica você fora do app) — usado só para sincronizar corretamente entre
+              dispositivos quando você usa o Conta Fechada em mais de um.
             </p>
           </section>
 
@@ -86,7 +89,8 @@ export default function PrivacidadePage() {
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">6. Retenção de dados</h2>
             <p>
               Mantemos seus dados enquanto sua conta existir. Ao excluir a conta, os dados são apagados
-              permanentemente do Firestore e sua conta de autenticação é removida.
+              permanentemente do Firestore e sua conta de autenticação é removida. Se você cancelar o Premium sem
+              excluir a conta, mantemos a cópia na nuvem por até 90 dias antes de removê-la.
             </p>
           </section>
 

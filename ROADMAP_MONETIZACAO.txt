@@ -57,7 +57,13 @@ Plano Gratuito
 - Gestor Financeiro com indicadores basicos do mes atual.
 - Exportacao CSV do mes atual.
 - Tema claro e escuro.
-- Acesso Web e Android.
+- Acesso Web e Android. [DESATUALIZADO em 30/07/2026 — decisao de produto
+  confirmada com o dono do projeto: o acesso Web passou a ser exclusivo do
+  Premium (ROADMAP_LOCAL_FIRST_PREMIUM.md, Fase 10). O Android gratuito
+  continua incluido. O gate ja esta implementado em
+  src/routes/RequirePremiumWeb.jsx, mas so entra em vigor quando
+  PREMIUM_ENFORCED virar true (hoje false, entao nada mudou ainda pra
+  ninguem).]
 
 Plano Premium
 
@@ -559,8 +565,14 @@ Prazo estimado: 7 a 14 dias.
 [x] Tratar compra pendente, renovacao, cancelamento e expiracao — mapeamento
     de subscriptionState em netlify/lib/subscriptionWriter.js
     (applyGooglePlaySubscription), mesmo padrão do MercadoPago. NAO TESTADO.
-    Falta implementar o *acknowledgement* da compra (obrigatório em até 3
-    dias pela Play Billing Library, senão o Google reembolsa sozinho).
+[x] Acknowledgement da compra (30/07/2026) — obrigatório em até 3 dias pela
+    Play Billing Library, senão o Google reembolsa sozinho.
+    netlify/lib/googlePlay.js (acknowledgeSubscriptionPurchase), chamado
+    por validate-android-purchase.js logo após conceder a assinatura
+    (best-effort: se a confirmação falhar, não desfaz a assinatura já
+    concedida, só loga pra investigação manual). Testado com fetch
+    mockado (googlePlay.test.js); o comportamento real do Google contra
+    uma compra já confirmada segue não verificado (precisa de sandbox).
 [ ] Sincronizar entitlement pelo uid.
 [ ] Testar nas trilhas internas da Play Store.
 [ ] Revisar politica de pagamentos vigente antes da publicacao.

@@ -19,8 +19,8 @@ describe('migrationRunner', () => {
     driver = createNodeSqliteDriver();
     const applied = await runMigrations(driver, migrations);
 
-    expect(applied).toEqual([1]);
-    expect(await getSchemaVersion(driver)).toBe(1);
+    expect(applied).toEqual(migrations.map((m) => m.version));
+    expect(await getSchemaVersion(driver)).toBe(migrations[migrations.length - 1].version);
   });
 
   it('creates every table and index declared in the schema', async () => {
@@ -41,6 +41,7 @@ describe('migrationRunner', () => {
       'configuracoes',
       'sync_queue',
       'sync_state',
+      'conflict_log',
     ]) {
       expect(tables).toContain(expected);
     }
@@ -56,7 +57,7 @@ describe('migrationRunner', () => {
     const secondRun = await runMigrations(driver, migrations);
 
     expect(secondRun).toEqual([]);
-    expect(await getSchemaVersion(driver)).toBe(1);
+    expect(await getSchemaVersion(driver)).toBe(migrations[migrations.length - 1].version);
   });
 
   it('rolls back the whole migration if one statement fails, leaving no partial schema', async () => {

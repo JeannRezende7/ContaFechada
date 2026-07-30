@@ -1,4 +1,4 @@
-import { getDeviceId } from '../../utils/deviceId.js';
+import { DOMAIN_ROW_CONFIG } from '../domainRowMappers.js';
 
 /**
  * Fase 5 do roadmap local-first: copia dados já existentes no Firestore
@@ -16,13 +16,6 @@ import { getDeviceId } from '../../utils/deviceId.js';
  *   joga um erro e a migração NÃO é marcada como concluída.
  */
 
-function toIsoString(value) {
-  if (value == null) return null;
-  if (typeof value === 'string') return value;
-  if (typeof value.toDate === 'function') return value.toDate().toISOString();
-  return null;
-}
-
 function round2(value) {
   return Math.round((Number(value) || 0) * 100) / 100;
 }
@@ -37,66 +30,15 @@ const MIGRATION_KEY_VERSION = 'migration:firestore:version';
 
 const DOMAIN_CONFIG = {
   categorias: {
-    table: 'categorias',
-    sumColumn: null,
+    ...DOMAIN_ROW_CONFIG.categorias,
     async fetch(uid, firebaseRepositories) {
       return firebaseRepositories.categorias.list(uid);
     },
-    insertSql: `INSERT OR REPLACE INTO categorias
-      (id, nome, tipo, cor_key, icone, padrao, ordem, created_at, updated_at, deleted_at, device_id, sync_status, local_version)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?)`,
-    toRow(item) {
-      const now = new Date().toISOString();
-      return [
-        item.id,
-        item.nome,
-        item.tipo,
-        item.corKey,
-        item.icone,
-        item.padrao ? 1 : 0,
-        item.ordem,
-        toIsoString(item.createdAt) ?? now,
-        toIsoString(item.updatedAt) ?? now,
-        toIsoString(item.deletedAt),
-        item.deviceId ?? getDeviceId(),
-        item.localVersion ?? 1,
-      ];
-    },
   },
   lancamentos: {
-    table: 'lancamentos',
-    sumColumn: 'valor',
+    ...DOMAIN_ROW_CONFIG.lancamentos,
     async fetch(uid, firebaseRepositories) {
       return firebaseRepositories.lancamentos.listAll(uid);
-    },
-    insertSql: `INSERT OR REPLACE INTO lancamentos
-      (id, tipo, descricao, valor, data_vencimento, data_pagamento, status, observacoes, categoria_id,
-       origem_recorrencia_id, mes_referencia, parcelamento_id, parcela_atual, total_parcelas,
-       created_at, updated_at, deleted_at, device_id, sync_status, local_version)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?)`,
-    toRow(item) {
-      const now = new Date().toISOString();
-      return [
-        item.id,
-        item.tipo,
-        item.descricao,
-        item.valor,
-        item.dataVencimento,
-        item.dataPagamento ?? null,
-        item.status,
-        item.observacoes ?? null,
-        item.categoriaId ?? null,
-        item.origemRecorrenciaId ?? null,
-        item.mesReferencia ?? null,
-        item.parcelamentoId ?? null,
-        item.parcelaAtual ?? null,
-        item.totalParcelas ?? null,
-        toIsoString(item.createdAt) ?? now,
-        toIsoString(item.updatedAt) ?? now,
-        toIsoString(item.deletedAt),
-        item.deviceId ?? getDeviceId(),
-        item.localVersion ?? 1,
-      ];
     },
   },
 };

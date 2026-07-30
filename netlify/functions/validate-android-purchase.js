@@ -1,6 +1,7 @@
 import { GoogleAuth } from 'google-auth-library';
 import { verifyIdToken } from '../lib/firebaseAdmin.js';
 import { applyGooglePlaySubscription } from '../lib/subscriptionWriter.js';
+import { acknowledgeSubscriptionPurchase, getSubscriptionPurchaseV2 } from '../lib/googlePlay.js';
 
 /**
  * Valida uma compra do Google Play Billing direto na Google Play Developer
@@ -21,8 +22,9 @@ import { applyGooglePlaySubscription } from '../lib/subscriptionWriter.js';
  *     capacitor.config.json).
  *
  * NÃO TESTADO — exige uma compra real de teste na Play Console (faixa
- * interna) pra confirmar o formato da resposta. Falta também implementar o
- * *acknowledgement* da compra (ver nota em subscriptionWriter.js).
+ * interna) pra confirmar o formato da resposta. O *acknowledgement* da
+ * compra (`../lib/googlePlay.js`) já está implementado e é chamado logo
+ * abaixo, usando `productId` como o `subscriptionId` que a API pede.
  */
 export default async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
@@ -59,16 +61,19 @@ export default async (req) => {
     const client = await auth.getClient();
     const { token: accessToken } = await client.getAccessToken();
 
-    const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`;
-    const res = await fetch(url, { headers: { authorization: `Bearer ${accessToken}` } });
+    const subscriptionPurchase = await getSubscriptionPurchaseV2({ packageName, purchaseToken, accessToken });
+    const patch = await applyGooglePlaySubscription(user.uid, { ...subscriptionPurchase, purchaseToken });
 
-    if (!res.ok) {
-      console.error('validate-android-purchase: Play Developer API respondeu', res.status, await res.text());
-      return json({ error: 'não foi possível validar a compra com o Google Play' }, 502);
+    // Obrigatório em até 3 dias pela Play Billing Library, senão o Google
+    // reembolsa a compra sozinho — best-effort: se falhar, a assinatura já
+    // foi concedida (patch acima), então não derruba a resposta pro
+    // cliente; só fica registrado pra investigação manual.
+    try {
+      await acknowledgeSubscriptionPurchase({ packageName, subscriptionId: productId, purchaseToken, accessToken });
+    } catch (ackErr) {
+      console.error('validate-android-purchase: falha ao confirmar (acknowledge) a compra', ackErr);
     }
 
-    const subscriptionPurchase = await res.json();
-    const patch = await applyGooglePlaySubscription(user.uid, { ...subscriptionPurchase, purchaseToken });
     return json({ ok: true, subscription: patch });
   } catch (err) {
     console.error('validate-android-purchase: falha ao validar', err);

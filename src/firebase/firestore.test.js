@@ -40,6 +40,7 @@ vi.mock('firebase/firestore', () => ({
   serverTimestamp: vi.fn(() => 'SERVER_TIMESTAMP'),
   increment: vi.fn((n) => ({ __increment: n })),
   writeBatch: vi.fn(() => mocks.makeBatch()),
+  Timestamp: { fromDate: vi.fn((date) => ({ __timestamp: date.toISOString() })) },
 }));
 
 import {
@@ -47,6 +48,7 @@ import {
   batchUpdateUserDocs,
   batchUpdateUserDocsWithData,
   createUserDoc,
+  listUserDocsUpdatedSince,
   setUserDoc,
   setUserDocMerged,
   updateUserDoc,
@@ -165,5 +167,13 @@ describe('firestore.js — Fase 2 sync metadata', () => {
       syncStatus: 'synced',
       localVersion: { __increment: 1 },
     });
+  });
+
+  it('listUserDocsUpdatedSince queries by a Timestamp built from the given ISO date', async () => {
+    mocks.getDocs.mockResolvedValue({ docs: [{ id: 'l1', data: () => ({ descricao: 'Feira' }) }] });
+
+    const result = await listUserDocsUpdatedSince('u1', 'lancamentos', '2026-07-01T00:00:00.000Z');
+
+    expect(result).toEqual([{ id: 'l1', descricao: 'Feira' }]);
   });
 });

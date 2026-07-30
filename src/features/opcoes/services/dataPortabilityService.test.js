@@ -11,7 +11,7 @@ const authMock = vi.hoisted(() => ({ currentUser: null }));
 vi.mock('../../../firebase/firestore.js', () => firestore);
 vi.mock('../../../firebase/config.js', () => ({ auth: authMock }));
 
-import { deleteAllUserData, exportUserData } from './dataPortabilityService.js';
+import { deleteAllUserData, deleteCloudCopyOnly, exportUserData } from './dataPortabilityService.js';
 
 const COLLECTIONS = ['lancamentos', 'categorias', 'regrasCategorizacao', 'recorrencias', 'metas', 'gestorLancamentos', 'planejamento', 'valorLivre', 'fechamentos'];
 
@@ -58,6 +58,16 @@ describe('dataPortabilityService', () => {
       method: 'POST',
       headers: { authorization: 'Bearer token-123' },
     });
+  });
+
+  it('deleteCloudCopyOnly wipes every collection and config, but never touches Auth or the subscription doc', async () => {
+    await deleteCloudCopyOnly('u1');
+
+    for (const collection of COLLECTIONS) {
+      expect(firestore.deleteAllUserDocs).toHaveBeenCalledWith('u1', collection);
+    }
+    expect(firestore.deleteUserDoc).toHaveBeenCalledWith('u1', 'config', 'geral');
+    expect(firestore.deleteUserDoc).not.toHaveBeenCalledWith('u1', 'private', 'subscription');
   });
 
   it('rejects private deletion when the authenticated user does not match', async () => {

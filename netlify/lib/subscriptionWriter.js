@@ -82,10 +82,9 @@ const GOOGLE_PLAY_STATE_MAP = {
  * NÃO TESTADO contra a API real do Google Play — os nomes de campo
  * (`subscriptionState`, `lineItems[0].expiryTime`) seguem a documentação
  * pública da Subscriptions v2 API, mas precisam ser confirmados com uma
- * compra de teste real antes de ir pra produção. Falta também implementar
- * o *acknowledgement* da compra (obrigatório em até 3 dias pela Play
- * Billing Library, via `purchases.subscriptions.acknowledge` da v1 API) —
- * sem isso o Google reembolsa a compra automaticamente.
+ * compra de teste real antes de ir pra produção. O *acknowledgement* da
+ * compra é feito à parte por `../lib/googlePlay.js`, chamado por
+ * `validate-android-purchase.js` depois desta função.
  */
 export async function applyGooglePlaySubscription(uid, subscriptionPurchase, { actor = 'google_play_validation' } = {}) {
   const subscriptionStatus = GOOGLE_PLAY_STATE_MAP[subscriptionPurchase.subscriptionState] ?? 'none';

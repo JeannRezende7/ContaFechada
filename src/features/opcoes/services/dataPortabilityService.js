@@ -59,6 +59,21 @@ export async function deleteAllUserData(uid) {
   }
 }
 
+/**
+ * Fase 11 do roadmap local-first: "Permitir exclusão antecipada da cópia
+ * remota" — apaga só os dados financeiros do Firestore (mesma lista de
+ * `COLLECTIONS` acima), mas MANTÉM a conta e o documento de assinatura
+ * intactos. Diferente de `deleteAllUserData`, que só é chamada como parte
+ * da exclusão completa da conta (e por isso também remove a conta do
+ * Firebase Auth). Não toca no SQLite local — os dados no aparelho
+ * continuam lá; só a cópia na nuvem é removida antes do prazo normal de
+ * retenção (90 dias, ver FASE0_DECISOES.md).
+ */
+export async function deleteCloudCopyOnly(uid) {
+  await Promise.all(COLLECTIONS.map((name) => deleteAllUserDocs(uid, name)));
+  await deleteUserDoc(uid, 'config', 'geral');
+}
+
 export function downloadJson(filename, data) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

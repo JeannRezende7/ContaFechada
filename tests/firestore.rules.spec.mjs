@@ -93,6 +93,31 @@ describe('Firestore owner data', () => {
     const ownerDb = testEnv.authenticatedContext('user-a').firestore();
     await assertFails(setDoc(doc(ownerDb, 'users/user-a/colecaoInesperada/item-1'), { value: true }));
   });
+
+  // Fase 2 (roadmap local-first) added sync metadata to every doc written by
+  // firebase/firestore.js: deviceId, syncStatus, localVersion, deletedAt,
+  // plus updatedAt via serverTimestamp(). These rules don't restrict field
+  // names for the general collections (only ownership), so this just
+  // confirms that assumption against the real emulator instead of leaving
+  // it as an untested claim.
+  it('accepts the Fase 2 sync metadata fields on a general collection doc', async () => {
+    const ownerDb = testEnv.authenticatedContext('user-a').firestore();
+    const otherDb = testEnv.authenticatedContext('user-b').firestore();
+    const path = 'users/user-a/lancamentos/synced-item';
+
+    await assertSucceeds(setDoc(doc(ownerDb, path), {
+      descricao: 'Mercado',
+      valor: 100,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      deletedAt: null,
+      deviceId: 'device-1',
+      syncStatus: 'synced',
+      localVersion: 1,
+    }));
+    await assertSucceeds(getDoc(doc(ownerDb, path)));
+    await assertFails(getDoc(doc(otherDb, path)));
+  });
 });
 
 describe('subscription protection', () => {
