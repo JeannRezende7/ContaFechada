@@ -5,6 +5,11 @@
   "plugins": {
     "LocalNotifications": {
       "iconColor": "#19c99a"
+    },
+    "SplashScreen": {
+      "backgroundColor": "#0F172AFF",
+      "androidScaleType": "CENTER",
+      "showSpinner": false
     }
   }
 }

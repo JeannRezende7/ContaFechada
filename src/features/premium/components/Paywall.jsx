@@ -48,8 +48,8 @@ const FEATURE_COPY = {
     desc: 'Exporte outros períodos e use filtros avançados.',
   },
   [FEATURES.PLANEJAMENTO_AVANCADO]: {
-    title: 'Planejamento financeiro completo',
-    desc: 'Orçamentos, fechamento mensal, alertas e simulador de parcelas fazem parte do Premium.',
+    title: 'Planejamento do valor livre',
+    desc: 'Distribua o valor livre, acompanhe suas finalidades e simule compras ao criar lançamentos.',
   },
   [FEATURES.IMPORTACAO_EXTRATO]: {
     title: 'Importação bancária',

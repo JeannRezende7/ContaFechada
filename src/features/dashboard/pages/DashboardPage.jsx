@@ -21,7 +21,6 @@ import {
   DashboardLinks,
   InsightsCard,
   MonthlyComparisonCard,
-  SavingsChallenge,
   FreeValueSummary,
 } from '../components/DashboardSections.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -38,16 +37,12 @@ export default function DashboardPage() {
   const [comparacao, setComparacao] = useState(null);
   const [dashboardItems, setDashboardItems] = useState({ atual: [], anterior: [] });
   const [categorias, setCategorias] = useState([]);
-  const [metaEconomia, setMetaEconomia] = useState(null);
-  const [editandoMeta, setEditandoMeta] = useState(false);
-  const [metaInput, setMetaInput] = useState('');
   const [loadError, setLoadError] = useState(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [distribuicaoValorLivre, setDistribuicaoValorLivre] = useState([]);
   const [valorBaseMensal, setValorBaseMensal] = useState(null);
   const [gastosIniciaisValorLivre, setGastosIniciaisValorLivre] = useState({});
-  const [metasValorLivre, setMetasValorLivre] = useState([]);
   const [dashboardDataMonthKey, setDashboardDataMonthKey] = useState(null);
   const [fotografiaCarregada, setFotografiaCarregada] = useState(false);
   const [fotografiaSalva, setFotografiaSalva] = useState(false);
@@ -158,27 +153,23 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!uid) return;
     repositories.categorias.list(uid).then(setCategorias);
-    repositories.configuracoes.getMetaEconomiaMensal(uid).then((valor) => setMetaEconomia(valor));
   }, [uid]);
 
   useEffect(() => {
     if (!uid) return;
     let cancelled = false;
     setDistribuicaoValorLivre([]);
-    setMetasValorLivre([]);
     setValorBaseMensal(null);
     setGastosIniciaisValorLivre({});
     setFotografiaCarregada(false);
     setFotografiaSalva(false);
     Promise.all([
       repositories.valorLivre.getDistribuicaoMensal(uid, monthKey),
-      repositories.metas.list(uid),
       repositories.valorLivre.getFotografiaMensal(uid, monthKey),
     ])
-      .then(([items, goalItems, fotografia]) => {
+      .then(([items, fotografia]) => {
         if (!cancelled) {
           setDistribuicaoValorLivre(items);
-          setMetasValorLivre(goalItems);
           setValorBaseMensal(fotografia.valorBaseMensal);
           setGastosIniciaisValorLivre(fotografia.gastosIniciais);
           setFotografiaSalva(
@@ -190,7 +181,6 @@ export default function DashboardPage() {
       .catch(() => {
         if (!cancelled) {
           setDistribuicaoValorLivre([]);
-          setMetasValorLivre([]);
           setFotografiaCarregada(true);
         }
       });
@@ -231,16 +221,6 @@ export default function DashboardPage() {
     });
   }, [indicators, comparacao, categoriasById, diasRestantes, diasNoMes, dashboardItems, insightsAllowed]);
 
-  async function handleSalvarMeta() {
-    const valor = Number(metaInput);
-    if (!valor) return;
-    await repositories.configuracoes.setMetaEconomiaMensal(uid, valor);
-    setMetaEconomia(valor);
-    setEditandoMeta(false);
-  }
-
-  const economiaAtual = indicators ? Math.max(0, indicators.saldoMes) : 0;
-  const economiaPct = metaEconomia > 0 ? Math.min(100, Math.round((economiaAtual / metaEconomia) * 100)) : 0;
   const resumoValorLivre = useMemo(
     () => calcularValorLivre(dashboardItems.atual, distribuicaoValorLivre, valorBaseMensal, gastosIniciaisValorLivre),
     [dashboardItems.atual, distribuicaoValorLivre, valorBaseMensal, gastosIniciaisValorLivre]
@@ -312,22 +292,9 @@ export default function DashboardPage() {
 
         <MonthlyComparisonCard comparacao={comparacao} monthKey={monthKey} />
         <DailyBudgetCard gastoDiario={gastoDiario} diasRestantes={diasRestantes} />
-        <FreeValueSummary resumo={resumoValorLivre} metas={metasValorLivre} />
+        <FreeValueSummary resumo={resumoValorLivre} monthKey={monthKey} />
         <DashboardHighlights indicators={indicators} />
 
-        <SavingsChallenge
-          editando={editandoMeta}
-          meta={metaEconomia}
-          metaInput={metaInput}
-          economiaAtual={economiaAtual}
-          economiaPct={economiaPct}
-          onStartEditing={() => {
-            setMetaInput(metaEconomia ? String(metaEconomia) : '');
-            setEditandoMeta(true);
-          }}
-          onInputChange={setMetaInput}
-          onSave={handleSalvarMeta}
-        />
         <InsightsCard
           insights={insights}
           locked={!insightsAllowed}

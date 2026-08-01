@@ -8,8 +8,6 @@ import {
   Receipt,
   Settings,
   Tag,
-  Target,
-  WalletCards,
   X,
 } from 'lucide-react';
 import BrandIcon from '../ui/BrandIcon.jsx';
@@ -18,10 +16,8 @@ const ITEMS = [
   { to: '/', label: 'Início', icon: Home },
   { to: '/lancamentos', label: 'Movimento', icon: Receipt },
   { to: '/planejamento', label: 'Planejamento', icon: CalendarRange },
-  { to: '/valor-livre', label: 'Valor livre', icon: WalletCards },
   { to: '/categorias', label: 'Categorias', icon: Tag },
   { to: '/relatorios', label: 'Relatórios', icon: PieChart },
-  { to: '/metas', label: 'Metas', icon: Target },
   { to: '/gestor', label: 'Gestor financeiro', icon: Landmark },
   { to: '/opcoes', label: 'Opções', icon: Settings },
 ];

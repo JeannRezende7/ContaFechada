@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Repeat, Layers } from 'lucide-react';
+import { Repeat, Layers, ShoppingCart } from 'lucide-react';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { getTodayISODate, shiftISODate, isSaneISODate } from '../../../utils/formatDate.js';
@@ -14,6 +14,7 @@ const EMPTY = {
   mesInicio: '', // 'YYYY-MM' — first month a recorrente starts generating from
   modo: 'normal', // 'normal' | 'recorrente' | 'parcelado' — only meaningful for new entries
   numParcelas: '2',
+  entrada: '0',
   status: 'pendente',
   observacoes: '',
   categoriaId: '',
@@ -23,6 +24,7 @@ const MODOS = [
   { key: 'normal', label: 'Única' },
   { key: 'recorrente', label: 'Recorrente' },
   { key: 'parcelado', label: 'Parcelado' },
+  { key: 'simulacao', label: 'Simular compra' },
 ];
 
 /**
@@ -143,6 +145,18 @@ export default function LancamentoModal({
         observacoes: form.observacoes || null,
         categoriaId: form.categoriaId || null,
       });
+    } else if (isNew && form.modo === 'simulacao') {
+      onSave({
+        simulacao: true,
+        tipo: 'despesa',
+        descricao: form.descricao,
+        valorTotal: valor,
+        entrada: Math.max(0, Number(form.entrada) || 0),
+        numParcelas: Number(form.numParcelas),
+        dataVencimento,
+        observacoes: form.observacoes || null,
+        categoriaId: form.categoriaId || null,
+      });
     } else if (isNew && form.modo === 'parcelado') {
       onSave({
         parcelado: true,
@@ -172,7 +186,7 @@ export default function LancamentoModal({
     <div className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-30 px-0 sm:px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
+        className="max-h-[92vh] overflow-y-auto bg-white dark:bg-ink-700 w-full sm:max-w-lg rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
       >
         <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
 
@@ -207,7 +221,10 @@ export default function LancamentoModal({
               <button
                 key={opt.key}
                 type="button"
-                onClick={() => update('modo', opt.key)}
+                onClick={() => {
+                  if (opt.key === 'simulacao') handleTipoChange('despesa');
+                  update('modo', opt.key);
+                }}
                 className={`flex-1 rounded-pill py-1.5 text-xs font-medium transition-colors ${
                   form.modo === opt.key ? 'bg-white dark:bg-ink-700 shadow-card text-ink-900 dark:text-ink-50' : 'text-ink-500'
                 }`}
@@ -245,7 +262,7 @@ export default function LancamentoModal({
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="block text-xs font-medium text-ink-300 mb-1">
-              {isNew && form.modo === 'parcelado' ? 'Valor total' : 'Valor'}
+              {isNew && ['parcelado', 'simulacao'].includes(form.modo) ? 'Valor total' : 'Valor'}
             </label>
             <input
               required
@@ -349,6 +366,45 @@ export default function LancamentoModal({
                 </p>
               )}
             </div>
+          </div>
+        )}
+
+        {isNew && form.modo === 'simulacao' && (
+          <div className="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 dark:border-ink-900 dark:bg-ink-900">
+            <p className="flex items-center gap-2 text-sm font-medium text-indigo-700 dark:text-indigo-200">
+              <ShoppingCart size={16} /> Simulação da compra
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label className="text-xs text-ink-300">
+                Entrada
+                <input type="number" min="0" max={Number(form.valor) || undefined} step="0.01" value={form.entrada} onChange={(e) => update('entrada', e.target.value)} className="money mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2 text-sm dark:border-ink-700 dark:bg-ink-700" />
+              </label>
+              <label className="text-xs text-ink-300">
+                Parcelas
+                <input type="number" min="1" max="60" value={form.numParcelas} onChange={(e) => update('numParcelas', e.target.value)} className="mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2 text-sm dark:border-ink-700 dark:bg-ink-700" />
+              </label>
+            </div>
+            {Number(form.valor) > 0 && (() => {
+              const financiado = Math.max(0, Number(form.valor) - Math.min(Number(form.valor), Number(form.entrada) || 0));
+              const parcelas = Math.max(1, Number(form.numParcelas) || 1);
+              const opcoes = [...new Set([Math.max(1, parcelas - 2), parcelas, parcelas + 2])];
+              return (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {opcoes.map((quantidade) => (
+                    <button
+                      key={quantidade}
+                      type="button"
+                      onClick={() => update('numParcelas', String(quantidade))}
+                      className={`rounded-xl border px-2 py-2 text-center ${quantidade === parcelas ? 'border-ledger-500 bg-white dark:bg-ink-700' : 'border-ink-100 dark:border-ink-700'}`}
+                    >
+                      <span className="block text-xs font-medium">{quantidade}x</span>
+                      <span className="money mt-0.5 block text-[11px] text-ink-300">{formatCurrency(financiado / quantidade)}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+            <p className="mt-2 text-[11px] text-ink-300">Ao salvar, a entrada será lançada agora e o restante será criado nas parcelas escolhidas.</p>
           </div>
         )}
 

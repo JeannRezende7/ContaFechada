@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Pencil, Plus, Sparkles, Trash2, WalletCards, X } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { CalendarRange, Check, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
@@ -8,16 +9,23 @@ import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { getCurrentMonthKey } from '../../../utils/monthKey.js';
+import { formatDateBR } from '../../../utils/formatDate.js';
 import { calcularGastosPorCategoria, calcularSaldoLancamentos, calcularValorLivre, criarSugestao } from '../utils/valorLivre.js';
 
 export default function ValorLivrePage() {
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const uid = user?.uid;
-  const [monthKey, setMonthKey] = useState(getCurrentMonthKey());
+  const requestedMonth = searchParams.get('mes');
+  const [monthKey, setMonthKey] = useState(
+    /^\d{4}-\d{2}$/.test(requestedMonth || '') ? requestedMonth : getCurrentMonthKey()
+  );
+  const [tab, setTab] = useState(
+    searchParams.get('aba') === 'configuracoes' ? 'configuracoes' : 'acompanhamento'
+  );
   const [lancamentos, setLancamentos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [distribuicoes, setDistribuicoes] = useState([]);
-  const [metas, setMetas] = useState([]);
   const [personalizada, setPersonalizada] = useState(false);
   const [valorBaseMensal, setValorBaseMensal] = useState(null);
   const [gastosIniciais, setGastosIniciais] = useState({});
@@ -35,8 +43,7 @@ export default function ValorLivrePage() {
       repositories.lancamentos.listByMonth(uid, monthKey),
       repositories.categorias.ensureDefaults(uid),
       repositories.valorLivre.getDistribuicao(uid, monthKey),
-      repositories.metas.list(uid),
-    ]).then(async ([items, categoryItems, saved, goalItems]) => {
+    ]).then(async ([items, categoryItems, saved]) => {
       const fotografia = await repositories.valorLivre.ensureFotografiaMensal(
         uid, monthKey, calcularSaldoLancamentos(items), calcularGastosPorCategoria(items)
       );
@@ -45,7 +52,6 @@ export default function ValorLivrePage() {
       setCategorias(categoryItems);
       setDistribuicoes(saved.distribuicoes);
       setPersonalizada(saved.personalizada);
-      setMetas(goalItems);
       setValorBaseMensal(fotografia.valorBaseMensal);
       setGastosIniciais(fotografia.gastosIniciais);
       setEditandoValorBase(false);
@@ -62,6 +68,19 @@ export default function ValorLivrePage() {
     () => categorias.filter((categoria) => categoria.tipo === 'despesa'),
     [categorias]
   );
+  const gruposAcompanhamento = useMemo(() => {
+    const despesas = lancamentos.filter((item) => item.tipo === 'despesa');
+    const categoriasVinculadas = new Set(resumo.itens.map((item) => item.categoriaId).filter(Boolean));
+    return {
+      finalidades: resumo.itens.map((item) => ({
+        ...item,
+        lancamentos: despesas.filter((lancamento) => lancamento.categoriaId === item.categoriaId),
+      })),
+      fora: despesas.filter((lancamento) => (
+        !lancamento.categoriaId || !categoriasVinculadas.has(lancamento.categoriaId)
+      )),
+    };
+  }, [lancamentos, resumo.itens]);
 
   function atualizar(id, campo, valor) {
     setDistribuicoes((atual) => atual.map((item) => (
@@ -72,19 +91,12 @@ export default function ValorLivrePage() {
 
   function adicionar() {
     setDistribuicoes((atual) => [...atual, {
-      id: crypto.randomUUID(), nome: '', categoriaId: '', metaId: '', valor: 0, percentual: 0,
+      id: crypto.randomUUID(), nome: '', categoriaId: '', valor: 0, percentual: 0,
     }]);
   }
 
   function gerarSugestao() {
-    const metaPoupanca = metas.find((meta) => {
-      const nome = String(meta.nome || '').toLocaleLowerCase('pt-BR');
-      return ['emergência', 'reserva', 'poupança', 'investimento'].some((termo) => nome.includes(termo));
-    });
-    const sugestao = criarSugestao(resumo.valorLivre, categorias);
-    setDistribuicoes(sugestao.map((item, index) => (
-      index === 2 && metaPoupanca ? { ...item, metaId: metaPoupanca.id } : item
-    )));
+    setDistribuicoes(criarSugestao(resumo.valorLivre, categorias));
     setFeedback('');
   }
 
@@ -137,13 +149,43 @@ export default function ValorLivrePage() {
     }
   }
 
-  if (loading) return <><Topbar title="Valor livre" icon={WalletCards} /><LoadingScreen /></>;
+  if (loading) return <><Topbar title="Planejamento" icon={CalendarRange} /><LoadingScreen /></>;
 
   return (
     <>
-      <Topbar title="Valor livre" icon={WalletCards} />
+      <Topbar title="Planejamento" icon={CalendarRange} />
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
         <MonthNav monthKey={monthKey} onChange={setMonthKey} />
+
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
+          <button type="button" onClick={() => setTab('acompanhamento')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'acompanhamento' ? 'bg-white text-ink-900 shadow-card dark:bg-ink-700 dark:text-ink-50' : 'text-ink-300'}`}>Acompanhamento</button>
+          <button type="button" onClick={() => setTab('configuracoes')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'configuracoes' ? 'bg-white text-ink-900 shadow-card dark:bg-ink-700 dark:text-ink-50' : 'text-ink-300'}`}>Distribuição</button>
+        </div>
+
+        {tab === 'acompanhamento' && (
+          <div className="mt-4 space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Resumo label="Renda do mês" valor={resumo.renda} />
+              <Resumo label="Contas fixas" valor={resumo.contasFixas} tone="text-signal-500" />
+              <Resumo label="Valor livre definido" valor={resumo.valorLivre} tone={resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'} />
+            </div>
+            {gruposAcompanhamento.finalidades.map((grupo) => (
+              <LancamentosGrupo key={grupo.id} grupo={grupo} categorias={categorias} />
+            ))}
+            {gruposAcompanhamento.fora.length > 0 && (
+              <LancamentosGrupo
+                grupo={{ nome: 'Fora da distribuição', lancamentos: gruposAcompanhamento.fora }}
+                categorias={categorias}
+                alerta
+              />
+            )}
+            {gruposAcompanhamento.finalidades.length === 0 && gruposAcompanhamento.fora.length === 0 && (
+              <p className="rounded-card bg-white p-6 text-center text-sm text-ink-300 shadow-card dark:bg-ink-700">Nenhuma finalidade ou gasto para acompanhar neste mês.</p>
+            )}
+          </div>
+        )}
+
+        {tab === 'configuracoes' && (<>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
           <Resumo label="Renda do mês" valor={resumo.renda} />
@@ -227,30 +269,6 @@ export default function ValorLivrePage() {
                   <span className="text-ink-300">Gasto: <b className="money text-ink-500">{formatCurrency(item.gasto)}</b></span>
                   <span className={item.disponivel < 0 ? 'text-signal-500' : 'text-ledger-600'}>Disponível: <b className="money">{formatCurrency(item.disponivel)}</b></span>
                 </div>
-                <label className="mt-3 block text-xs text-ink-300">
-                  Meta vinculada (opcional)
-                  <select
-                    value={item.metaId || ''}
-                    onChange={(e) => atualizar(item.id, 'metaId', e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900 sm:max-w-sm"
-                  >
-                    <option value="">Nenhuma meta</option>
-                    {metas.map((meta) => <option key={meta.id} value={meta.id}>{meta.nome}</option>)}
-                  </select>
-                </label>
-                {item.metaId && (() => {
-                  const meta = metas.find((goal) => goal.id === item.metaId);
-                  if (!meta) return null;
-                  const alvo = Number(meta.valorAlvo) || 0;
-                  const atual = Number(meta.valorAtual) || 0;
-                  const progresso = alvo > 0 ? Math.min(100, Math.round((atual / alvo) * 100)) : 0;
-                  return (
-                    <div className="mt-2 rounded-xl bg-gold-50 px-3 py-2 text-xs text-gold-800 dark:bg-ink-900 dark:text-gold-200">
-                      Meta “{meta.nome}”: <b className="money">{formatCurrency(atual)}</b> de <b className="money">{formatCurrency(alvo)}</b> ({progresso}%)
-                      <span className="block text-[11px] opacity-75">Os lançamentos desta categoria mostram o reservado no mês; o progresso acumulado continua sendo controlado em Metas.</span>
-                    </div>
-                  );
-                })()}
               </div>
             ))}
             {distribuicoes.length === 0 && <p className="rounded-xl bg-ink-50 p-4 text-sm text-ink-300 dark:bg-ink-900">Gere uma sugestão ou adicione sua primeira finalidade.</p>}
@@ -281,8 +299,38 @@ export default function ValorLivrePage() {
           </button>
           {feedback && <p className="mt-2 text-center text-xs text-ink-300" aria-live="polite">{feedback}</p>}
         </section>
+        </>)}
       </div>
     </>
+  );
+}
+
+function LancamentosGrupo({ grupo, categorias, alerta = false }) {
+  const categoriasById = Object.fromEntries(categorias.map((item) => [item.id, item.nome]));
+  const total = grupo.lancamentos.reduce((soma, item) => soma + (Number(item.valor) || 0), 0);
+  return (
+    <section className={`overflow-hidden rounded-card border bg-white shadow-card dark:bg-ink-700 ${alerta ? 'border-signal-200 dark:border-signal-900' : 'border-transparent'}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2 p-4">
+        <div>
+          <h2 className={`text-sm font-semibold ${alerta ? 'text-signal-500' : 'text-ink-900 dark:text-ink-50'}`}>{grupo.nome || 'Sem nome'}</h2>
+          {!alerta && grupo.planejado !== undefined && <p className="mt-0.5 text-xs text-ink-300">Limite {formatCurrency(grupo.planejado)} · disponível {formatCurrency(grupo.disponivel)}</p>}
+        </div>
+        <p className={`money text-sm font-semibold ${total > 0 ? 'text-signal-500' : 'text-ink-300'}`}>{formatCurrency(total)} gastos</p>
+      </div>
+      {grupo.lancamentos.length > 0 ? (
+        <div className="divide-y divide-ink-100 border-t border-ink-100 dark:divide-ink-900 dark:border-ink-900">
+          {grupo.lancamentos.map((item) => (
+            <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm text-ink-700 dark:text-ink-100">{item.descricao}</p>
+                <p className="text-xs text-ink-300">{formatDateBR(item.dataVencimento)} · {item.categoriaId ? categoriasById[item.categoriaId] || 'Categoria removida' : 'Sem categoria'}{item.origemRecorrenciaId ? ' · Conta fixa' : ''}</p>
+              </div>
+              <span className="money shrink-0 text-sm font-medium text-signal-500">-{formatCurrency(item.valor)}</span>
+            </div>
+          ))}
+        </div>
+      ) : <p className="border-t border-ink-100 px-4 py-3 text-xs text-ink-300 dark:border-ink-900">Nenhum lançamento nesta finalidade.</p>}
+    </section>
   );
 }
 

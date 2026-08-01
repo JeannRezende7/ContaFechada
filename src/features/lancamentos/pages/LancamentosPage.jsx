@@ -181,11 +181,37 @@ export default function LancamentosPage() {
   }, [modalOpen]);
 
   async function handleSave(data) {
-    const { recorrente, parcelado, ...rest } = data;
+    const { recorrente, parcelado, simulacao, ...rest } = data;
     if (recorrente) {
       const ativasCount = recorrencias.filter((r) => r.ativo).length;
       if (!guardFeature(FEATURES.RECORRENCIAS, { count: ativasCount })) return;
       await repositories.recorrencias.create(uid, rest);
+    } else if (simulacao) {
+      const total = Math.max(0, Number(rest.valorTotal) || 0);
+      const entrada = Math.min(total, Math.max(0, Number(rest.entrada) || 0));
+      if (entrada > 0) {
+        await repositories.lancamentos.create(uid, {
+          tipo: 'despesa',
+          descricao: `${rest.descricao} (entrada)`,
+          valor: entrada,
+          dataVencimento: rest.dataVencimento,
+          dataPagamento: rest.dataVencimento,
+          status: 'pago',
+          observacoes: rest.observacoes || 'Criado pelo simulador de compra.',
+          categoriaId: rest.categoriaId,
+        });
+      }
+      if (total - entrada > 0) {
+        await repositories.lancamentos.createParcelamento(uid, {
+          tipo: 'despesa',
+          descricao: rest.descricao,
+          valorTotal: total - entrada,
+          numParcelas: Math.max(1, Number(rest.numParcelas) || 1),
+          dataVencimento: rest.dataVencimento,
+          observacoes: rest.observacoes || 'Criado pelo simulador de compra.',
+          categoriaId: rest.categoriaId,
+        });
+      }
     } else if (parcelado) {
       await repositories.lancamentos.createParcelamento(uid, rest);
     } else if (editing && !duplicating) {

@@ -17,7 +17,7 @@ export default function BuscaGlobalPage() {
   const { user } = useAuth();
   const { canUse, openPaywall, loading: premiumLoading } = usePremium();
   const allowed = canUse(FEATURES.BUSCA_GLOBAL);
-  const [data, setData] = useState({ lancamentos: [], categorias: [], metas: [], recorrencias: [] });
+  const [data, setData] = useState({ lancamentos: [], categorias: [], recorrencias: [] });
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [loading, setLoading] = useState(true);
 
@@ -29,10 +29,9 @@ export default function BuscaGlobalPage() {
     Promise.all([
       repositories.lancamentos.listAll(user.uid),
       repositories.categorias.ensureDefaults(user.uid),
-      repositories.metas.list(user.uid),
       repositories.recorrencias.list(user.uid),
-    ]).then(([lancamentos, categorias, metas, recorrencias]) => {
-      setData({ lancamentos, categorias, metas, recorrencias });
+    ]).then(([lancamentos, categorias, recorrencias]) => {
+      setData({ lancamentos, categorias, recorrencias });
       setLoading(false);
     });
   }, [user, allowed, premiumLoading]);
@@ -44,7 +43,6 @@ export default function BuscaGlobalPage() {
       href: `/lancamentos?q=${encodeURIComponent(item.descricao)}`,
     })),
     ...data.categorias.map((item) => ({ ...item, recurso: 'categorias', titulo: item.nome, href: '/categorias' })),
-    ...data.metas.map((item) => ({ ...item, recurso: 'metas', titulo: item.nome, valor: item.valorAtual, href: '/metas' })),
     ...data.recorrencias.map((item) => ({ ...item, recurso: 'recorrencias', titulo: item.descricao, subtitulo: item.ativo ? 'Ativa' : 'Inativa', href: `/lancamentos?q=${encodeURIComponent(item.descricao)}` })),
   ], [data]);
   const results = useMemo(() => filtrarBuscaGlobal(items, filters).slice(0, 100), [items, filters]);
@@ -70,10 +68,10 @@ export default function BuscaGlobalPage() {
     <>
       <Topbar title="Busca global" icon={Search} />
       <div className="mx-auto max-w-4xl p-4 md:p-8">
-        <input autoFocus value={filters.query} onChange={(e) => update('query', e.target.value)} placeholder="Buscar lançamentos, metas, categorias…" className="w-full rounded-pill border border-ink-100 bg-white px-4 py-3 text-sm shadow-card dark:border-ink-700 dark:bg-ink-900" />
+        <input autoFocus value={filters.query} onChange={(e) => update('query', e.target.value)} placeholder="Buscar lançamentos, categorias…" className="w-full rounded-pill border border-ink-100 bg-white px-4 py-3 text-sm shadow-card dark:border-ink-700 dark:bg-ink-900" />
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <select value={filters.recurso} onChange={(e) => update('recurso', e.target.value)} className="rounded-xl border border-ink-100 p-2 text-xs dark:border-ink-700 dark:bg-ink-900">
-            <option value="todos">Todos os recursos</option><option value="lancamentos">Lançamentos</option><option value="parcelamentos">Parcelamentos</option><option value="recorrencias">Recorrências</option><option value="categorias">Categorias</option><option value="metas">Metas</option>
+            <option value="todos">Todos os recursos</option><option value="lancamentos">Lançamentos</option><option value="parcelamentos">Parcelamentos</option><option value="recorrencias">Recorrências</option><option value="categorias">Categorias</option>
           </select>
           <select value={filters.tipo} onChange={(e) => update('tipo', e.target.value)} className="rounded-xl border border-ink-100 p-2 text-xs dark:border-ink-700 dark:bg-ink-900">
             <option value="todos">Receitas e despesas</option><option value="receita">Receitas</option><option value="despesa">Despesas</option>

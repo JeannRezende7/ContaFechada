@@ -74,7 +74,7 @@ export function DailyBudgetCard({ gastoDiario, diasRestantes }) {
   );
 }
 
-export function FreeValueSummary({ resumo, metas = [] }) {
+export function FreeValueSummary({ resumo, monthKey }) {
   if (!resumo) return null;
   const distribuido = Math.max(0, resumo.totalPlanejado);
   const percentual = resumo.valorLivre > 0
@@ -85,7 +85,7 @@ export function FreeValueSummary({ resumo, metas = [] }) {
 
   return (
     <Link
-      to="/valor-livre"
+      to={monthKey ? `/planejamento?mes=${monthKey}` : '/planejamento'}
       className="mt-4 block rounded-card bg-white p-4 shadow-card transition-shadow hover:shadow-card-hover dark:bg-ink-700"
     >
       <div className="flex items-start gap-3">
@@ -151,18 +151,6 @@ export function FreeValueSummary({ resumo, metas = [] }) {
                     <span>Gasto: <b className="money">{formatCurrency(item.gasto)}</b></span>
                     <span>Limite: <b className="money">{formatCurrency(item.planejado)}</b></span>
                   </div>
-                  {item.metaId && (() => {
-                    const meta = metas.find((goal) => goal.id === item.metaId);
-                    if (!meta) return null;
-                    const alvo = Number(meta.valorAlvo) || 0;
-                    const atual = Number(meta.valorAtual) || 0;
-                    const progresso = alvo > 0 ? Math.min(100, Math.round((atual / alvo) * 100)) : 0;
-                    return (
-                      <p className="mt-2 border-t border-ink-100 pt-2 text-[10px] text-gold-700 dark:border-ink-700 dark:text-gold-200">
-                        Meta: {meta.nome} · {progresso}%
-                      </p>
-                    );
-                  })()}
                 </div>
               ))}
               {temGastosFora && (
@@ -348,7 +336,7 @@ export function DashboardLinks() {
         to="/planejamento"
         icon={CalendarRange}
         tone="bg-ledger-50 text-ledger-600"
-        text="Antecipe seu saldo, defina orçamentos e resolva pendências"
+        text="Distribua seu valor livre e acompanhe quanto ainda pode gastar"
       />
       <DashboardLink
         to="/relatorios"
