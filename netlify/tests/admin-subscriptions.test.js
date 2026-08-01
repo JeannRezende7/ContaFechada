@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAdminSubscriptionsHandler } from './admin-subscriptions.js';
+import { createAdminSubscriptionsHandler } from '../functions/admin-subscriptions.js';
 
 function request(method = 'GET', body) {
   return new Request('https://example.test/api/admin-subscriptions', {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createCleanupHandler } from './cleanup-expired-cloud-data.js';
-import { createGooglePlayRtdnHandler } from './google-play-rtdn.js';
+import { createCleanupHandler } from '../functions/cleanup-expired-cloud-data.js';
+import { createGooglePlayRtdnHandler } from '../functions/google-play-rtdn.js';
 import { GooglePlayRtdnError } from '../lib/googlePlayRtdn.js';
 
 afterEach(() => {
