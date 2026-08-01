@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogOut } from 'lucide-react';
+import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogOut } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -10,7 +10,6 @@ import { deleteAccount, signOutUser } from '../../../firebase/auth.js';
 import { clearDeviceData } from '../../../utils/deviceCache.js';
 import { track, EVENTS } from '../../../utils/analytics.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
-import { usePrivacy } from '../../../contexts/PrivacyContext.jsx';
 import {
   clearLocalData,
   exportLocalData,
@@ -25,9 +24,9 @@ export default function OpcoesPage() {
   const confirm = useConfirm();
   const { isPremium } = usePremium();
   const [loading, setLoading] = useState(null);
+  const [activeTab, setActiveTab] = useState('geral');
   const [gestorUsaMovimento, setGestorUsaMovimentoState] = useState(true);
   const [recoverySnapshot, setRecoverySnapshot] = useState(null);
-  const privacy = usePrivacy();
   const importInputRef = useRef(null);
 
   async function handleSignOut() {
@@ -222,15 +221,12 @@ export default function OpcoesPage() {
           </button>
         </section>
 
-        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <span className="w-8 h-8 rounded-full bg-ledger-50 text-ledger-600 flex items-center justify-center">{privacy.enabled ? <EyeOff size={15} /> : <Eye size={15} />}</span>
-            <div><p className="text-sm font-medium">Modo privacidade</p><p className="text-xs text-ink-300">Oculta valores em todas as telas e capturas.</p></div>
-          </div>
-          <button role="switch" aria-checked={privacy.enabled} onClick={privacy.toggle} className={`relative h-6 w-11 rounded-pill ${privacy.enabled ? 'bg-ledger-500' : 'bg-ink-100 dark:bg-ink-900'}`}><span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${privacy.enabled ? 'translate-x-5' : ''}`} /></button>
+        <div className="grid grid-cols-2 gap-1 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
+          <button type="button" onClick={() => setActiveTab('geral')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'geral' ? 'bg-white text-ink-900 shadow-card dark:bg-ink-700 dark:text-ink-50' : 'text-ink-300'}`}>Geral</button>
+          <button type="button" onClick={() => setActiveTab('avancado')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'avancado' ? 'bg-white text-ink-900 shadow-card dark:bg-ink-700 dark:text-ink-50' : 'text-ink-300'}`}>Avançado</button>
         </div>
 
-        {isLocalSession && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        {activeTab === 'avancado' && isLocalSession && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Importar backup local</p>
             <p className="text-xs text-ink-300 mt-0.5">Substitui os dados deste aparelho por um JSON exportado pelo Conta Fechada.</p>
@@ -241,12 +237,12 @@ export default function OpcoesPage() {
           </button>
         </div>}
 
-        {isNativeLocalDatabaseAvailable() && <Link to="/opcoes/diagnostico" className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        {activeTab === 'avancado' && isNativeLocalDatabaseAvailable() && <Link to="/opcoes/diagnostico" className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div><p className="text-sm font-medium">Diagnóstico de sincronização</p><p className="text-xs text-ink-300">Fila, erros, conflitos, métricas e exportação para suporte.</p></div>
           <ChevronRight size={16} className="text-ink-300" />
         </Link>}
 
-        {recoverySnapshot && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
+        {activeTab === 'avancado' && recoverySnapshot && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
           <p className="text-sm font-medium">Snapshot de recuperação</p>
           <p className="mt-0.5 text-xs text-ink-300">Cópia interna mais recente: {recoverySnapshot.key}</p>
           <div className="mt-3 flex gap-2">
@@ -257,11 +253,11 @@ export default function OpcoesPage() {
           </div>
         </div>}
 
-        <button onClick={() => window.dispatchEvent(new Event('contafechada:open-onboarding'))} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 text-left hover:shadow-card-hover">
-          <div className="flex items-start gap-3"><span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><ListRestart size={15} /></span><div><p className="text-sm font-medium">Retomar configuração inicial</p><p className="text-xs text-ink-300">Revise renda, recorrências, categorias e sua primeira meta.</p></div></div>
+        {activeTab === 'geral' && <button onClick={() => window.dispatchEvent(new Event('contafechada:open-onboarding'))} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 text-left hover:shadow-card-hover">
+          <div className="flex items-start gap-3"><span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><ListRestart size={15} /></span><div><p className="text-sm font-medium">Retomar configuração inicial</p><p className="text-xs text-ink-300">Revise sua receita principal, contas fixas e categorias.</p></div></div>
           <ChevronRight size={16} className="text-ink-300" />
-        </button>
-        <Link
+        </button>}
+        {activeTab === 'geral' && <Link
           to="/opcoes/meu-plano"
           onClick={() => !isPremium && track(EVENTS.PREMIUM_CARD_CLICKED, { placement: 'opcoes' })}
           className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 hover:shadow-card-hover hover:-translate-y-px transition-all"
@@ -278,9 +274,9 @@ export default function OpcoesPage() {
             </div>
           </div>
           <ChevronRight size={16} className="text-ink-300 shrink-0" strokeWidth={2} />
-        </Link>
+        </Link>}
 
-        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        <div className={`${activeTab !== 'geral' ? 'hidden' : 'flex'} bg-white dark:bg-ink-700 rounded-card shadow-card p-4 items-center justify-between gap-3`}>
           <div className="min-w-0 flex items-start gap-3">
             <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
               <Landmark size={15} strokeWidth={1.75} />
@@ -311,7 +307,7 @@ export default function OpcoesPage() {
           </button>
         </div>
 
-        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        <div className={`${activeTab !== 'avancado' ? 'hidden' : 'flex'} bg-white dark:bg-ink-700 rounded-card shadow-card p-4 items-center justify-between gap-3`}>
           <div className="min-w-0 flex items-start gap-3">
             <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
               <HardDrive size={15} strokeWidth={1.75} />
@@ -333,10 +329,11 @@ export default function OpcoesPage() {
           </button>
         </div>
 
-        <p className="text-sm text-ink-300">
+        <p className={`${activeTab !== 'avancado' ? 'hidden' : ''} text-sm text-ink-300`}>
           Ações abaixo afetam todos os seus dados e não podem ser desfeitas.
         </p>
 
+        <div className={`${activeTab !== 'avancado' ? 'hidden' : 'flex'} flex-col gap-4`}>
         <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Zerar lançamentos</p>
@@ -422,6 +419,7 @@ export default function OpcoesPage() {
             {loading === 'conta' ? 'Excluindo...' : 'Excluir conta'}
           </button>
         </div>}
+        </div>
 
         <p className="text-center text-xs text-ink-300 mt-8">
           Conta Fechada v{__APP_VERSION__} · desenvolvido por <span className="font-medium text-ink-500">LeliaLabs</span>
