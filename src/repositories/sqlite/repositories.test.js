@@ -71,7 +71,6 @@ describe('repositórios SQLite completos', () => {
     await repositories.configuracoes.completeOnboarding('local', {
       incomeDescription: 'Salário', incomeValue: '5000', incomeDay: '5',
       expenseDescription: 'Internet', expenseValue: '120', expenseDay: '10',
-      goalName: 'Reserva', goalValue: '10000',
     });
 
     expect(await repositories.configuracoes.getOnboardingState('local')).toEqual({
@@ -80,7 +79,7 @@ describe('repositórios SQLite completos', () => {
     });
     expect(await repositories.categorias.list('local')).not.toHaveLength(0);
     expect(await repositories.recorrencias.list('local')).toHaveLength(2);
-    expect(await repositories.metas.list('local')).toHaveLength(1);
+    expect(await repositories.metas.list('local')).toHaveLength(0);
   });
 
   it('mantém configurações mensais e dados do gestor localmente', async () => {

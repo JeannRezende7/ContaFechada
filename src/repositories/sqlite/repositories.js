@@ -333,8 +333,8 @@ export function createSqliteRepositories(driver) {
     },
     skipOnboarding: () => setConfig({ onboardingSkipped: true }),
     async completeOnboarding(uid, data) {
-      const [categories, goals, templates] = await Promise.all([
-        categorias.ensureDefaults(uid), metas.list(uid), recorrencias.list(uid),
+      const [categories, templates] = await Promise.all([
+        categorias.ensureDefaults(uid), recorrencias.list(uid),
       ]);
       const monthKey = getCurrentMonthKey();
       if (Number(data.incomeValue) > 0 && !templates.some((item) => item.tipo === 'receita')) {
@@ -351,12 +351,6 @@ export function createSqliteRepositories(driver) {
           valor: Number(data.expenseValue), diaVencimento: Number(data.expenseDay) || 10,
           mesInicio: monthKey, categoriaId: categories.find((item) => item.tipo === 'despesa')?.id ?? null,
           observacoes: 'Criado no onboarding.',
-        });
-      }
-      if (data.goalName?.trim() && Number(data.goalValue) > 0 && goals.length === 0) {
-        await metas.create(uid, {
-          nome: data.goalName.trim(), valorAlvo: Number(data.goalValue), corKey: 'verde',
-          aporteAutomatico: { tipo: 'nenhum', valor: 0, lembrete: false },
         });
       }
       await setConfig({ onboardingCompleted: true, onboardingSkipped: false, onboardingCompletedAt: new Date().toISOString() });

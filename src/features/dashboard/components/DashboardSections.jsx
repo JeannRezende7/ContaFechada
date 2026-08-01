@@ -95,7 +95,7 @@ export function FreeValueSummary({ resumo, monthKey }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-xs text-ink-300">Valor livre definido no mês</p>
+              <p className="text-xs text-ink-300">Valor livre do mês</p>
               <p className={`money text-xl font-semibold ${resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>
                 {formatCurrency(resumo.valorLivre)}
               </p>
@@ -104,7 +104,7 @@ export function FreeValueSummary({ resumo, monthKey }) {
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
-            <span className="text-ink-300">Renda <b className="money block text-ink-500 dark:text-ink-100">{formatCurrency(resumo.renda)}</b></span>
+            <span className="text-ink-300">Receitas do mês <b className="money block text-ink-500 dark:text-ink-100">{formatCurrency(resumo.renda)}</b></span>
             <span className="text-ink-300">Contas fixas <b className="money block text-ink-500 dark:text-ink-100">{formatCurrency(resumo.contasFixas)}</b></span>
             <span className="col-span-2 text-ink-300 sm:col-span-1">Não distribuído <b className={`money block ${resumo.naoDistribuido < 0 ? 'text-signal-500' : 'text-ink-500 dark:text-ink-100'}`}>{formatCurrency(resumo.naoDistribuido)}</b></span>
           </div>
@@ -138,7 +138,7 @@ export function FreeValueSummary({ resumo, monthKey }) {
                   }`}>
                     {formatCurrency(item.disponivel)}
                   </p>
-                  <p className="text-[10px] text-ink-300">disponível para gastar</p>
+                  <p className="text-[10px] text-ink-300">Disponível</p>
                   <div className="mt-2 h-1.5 overflow-hidden rounded-pill bg-white dark:bg-ink-700">
                     <div
                       className={`h-full rounded-pill ${

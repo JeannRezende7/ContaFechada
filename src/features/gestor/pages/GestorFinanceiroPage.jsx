@@ -172,7 +172,7 @@ export default function GestorFinanceiroPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-4">
-          <IndicatorCard label="Renda do mês" value={analise.rendaMes} tone="positive" />
+          <IndicatorCard label="Receitas do mês" value={analise.rendaMes} tone="positive" />
           <IndicatorCard
             label="Renda comprometida"
             value={analise.despesaComprometida}

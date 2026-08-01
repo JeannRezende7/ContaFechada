@@ -76,4 +76,41 @@ describe('valor livre', () => {
     const sugestao = criarSugestao(1915, []);
     expect(sugestao.map((item) => item.valor)).toEqual([957.5, 574.5, 383]);
   });
+
+  it('mantém o planejamento operacional durante o fluxo completo de lançamento e edição', () => {
+    const fotografia = 1000;
+    const gastosIniciais = { casa: 200 };
+    const distribuicoes = [
+      { id: 'necessidades', categoriaId: 'casa', percentual: 50 },
+      { id: 'lazer', categoriaId: 'lazer', percentual: 30 },
+      { id: 'reserva', categoriaId: 'investimentos', percentual: 20 },
+    ];
+    const base = [
+      { id: 'renda', tipo: 'receita', valor: 2200 },
+      { id: 'fixa', tipo: 'despesa', valor: 1000, origemRecorrenciaId: 'aluguel', categoriaId: 'casa' },
+      { id: 'anterior', tipo: 'despesa', valor: 200, categoriaId: 'casa' },
+    ];
+
+    const depoisDoLancamento = calcularValorLivre([
+      ...base,
+      { id: 'novo', tipo: 'despesa', valor: 100, categoriaId: 'lazer' },
+      { id: 'fora', tipo: 'despesa', valor: 50 },
+    ], distribuicoes, fotografia, gastosIniciais);
+
+    expect(depoisDoLancamento.valorLivre).toBe(1000);
+    expect(depoisDoLancamento.itens.map((item) => item.disponivel)).toEqual([500, 200, 200]);
+    expect(depoisDoLancamento.gastosForaDistribuicao.gastoDepoisDaFotografia).toBe(50);
+    expect(depoisDoLancamento.naoDistribuido).toBe(-50);
+
+    const depoisDaEdicao = calcularValorLivre([
+      ...base,
+      { id: 'novo', tipo: 'despesa', valor: 80, categoriaId: 'casa' },
+      { id: 'fora', tipo: 'despesa', valor: 50, categoriaId: 'lazer' },
+    ], distribuicoes, fotografia, gastosIniciais);
+
+    expect(depoisDaEdicao.valorLivre).toBe(1000);
+    expect(depoisDaEdicao.itens.map((item) => item.disponivel)).toEqual([420, 250, 200]);
+    expect(depoisDaEdicao.gastosForaDistribuicao.gastoDepoisDaFotografia).toBe(0);
+    expect(depoisDaEdicao.naoDistribuido).toBe(0);
+  });
 });

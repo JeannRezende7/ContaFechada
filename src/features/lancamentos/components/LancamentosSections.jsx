@@ -9,7 +9,7 @@ export function LancamentoTabs({ tab, onChange }) {
         Despesas
       </TabButton>
       <TabButton active={tab === 'receita'} onClick={() => onChange('receita')} positive>
-        Renda
+        Receitas
       </TabButton>
     </div>
   );

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CalendarRange, Check, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react';
+import { CalendarRange, Check, ChevronRight, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
+import LancamentoModal from '../../lancamentos/components/LancamentoModal.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { getCurrentMonthKey } from '../../../utils/monthKey.js';
@@ -34,6 +35,8 @@ export default function ValorLivrePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [editingLancamento, setEditingLancamento] = useState(null);
+  const [duplicatingLancamento, setDuplicatingLancamento] = useState(false);
 
   useEffect(() => {
     if (!uid) return;
@@ -87,6 +90,58 @@ export default function ValorLivrePage() {
       item.id === id ? atualizarItem(item, campo, valor, Math.max(0, resumo.valorLivre)) : item
     )));
     setFeedback('');
+  }
+
+  async function recarregarLancamentos() {
+    setLancamentos(await repositories.lancamentos.listByMonth(uid, monthKey));
+  }
+
+  async function salvarLancamento(data) {
+    const { recorrente: _recorrente, parcelado, simulacao, ...rest } = data;
+    if (simulacao) {
+      const total = Math.max(0, Number(rest.valorTotal) || 0);
+      const entrada = Math.min(total, Math.max(0, Number(rest.entrada) || 0));
+      if (entrada > 0) await repositories.lancamentos.create(uid, {
+        tipo: 'despesa', descricao: `${rest.descricao} (entrada)`, valor: entrada,
+        dataVencimento: rest.dataVencimento, dataPagamento: rest.dataVencimento,
+        status: 'pago', observacoes: rest.observacoes || 'Criado pelo simulador de compra.',
+        categoriaId: rest.categoriaId,
+      });
+      if (total - entrada > 0) await repositories.lancamentos.createParcelamento(uid, {
+        tipo: 'despesa', descricao: rest.descricao, valorTotal: total - entrada,
+        numParcelas: Math.max(1, Number(rest.numParcelas) || 1),
+        dataVencimento: rest.dataVencimento,
+        observacoes: rest.observacoes || 'Criado pelo simulador de compra.',
+        categoriaId: rest.categoriaId,
+      });
+    } else if (parcelado) {
+      await repositories.lancamentos.createParcelamento(uid, rest);
+    } else if (editingLancamento && !duplicatingLancamento) {
+      await repositories.lancamentos.update(uid, editingLancamento.id, rest);
+    } else {
+      await repositories.lancamentos.create(uid, rest);
+    }
+    setEditingLancamento(null);
+    setDuplicatingLancamento(false);
+    await recarregarLancamentos();
+  }
+
+  async function excluirLancamento(item, { futureInstallments = false, futureRecorrencia = false, allRecorrencia = false } = {}) {
+    if (futureInstallments && item.parcelamentoId && item.totalParcelas) {
+      const ids = [];
+      for (let n = item.parcelaAtual; n <= item.totalParcelas; n++) ids.push(`${item.parcelamentoId}_${n}`);
+      await repositories.lancamentos.removeByIds(uid, ids);
+    } else if ((futureRecorrencia || allRecorrencia) && item.origemRecorrenciaId) {
+      await repositories.lancamentos.removeGeneratedFromRecorrencia(
+        uid, item.origemRecorrenciaId, futureRecorrencia ? { fromMonthKey: item.mesReferencia } : {}
+      );
+      if (allRecorrencia) await repositories.recorrencias.remove(uid, item.origemRecorrenciaId);
+    } else {
+      await repositories.lancamentos.remove(uid, item.id);
+    }
+    setEditingLancamento(null);
+    setDuplicatingLancamento(false);
+    await recarregarLancamentos();
   }
 
   function adicionar() {
@@ -165,18 +220,19 @@ export default function ValorLivrePage() {
         {tab === 'acompanhamento' && (
           <div className="mt-4 space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Resumo label="Renda do mês" valor={resumo.renda} />
+              <Resumo label="Receitas do mês" valor={resumo.renda} />
               <Resumo label="Contas fixas" valor={resumo.contasFixas} tone="text-signal-500" />
-              <Resumo label="Valor livre definido" valor={resumo.valorLivre} tone={resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'} />
+              <Resumo label="Valor livre do mês" valor={resumo.valorLivre} tone={resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'} />
             </div>
             {gruposAcompanhamento.finalidades.map((grupo) => (
-              <LancamentosGrupo key={grupo.id} grupo={grupo} categorias={categorias} />
+              <LancamentosGrupo key={grupo.id} grupo={grupo} categorias={categorias} onSelect={setEditingLancamento} />
             ))}
             {gruposAcompanhamento.fora.length > 0 && (
               <LancamentosGrupo
                 grupo={{ nome: 'Fora da distribuição', lancamentos: gruposAcompanhamento.fora }}
                 categorias={categorias}
                 alerta
+                onSelect={setEditingLancamento}
               />
             )}
             {gruposAcompanhamento.finalidades.length === 0 && gruposAcompanhamento.fora.length === 0 && (
@@ -188,11 +244,11 @@ export default function ValorLivrePage() {
         {tab === 'configuracoes' && (<>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
-          <Resumo label="Renda do mês" valor={resumo.renda} />
+          <Resumo label="Receitas do mês" valor={resumo.renda} />
           <Resumo label="Contas fixas" valor={resumo.contasFixas} tone="text-signal-500" />
           <div className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-ink-300">Valor livre definido para o mês</p>
+              <p className="text-xs text-ink-300">Valor livre do mês</p>
               {!editandoValorBase && (
                 <button type="button" onClick={iniciarEdicaoValorBase} className="inline-flex items-center gap-1 text-xs font-medium text-ledger-600">
                   <Pencil size={13} /> Editar
@@ -226,7 +282,7 @@ export default function ValorLivrePage() {
             <div>
               <h2 className="text-base font-semibold text-ink-900 dark:text-ink-50">Distribuição do valor livre</h2>
               <p className="mt-1 text-xs text-ink-300">
-                Os percentuais usam o valor livre fixado no início do mês. Novos gastos consomem os limites sem alterar essa base.
+                Os percentuais usam o valor livre do mês. Novos gastos reduzem o disponível sem alterar essa fotografia.
               </p>
             </div>
             <button
@@ -255,7 +311,7 @@ export default function ValorLivrePage() {
                     <div className="mt-1"><CategoriaPicker categorias={categoriasDespesa} value={item.categoriaId} onChange={(value) => atualizar(item.id, 'categoriaId', value)} /></div>
                   </label>
                   <label className="text-xs text-ink-300">
-                    Valor reservado
+                    Limite
                     <input type="number" min="0" step="0.01" value={item.planejado} onChange={(e) => atualizar(item.id, 'valor', e.target.value)} className="money mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
                   </label>
                   <button type="button" aria-label={`Remover ${item.nome || 'item'}`} onClick={() => setDistribuicoes((atual) => atual.filter((row) => row.id !== item.id))} className="mb-1 text-ink-300 hover:text-signal-500">
@@ -292,7 +348,7 @@ export default function ValorLivrePage() {
             Usar uma distribuição diferente somente em {monthKey.split('-').reverse().join('/')}
           </label>
           <p className="mt-3 rounded-xl bg-indigo-50 p-3 text-xs text-indigo-700 dark:bg-ink-900 dark:text-indigo-200">
-            O valor livre é registrado uma vez por mês a partir das entradas menos saídas existentes. Você pode corrigi-lo no campo acima; depois disso, novos lançamentos apenas atualizam os gastos das finalidades.
+            O valor livre do mês é registrado a partir das receitas menos despesas existentes na fotografia mensal. Você pode corrigi-lo acima; depois disso, novos lançamentos apenas atualizam o gasto e o disponível de cada finalidade.
           </p>
           <button type="button" disabled={saving} onClick={salvar} className="mt-4 w-full rounded-pill bg-ledger-500 py-2.5 text-sm font-medium text-white disabled:opacity-50">
             {saving ? 'Salvando…' : personalizada ? 'Salvar somente para este mês' : 'Salvar regra para todos os meses'}
@@ -301,11 +357,32 @@ export default function ValorLivrePage() {
         </section>
         </>)}
       </div>
+      <LancamentoModal
+        open={Boolean(editingLancamento)}
+        initialData={editingLancamento}
+        categorias={categorias}
+        permitirRecorrente={false}
+        onClose={() => { setEditingLancamento(null); setDuplicatingLancamento(false); }}
+        onSave={salvarLancamento}
+        onDelete={excluirLancamento}
+        copyMode={duplicatingLancamento}
+        onDuplicate={(item) => {
+          setEditingLancamento({
+            ...item,
+            descricao: `${item.descricao} (cópia)`,
+            origemRecorrenciaId: null,
+            parcelamentoId: null,
+            parcelaAtual: null,
+            totalParcelas: null,
+          });
+          setDuplicatingLancamento(true);
+        }}
+      />
     </>
   );
 }
 
-function LancamentosGrupo({ grupo, categorias, alerta = false }) {
+function LancamentosGrupo({ grupo, categorias, alerta = false, onSelect }) {
   const categoriasById = Object.fromEntries(categorias.map((item) => [item.id, item.nome]));
   const total = grupo.lancamentos.reduce((soma, item) => soma + (Number(item.valor) || 0), 0);
   return (
@@ -313,20 +390,20 @@ function LancamentosGrupo({ grupo, categorias, alerta = false }) {
       <div className="flex flex-wrap items-center justify-between gap-2 p-4">
         <div>
           <h2 className={`text-sm font-semibold ${alerta ? 'text-signal-500' : 'text-ink-900 dark:text-ink-50'}`}>{grupo.nome || 'Sem nome'}</h2>
-          {!alerta && grupo.planejado !== undefined && <p className="mt-0.5 text-xs text-ink-300">Limite {formatCurrency(grupo.planejado)} · disponível {formatCurrency(grupo.disponivel)}</p>}
+          {!alerta && grupo.planejado !== undefined && <p className="mt-0.5 text-xs text-ink-300">Limite: {formatCurrency(grupo.planejado)} · Disponível: {formatCurrency(grupo.disponivel)}</p>}
         </div>
         <p className={`money text-sm font-semibold ${total > 0 ? 'text-signal-500' : 'text-ink-300'}`}>{formatCurrency(total)} gastos</p>
       </div>
       {grupo.lancamentos.length > 0 ? (
         <div className="divide-y divide-ink-100 border-t border-ink-100 dark:divide-ink-900 dark:border-ink-900">
           {grupo.lancamentos.map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
+            <button type="button" key={item.id} onClick={() => onSelect(item)} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-ink-50 dark:hover:bg-ink-900">
               <div className="min-w-0">
                 <p className="truncate text-sm text-ink-700 dark:text-ink-100">{item.descricao}</p>
                 <p className="text-xs text-ink-300">{formatDateBR(item.dataVencimento)} · {item.categoriaId ? categoriasById[item.categoriaId] || 'Categoria removida' : 'Sem categoria'}{item.origemRecorrenciaId ? ' · Conta fixa' : ''}</p>
               </div>
-              <span className="money shrink-0 text-sm font-medium text-signal-500">-{formatCurrency(item.valor)}</span>
-            </div>
+              <span className="flex shrink-0 items-center gap-2"><span className="money text-sm font-medium text-signal-500">-{formatCurrency(item.valor)}</span><ChevronRight size={15} className="text-ink-300" /></span>
+            </button>
           ))}
         </div>
       ) : <p className="border-t border-ink-100 px-4 py-3 text-xs text-ink-300 dark:border-ink-900">Nenhum lançamento nesta finalidade.</p>}

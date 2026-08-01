@@ -1,6 +1,5 @@
 import { getUserDoc, hasAnyUserDoc, setUserDocMerged } from '../../../firebase/firestore.js';
 import { ensureDefaultCategorias } from '../../categorias/services/categoriasService.js';
-import { createMeta, listMetas } from '../../metas/services/metasService.js';
 import { createRecorrencia, listRecorrencias } from '../../recorrencias/services/recorrenciasService.js';
 import { getCurrentMonthKey } from '../../../utils/monthKey.js';
 
@@ -28,8 +27,8 @@ export function skipOnboarding(uid) {
 }
 
 export async function completeOnboarding(uid, data) {
-  const [categories, existingGoals, existingRecurrences] = await Promise.all([
-    ensureDefaultCategorias(uid), listMetas(uid), listRecorrencias(uid),
+  const [categories, existingRecurrences] = await Promise.all([
+    ensureDefaultCategorias(uid), listRecorrencias(uid),
   ]);
   const monthKey = getCurrentMonthKey();
   const writes = [];
@@ -42,10 +41,6 @@ export async function completeOnboarding(uid, data) {
     tipo: 'despesa', descricao: data.expenseDescription || 'Conta recorrente', valor: Number(data.expenseValue),
     diaVencimento: Number(data.expenseDay) || 10, mesInicio: monthKey,
     categoriaId: categories.find((item) => item.tipo === 'despesa')?.id ?? null, observacoes: 'Criado no onboarding.',
-  }));
-  if (data.goalName?.trim() && Number(data.goalValue) > 0 && existingGoals.length === 0) writes.push(createMeta(uid, {
-    nome: data.goalName.trim(), valorAlvo: Number(data.goalValue), valorAtual: 0, corKey: 'verde',
-    aporteAutomatico: { tipo: 'nenhum', valor: 0, lembrete: false },
   }));
   await Promise.all(writes);
   await setUserDocMerged(uid, 'config', 'geral', {
