@@ -26,7 +26,7 @@ import {
 } from '../components/DashboardSections.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
-import { calcularValorLivre } from '../../valor-livre/utils/valorLivre.js';
+import { calcularGastosPorCategoria, calcularSaldoLancamentos, calcularValorLivre } from '../../valor-livre/utils/valorLivre.js';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -45,7 +45,12 @@ export default function DashboardPage() {
   const [reloadToken, setReloadToken] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [distribuicaoValorLivre, setDistribuicaoValorLivre] = useState([]);
+  const [valorBaseMensal, setValorBaseMensal] = useState(null);
+  const [gastosIniciaisValorLivre, setGastosIniciaisValorLivre] = useState({});
   const [metasValorLivre, setMetasValorLivre] = useState([]);
+  const [dashboardDataMonthKey, setDashboardDataMonthKey] = useState(null);
+  const [fotografiaCarregada, setFotografiaCarregada] = useState(false);
+  const [fotografiaSalva, setFotografiaSalva] = useState(false);
 
   useEffect(() => {
     if (!uid) return;
@@ -55,12 +60,14 @@ export default function DashboardPage() {
     let timeoutId;
     const startedAt = performance.now();
     const memory = getDashboardMemoryCache(uid, monthKey);
+    setDashboardDataMonthKey(null);
 
     if (memory) {
       cachePainted = true;
       setIndicators(memory.indicators);
       setComparacao(memory.comparacao);
       setDashboardItems({ atual: memory.lancamentosAtual || [], anterior: memory.lancamentosAnterior || [] });
+      setDashboardDataMonthKey(monthKey);
       setRefreshing(false);
       return () => {
         cancelled = true;
@@ -83,6 +90,7 @@ export default function DashboardPage() {
           setIndicators(cached.indicators);
           setComparacao(cached.comparacao);
           setDashboardItems({ atual: cached.lancamentosAtual || [], anterior: cached.lancamentosAnterior || [] });
+          setDashboardDataMonthKey(monthKey);
           if (import.meta.env.DEV) {
             console.debug(`[dashboard] cache em ${Math.round(performance.now() - startedAt)}ms`);
           }
@@ -106,6 +114,7 @@ export default function DashboardPage() {
         setIndicators(data.indicators);
         setComparacao(data.comparacao);
         setDashboardItems({ atual: data.lancamentosAtual || [], anterior: data.lancamentosAnterior || [] });
+        setDashboardDataMonthKey(monthKey);
         setRefreshing(false);
         if (import.meta.env.DEV) {
           console.debug(`[dashboard] servidor em ${Math.round(performance.now() - startedAt)}ms`);
@@ -120,6 +129,7 @@ export default function DashboardPage() {
             setIndicators(updated.indicators);
             setComparacao(updated.comparacao);
             setDashboardItems({ atual: updated.lancamentosAtual || [], anterior: updated.lancamentosAnterior || [] });
+            setDashboardDataMonthKey(monthKey);
           })
           .catch((error) => {
             if (import.meta.env.DEV) console.debug('[dashboard] sincronização de recorrências falhou', error);
@@ -156,21 +166,47 @@ export default function DashboardPage() {
     let cancelled = false;
     setDistribuicaoValorLivre([]);
     setMetasValorLivre([]);
-    Promise.all([repositories.valorLivre.getDistribuicaoMensal(uid, monthKey), repositories.metas.list(uid)])
-      .then(([items, goalItems]) => {
+    setValorBaseMensal(null);
+    setGastosIniciaisValorLivre({});
+    setFotografiaCarregada(false);
+    setFotografiaSalva(false);
+    Promise.all([
+      repositories.valorLivre.getDistribuicaoMensal(uid, monthKey),
+      repositories.metas.list(uid),
+      repositories.valorLivre.getFotografiaMensal(uid, monthKey),
+    ])
+      .then(([items, goalItems, fotografia]) => {
         if (!cancelled) {
           setDistribuicaoValorLivre(items);
           setMetasValorLivre(goalItems);
+          setValorBaseMensal(fotografia.valorBaseMensal);
+          setGastosIniciaisValorLivre(fotografia.gastosIniciais);
+          setFotografiaSalva(
+            fotografia.valorBaseMensal !== null && fotografia.gastosIniciaisDefinidos
+          );
+          setFotografiaCarregada(true);
         }
       })
       .catch(() => {
         if (!cancelled) {
           setDistribuicaoValorLivre([]);
           setMetasValorLivre([]);
+          setFotografiaCarregada(true);
         }
       });
     return () => { cancelled = true; };
   }, [uid, monthKey]);
+
+  useEffect(() => {
+    if (!uid || !fotografiaCarregada || fotografiaSalva || dashboardDataMonthKey !== monthKey) return;
+    repositories.valorLivre.ensureFotografiaMensal(
+      uid, monthKey, calcularSaldoLancamentos(dashboardItems.atual),
+      calcularGastosPorCategoria(dashboardItems.atual)
+    ).then((fotografia) => {
+      setValorBaseMensal(fotografia.valorBaseMensal);
+      setGastosIniciaisValorLivre(fotografia.gastosIniciais);
+    });
+  }, [uid, monthKey, dashboardDataMonthKey, dashboardItems.atual, fotografiaCarregada, fotografiaSalva]);
 
   const categoriasById = useMemo(
     () => Object.fromEntries(categorias.map((c) => [c.id, c])),
@@ -206,8 +242,8 @@ export default function DashboardPage() {
   const economiaAtual = indicators ? Math.max(0, indicators.saldoMes) : 0;
   const economiaPct = metaEconomia > 0 ? Math.min(100, Math.round((economiaAtual / metaEconomia) * 100)) : 0;
   const resumoValorLivre = useMemo(
-    () => calcularValorLivre(dashboardItems.atual, distribuicaoValorLivre),
-    [dashboardItems.atual, distribuicaoValorLivre]
+    () => calcularValorLivre(dashboardItems.atual, distribuicaoValorLivre, valorBaseMensal, gastosIniciaisValorLivre),
+    [dashboardItems.atual, distribuicaoValorLivre, valorBaseMensal, gastosIniciaisValorLivre]
   );
 
   if (loadError && !indicators) {

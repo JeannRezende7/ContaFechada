@@ -63,8 +63,15 @@
  * @property {(meta: object, aporteMensal: number, monthKey: string) => string|null} preverConclusao
  *
  * @typedef {Object} ValorLivreRepository
+ * @property {(uid: string, monthKey: string) => Promise<{distribuicoes: object[], personalizada: boolean}>} getDistribuicao
  * @property {(uid: string, monthKey: string) => Promise<object[]>} getDistribuicaoMensal
  * @property {(uid: string, monthKey: string, distribuicoes: object[]) => Promise<void>} setDistribuicaoMensal
+ * @property {(uid: string, monthKey: string, distribuicoes: object[], personalizada?: boolean) => Promise<void>} setDistribuicao
+ * @property {(uid: string, monthKey: string) => Promise<number|null>} getValorBaseMensal
+ * @property {(uid: string, monthKey: string, valor: number) => Promise<number>} setValorBaseMensal
+ * @property {(uid: string, monthKey: string, valorCalculado: number) => Promise<number>} ensureValorBaseMensal
+ * @property {(uid: string, monthKey: string) => Promise<{valorBaseMensal: number|null, gastosIniciais: object}>} getFotografiaMensal
+ * @property {(uid: string, monthKey: string, valorCalculado: number, gastosIniciais: object) => Promise<{valorBaseMensal: number, gastosIniciais: object}>} ensureFotografiaMensal
  *
  * @typedef {Object} PlanejamentoRepository
  * @property {(uid: string, monthKey: string) => Promise<{ saldoInicial: number, orcamentos: object }>} getMensal

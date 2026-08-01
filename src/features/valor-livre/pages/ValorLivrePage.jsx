@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Sparkles, Trash2, WalletCards } from 'lucide-react';
+import { Check, Pencil, Plus, Sparkles, Trash2, WalletCards, X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
@@ -8,7 +8,7 @@ import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { getCurrentMonthKey } from '../../../utils/monthKey.js';
-import { calcularValorLivre, criarSugestao } from '../utils/valorLivre.js';
+import { calcularGastosPorCategoria, calcularSaldoLancamentos, calcularValorLivre, criarSugestao } from '../utils/valorLivre.js';
 
 export default function ValorLivrePage() {
   const { user } = useAuth();
@@ -18,6 +18,11 @@ export default function ValorLivrePage() {
   const [categorias, setCategorias] = useState([]);
   const [distribuicoes, setDistribuicoes] = useState([]);
   const [metas, setMetas] = useState([]);
+  const [personalizada, setPersonalizada] = useState(false);
+  const [valorBaseMensal, setValorBaseMensal] = useState(null);
+  const [gastosIniciais, setGastosIniciais] = useState({});
+  const [editandoValorBase, setEditandoValorBase] = useState(false);
+  const [valorBaseRascunho, setValorBaseRascunho] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -29,22 +34,29 @@ export default function ValorLivrePage() {
     Promise.all([
       repositories.lancamentos.listByMonth(uid, monthKey),
       repositories.categorias.ensureDefaults(uid),
-      repositories.valorLivre.getDistribuicaoMensal(uid, monthKey),
+      repositories.valorLivre.getDistribuicao(uid, monthKey),
       repositories.metas.list(uid),
-    ]).then(([items, categoryItems, saved, goalItems]) => {
+    ]).then(async ([items, categoryItems, saved, goalItems]) => {
+      const fotografia = await repositories.valorLivre.ensureFotografiaMensal(
+        uid, monthKey, calcularSaldoLancamentos(items), calcularGastosPorCategoria(items)
+      );
       if (cancelled) return;
       setLancamentos(items);
       setCategorias(categoryItems);
-      setDistribuicoes(saved);
+      setDistribuicoes(saved.distribuicoes);
+      setPersonalizada(saved.personalizada);
       setMetas(goalItems);
+      setValorBaseMensal(fotografia.valorBaseMensal);
+      setGastosIniciais(fotografia.gastosIniciais);
+      setEditandoValorBase(false);
       setLoading(false);
     });
     return () => { cancelled = true; };
   }, [uid, monthKey]);
 
   const resumo = useMemo(
-    () => calcularValorLivre(lancamentos, distribuicoes),
-    [lancamentos, distribuicoes]
+    () => calcularValorLivre(lancamentos, distribuicoes, valorBaseMensal, gastosIniciais),
+    [lancamentos, distribuicoes, valorBaseMensal, gastosIniciais]
   );
   const categoriasDespesa = useMemo(
     () => categorias.filter((categoria) => categoria.tipo === 'despesa'),
@@ -53,7 +65,7 @@ export default function ValorLivrePage() {
 
   function atualizar(id, campo, valor) {
     setDistribuicoes((atual) => atual.map((item) => (
-      item.id === id ? atualizarItem(item, campo, valor, resumo.valorLivre) : item
+      item.id === id ? atualizarItem(item, campo, valor, Math.max(0, resumo.valorLivre)) : item
     )));
     setFeedback('');
   }
@@ -76,12 +88,48 @@ export default function ValorLivrePage() {
     setFeedback('');
   }
 
+  function iniciarEdicaoValorBase() {
+    setValorBaseRascunho(String(valorBaseMensal ?? 0).replace('.', ','));
+    setEditandoValorBase(true);
+    setFeedback('');
+  }
+
+  async function confirmarValorBase() {
+    const texto = String(valorBaseRascunho).trim();
+    const numero = Number(texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto);
+    if (!Number.isFinite(numero)) {
+      setFeedback('Informe um valor livre válido.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const salvo = await repositories.valorLivre.setValorBaseMensal(uid, monthKey, numero);
+      setValorBaseMensal(salvo);
+      setEditandoValorBase(false);
+      setFeedback('Valor livre do mês atualizado.');
+    } catch {
+      setFeedback('Não foi possível atualizar o valor livre. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function salvar() {
     setSaving(true);
     setFeedback('');
     try {
-      await repositories.valorLivre.setDistribuicaoMensal(uid, monthKey, distribuicoes);
-      setFeedback('Distribuição salva para este mês.');
+      const distribuicoesAtualizadas = resumo.itens.map((item) => ({
+        ...item,
+        valor: item.planejado,
+      }));
+      await Promise.all([
+        repositories.valorLivre.setDistribuicao(uid, monthKey, distribuicoesAtualizadas, personalizada),
+        repositories.valorLivre.setValorBaseMensal(uid, monthKey, valorBaseMensal),
+      ]);
+      setDistribuicoes(distribuicoesAtualizadas);
+      setFeedback(personalizada
+        ? 'Distribuição exclusiva deste mês salva.'
+        : 'Regra padrão salva e atualizada para todos os meses.');
     } catch {
       setFeedback('Não foi possível salvar. Tente novamente.');
     } finally {
@@ -100,7 +148,35 @@ export default function ValorLivrePage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
           <Resumo label="Renda do mês" valor={resumo.renda} />
           <Resumo label="Contas fixas" valor={resumo.contasFixas} tone="text-signal-500" />
-          <Resumo label="Valor livre" valor={resumo.valorLivre} tone={resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'} />
+          <div className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-ink-300">Valor livre definido para o mês</p>
+              {!editandoValorBase && (
+                <button type="button" onClick={iniciarEdicaoValorBase} className="inline-flex items-center gap-1 text-xs font-medium text-ledger-600">
+                  <Pencil size={13} /> Editar
+                </button>
+              )}
+            </div>
+            {editandoValorBase ? (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="money text-sm text-ink-300">R$</span>
+                <input
+                  autoFocus
+                  inputMode="decimal"
+                  value={valorBaseRascunho}
+                  onChange={(event) => setValorBaseRascunho(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === 'Enter') confirmarValorBase(); }}
+                  aria-label="Novo valor livre do mês"
+                  className="money min-w-0 flex-1 rounded-xl border border-ink-100 bg-white px-3 py-2 text-base dark:border-ink-900 dark:bg-ink-900"
+                />
+                <button type="button" disabled={saving} onClick={confirmarValorBase} aria-label="Salvar valor livre" className="rounded-full bg-ledger-500 p-2 text-white disabled:opacity-50"><Check size={16} /></button>
+                <button type="button" onClick={() => setEditandoValorBase(false)} aria-label="Cancelar edição" className="rounded-full bg-ink-50 p-2 text-ink-400 dark:bg-ink-900"><X size={16} /></button>
+              </div>
+            ) : (
+              <p className={`money mt-1 text-xl font-semibold ${resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>{formatCurrency(resumo.valorLivre)}</p>
+            )}
+            <p className="mt-1 text-[11px] text-ink-300">Fotografia mensal; permanece fixa até você editar.</p>
+          </div>
         </div>
 
         <section className="mt-4 rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
@@ -108,7 +184,7 @@ export default function ValorLivrePage() {
             <div>
               <h2 className="text-base font-semibold text-ink-900 dark:text-ink-50">Distribuição do valor livre</h2>
               <p className="mt-1 text-xs text-ink-300">
-                Renda menos lançamentos de contas recorrentes. Gastos são abatidos automaticamente pela categoria vinculada.
+                Os percentuais usam o valor livre fixado no início do mês. Novos gastos consomem os limites sem alterar essa base.
               </p>
             </div>
             <button
@@ -133,12 +209,12 @@ export default function ValorLivrePage() {
                     <input type="number" min="0" step="1" value={item.percentual ?? 0} onChange={(e) => atualizar(item.id, 'percentual', e.target.value)} className="money mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
                   </label>
                   <label className="text-xs text-ink-300">
-                    Categoria que abate
+                    Categoria para acompanhar
                     <div className="mt-1"><CategoriaPicker categorias={categoriasDespesa} value={item.categoriaId} onChange={(value) => atualizar(item.id, 'categoriaId', value)} /></div>
                   </label>
                   <label className="text-xs text-ink-300">
                     Valor reservado
-                    <input type="number" min="0" step="0.01" value={item.valor} onChange={(e) => atualizar(item.id, 'valor', e.target.value)} className="money mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
+                    <input type="number" min="0" step="0.01" value={item.planejado} onChange={(e) => atualizar(item.id, 'valor', e.target.value)} className="money mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
                   </label>
                   <button type="button" aria-label={`Remover ${item.nome || 'item'}`} onClick={() => setDistribuicoes((atual) => atual.filter((row) => row.id !== item.id))} className="mb-1 text-ink-300 hover:text-signal-500">
                     <Trash2 size={17} />
@@ -189,11 +265,19 @@ export default function ValorLivrePage() {
               {resumo.naoDistribuido < 0 && <p className="text-xs text-signal-500">A distribuição ultrapassa o valor livre.</p>}
             </div>
           </div>
+          <label className="mt-4 flex items-center gap-2 rounded-xl bg-ink-50 px-3 py-2.5 text-sm text-ink-500 dark:bg-ink-900 dark:text-ink-100">
+            <input
+              type="checkbox"
+              checked={personalizada}
+              onChange={(event) => { setPersonalizada(event.target.checked); setFeedback(''); }}
+            />
+            Usar uma distribuição diferente somente em {monthKey.split('-').reverse().join('/')}
+          </label>
           <p className="mt-3 rounded-xl bg-indigo-50 p-3 text-xs text-indigo-700 dark:bg-ink-900 dark:text-indigo-200">
-            Sugestão adaptada ao valor livre: 50% para necessidades do mês, 30% para lazer e desejos e 20% para poupança ou emergência. As contas fixas já foram retiradas antes deste cálculo. Ajuste os percentuais à sua realidade.
+            O valor livre é registrado uma vez por mês a partir das entradas menos saídas existentes. Você pode corrigi-lo no campo acima; depois disso, novos lançamentos apenas atualizam os gastos das finalidades.
           </p>
           <button type="button" disabled={saving} onClick={salvar} className="mt-4 w-full rounded-pill bg-ledger-500 py-2.5 text-sm font-medium text-white disabled:opacity-50">
-            {saving ? 'Salvando…' : 'Salvar distribuição do mês'}
+            {saving ? 'Salvando…' : personalizada ? 'Salvar somente para este mês' : 'Salvar regra para todos os meses'}
           </button>
           {feedback && <p className="mt-2 text-center text-xs text-ink-300" aria-live="polite">{feedback}</p>}
         </section>

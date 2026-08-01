@@ -179,9 +179,65 @@ export function createSqliteRepositories(driver) {
   };
 
   const valorLivre = {
-    getDistribuicaoMensal: async (_uid, monthKey) => (await store.get('valorLivre', monthKey))?.distribuicoes ?? [],
-    setDistribuicaoMensal: (_uid, monthKey, distribuicoes) =>
-      store.put('valorLivre', { distribuicoes }, { id: monthKey, operation: 'update' }),
+    async getDistribuicao(_uid, monthKey) {
+      const mensal = await store.get('valorLivre', monthKey);
+      if (mensal?.personalizada) return { distribuicoes: mensal.distribuicoes ?? [], personalizada: true };
+      const padrao = await store.get('valorLivre', '_padrao');
+      if (padrao?.distribuicoes?.length) return { distribuicoes: padrao.distribuicoes, personalizada: false };
+      const legado = (await store.list('valorLivre'))
+        .filter((item) => /^\d{4}-\d{2}$/.test(item.id) && item.distribuicoes?.length)
+        .sort((a, b) => b.id.localeCompare(a.id))[0];
+      return { distribuicoes: legado?.distribuicoes ?? [], personalizada: false };
+    },
+    async getDistribuicaoMensal(uid, monthKey) {
+      return (await this.getDistribuicao(uid, monthKey)).distribuicoes;
+    },
+    setDistribuicao(_uid, monthKey, distribuicoes, personalizada = false) {
+      const id = personalizada ? monthKey : '_padrao';
+      return store.put('valorLivre', { distribuicoes, personalizada }, { id, operation: 'update' });
+    },
+    setDistribuicaoMensal(_uid, _monthKey, distribuicoes) {
+      return store.put('valorLivre', { distribuicoes, personalizada: false }, { id: '_padrao', operation: 'update' });
+    },
+    async getValorBaseMensal(_uid, monthKey) {
+      const item = await store.get('valorLivre', monthKey);
+      return item?.valorBaseMensal !== null && item?.valorBaseMensal !== undefined
+        && Number.isFinite(Number(item.valorBaseMensal)) ? Number(item.valorBaseMensal) : null;
+    },
+    async setValorBaseMensal(_uid, monthKey, valor) {
+      const current = await store.get('valorLivre', monthKey) ?? {};
+      const valorBaseMensal = Math.round((Number(valor) || 0) * 100) / 100;
+      await store.put('valorLivre', { ...current, valorBaseMensal, valorBaseDefinidoEm: new Date().toISOString() }, { id: monthKey, operation: 'update' });
+      return valorBaseMensal;
+    },
+    async ensureValorBaseMensal(uid, monthKey, valorCalculado) {
+      const existente = await this.getValorBaseMensal(uid, monthKey);
+      if (existente !== null) return existente;
+      if (monthKey > getCurrentMonthKey()) return Math.round((Number(valorCalculado) || 0) * 100) / 100;
+      return this.setValorBaseMensal(uid, monthKey, valorCalculado);
+    },
+    async getFotografiaMensal(uid, monthKey) {
+      const item = await store.get('valorLivre', monthKey);
+      const gastosIniciaisDefinidos = Boolean(item?.gastosIniciais && typeof item.gastosIniciais === 'object');
+      return {
+        valorBaseMensal: await this.getValorBaseMensal(uid, monthKey),
+        gastosIniciais: gastosIniciaisDefinidos ? item.gastosIniciais : {},
+        gastosIniciaisDefinidos,
+      };
+    },
+    async ensureFotografiaMensal(uid, monthKey, valorCalculado, gastosIniciais = {}) {
+      const existente = await this.getFotografiaMensal(uid, monthKey);
+      if (existente.valorBaseMensal !== null && existente.gastosIniciaisDefinidos) return existente;
+      if (existente.valorBaseMensal !== null) {
+        const current = await store.get('valorLivre', monthKey) ?? {};
+        await store.put('valorLivre', { ...current, gastosIniciais }, { id: monthKey, operation: 'update' });
+        return { ...existente, gastosIniciais, gastosIniciaisDefinidos: true };
+      }
+      const valorBaseMensal = Math.round((Number(valorCalculado) || 0) * 100) / 100;
+      if (monthKey > getCurrentMonthKey()) return { valorBaseMensal, gastosIniciais, gastosIniciaisDefinidos: true };
+      await store.put('valorLivre', { valorBaseMensal, gastosIniciais, valorBaseDefinidoEm: new Date().toISOString() }, { id: monthKey, operation: 'update' });
+      return { valorBaseMensal, gastosIniciais, gastosIniciaisDefinidos: true };
+    },
   };
 
   const planejamento = {

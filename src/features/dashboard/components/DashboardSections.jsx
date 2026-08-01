@@ -80,6 +80,8 @@ export function FreeValueSummary({ resumo, metas = [] }) {
   const percentual = resumo.valorLivre > 0
     ? Math.min(100, Math.round((distribuido / resumo.valorLivre) * 100))
     : 0;
+  const gastosFora = resumo.gastosForaDistribuicao;
+  const temGastosFora = gastosFora?.gasto > 0;
 
   return (
     <Link
@@ -93,7 +95,7 @@ export function FreeValueSummary({ resumo, metas = [] }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-xs text-ink-300">Valor livre do mês</p>
+              <p className="text-xs text-ink-300">Valor livre definido no mês</p>
               <p className={`money text-xl font-semibold ${resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>
                 {formatCurrency(resumo.valorLivre)}
               </p>
@@ -116,7 +118,7 @@ export function FreeValueSummary({ resumo, metas = [] }) {
             </div>
           )}
 
-          {resumo.itens.length > 0 && (
+          {(resumo.itens.length > 0 || temGastosFora) && (
             <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {resumo.itens.map((item) => (
                 <div
@@ -163,6 +165,21 @@ export function FreeValueSummary({ resumo, metas = [] }) {
                   })()}
                 </div>
               ))}
+              {temGastosFora && (
+                <div className="rounded-xl border border-signal-200 bg-signal-50/60 p-3 dark:border-signal-900/50 dark:bg-ink-900">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xs font-medium text-ink-700 dark:text-ink-100">Fora da distribuição</p>
+                    <span className="text-[10px] text-signal-500">Atenção</span>
+                  </div>
+                  <p className="money mt-1 text-base font-semibold text-signal-500">
+                    -{formatCurrency(gastosFora.gasto)}
+                  </p>
+                  <p className="text-[10px] text-ink-300">gasto em outra categoria ou sem categoria</p>
+                  <div className="mt-2 border-t border-signal-100 pt-2 text-[10px] text-ink-300 dark:border-ink-700">
+                    Após a fotografia: <b className="money text-signal-500">{formatCurrency(gastosFora.gastoDepoisDaFotografia)}</b>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
