@@ -222,7 +222,7 @@ export default function GestorFinanceiroPage() {
               onClick={() => setAbaDetalhe('compromissos')}
               className={`flex-1 rounded-pill py-1.5 text-xs font-medium transition-colors ${
                 abaDetalhe === 'compromissos'
-                  ? 'bg-white dark:bg-ink-700 shadow-card text-ink-900 dark:text-ink-50'
+                  ? 'bg-white dark:bg-ledger-500 shadow-card text-ink-900 dark:text-white'
                   : 'text-ink-500'
               }`}
             >
@@ -232,7 +232,7 @@ export default function GestorFinanceiroPage() {
               onClick={() => setAbaDetalhe('lancamentos')}
               className={`flex-1 rounded-pill py-1.5 text-xs font-medium transition-colors ${
                 abaDetalhe === 'lancamentos'
-                  ? 'bg-white dark:bg-ink-700 shadow-card text-ink-900 dark:text-ink-50'
+                  ? 'bg-white dark:bg-ledger-500 shadow-card text-ink-900 dark:text-white'
                   : 'text-ink-500'
               }`}
             >

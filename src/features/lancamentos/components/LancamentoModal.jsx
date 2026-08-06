@@ -226,7 +226,7 @@ export default function LancamentoModal({
                   update('modo', opt.key);
                 }}
                 className={`flex-1 rounded-pill py-1.5 text-xs font-medium transition-colors ${
-                  form.modo === opt.key ? 'bg-white dark:bg-ink-700 shadow-card text-ink-900 dark:text-ink-50' : 'text-ink-500'
+                  form.modo === opt.key ? 'bg-white dark:bg-ledger-500 shadow-card text-ink-900 dark:text-white' : 'text-ink-500 dark:text-ink-100'
                 }`}
               >
                 {opt.label}

@@ -18,7 +18,7 @@ export function LancamentoTabs({ tab, onChange }) {
 function TabButton({ active, positive = false, onClick, children }) {
   const activeClass = positive
     ? 'bg-ledger-500 text-white shadow-card'
-    : 'bg-ink-900 text-white shadow-card dark:bg-ink-50 dark:text-ink-900';
+    : 'bg-ink-900 text-white shadow-card dark:bg-ledger-500 dark:text-white';
   return (
     <button
       type="button"

@@ -213,8 +213,8 @@ export default function ValorLivrePage() {
         <MonthNav monthKey={monthKey} onChange={setMonthKey} />
 
         <div className="mt-4 grid grid-cols-2 gap-2 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
-          <button type="button" onClick={() => setTab('acompanhamento')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'acompanhamento' ? 'bg-white text-ink-900 shadow-card dark:bg-ink-700 dark:text-ink-50' : 'text-ink-300'}`}>Acompanhamento</button>
-          <button type="button" onClick={() => setTab('configuracoes')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'configuracoes' ? 'bg-white text-ink-900 shadow-card dark:bg-ink-700 dark:text-ink-50' : 'text-ink-300'}`}>Distribuição</button>
+          <button type="button" onClick={() => setTab('acompanhamento')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'acompanhamento' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Acompanhamento</button>
+          <button type="button" onClick={() => setTab('configuracoes')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'configuracoes' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Distribuição</button>
         </div>
 
         {tab === 'acompanhamento' && (
