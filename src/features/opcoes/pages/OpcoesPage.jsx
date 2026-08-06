@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogOut } from 'lucide-react';
+import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogOut, MonitorDown } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -9,6 +9,7 @@ import { exportUserData, deleteAllUserData, downloadJson } from '../services/dat
 import { deleteAccount, signOutUser } from '../../../firebase/auth.js';
 import { clearDeviceData } from '../../../utils/deviceCache.js';
 import { track, EVENTS } from '../../../utils/analytics.js';
+import { getPwaInstallState, requestPwaInstall, subscribeToPwaInstall } from '../../../utils/pwaInstall.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import {
   clearLocalData,
@@ -27,6 +28,7 @@ export default function OpcoesPage() {
   const [activeTab, setActiveTab] = useState('geral');
   const [gestorUsaMovimento, setGestorUsaMovimentoState] = useState(true);
   const [recoverySnapshot, setRecoverySnapshot] = useState(null);
+  const [installState, setInstallState] = useState(getPwaInstallState);
   const importInputRef = useRef(null);
 
   async function handleSignOut() {
@@ -51,6 +53,18 @@ export default function OpcoesPage() {
   useEffect(() => {
     if (!isPremium) track(EVENTS.PREMIUM_CARD_VIEWED, { placement: 'opcoes' });
   }, [isPremium]);
+
+  useEffect(() => subscribeToPwaInstall(setInstallState), []);
+
+  async function handleInstallApp() {
+    const result = await requestPwaInstall();
+    if (result.outcome !== 'unavailable') return;
+
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    await confirm(isIos
+      ? 'Para instalar no iPhone ou iPad, abra esta página no Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.'
+      : 'O navegador ainda não liberou a instalação automática. Abra o menu do navegador e escolha “Instalar app” ou “Adicionar à tela inicial”. Se a opção não aparecer, atualize a página e tente novamente.');
+  }
 
   async function handleToggleGestorUsaMovimento() {
     const novoValor = !gestorUsaMovimento;
@@ -257,6 +271,24 @@ export default function OpcoesPage() {
           <div className="flex items-start gap-3"><span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><ListRestart size={15} /></span><div><p className="text-sm font-medium">Retomar configuração inicial</p><p className="text-xs text-ink-300">Revise sua receita principal, contas fixas e categorias.</p></div></div>
           <ChevronRight size={16} className="text-ink-300" />
         </button>}
+        {activeTab === 'geral' && installState.isBrowser && !installState.isInstalled && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex items-start gap-3">
+            <span className="w-8 h-8 rounded-full bg-ledger-50 text-ledger-600 flex items-center justify-center shrink-0 mt-0.5">
+              <MonitorDown size={15} strokeWidth={1.75} />
+            </span>
+            <div>
+              <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Instalar Conta Fechada</p>
+              <p className="text-xs text-ink-300 mt-0.5">Use como aplicativo e acesse com mais facilidade pelo seu dispositivo.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleInstallApp}
+            className="shrink-0 rounded-pill bg-ledger-500 px-3.5 py-2 text-sm font-medium text-white hover:bg-ledger-600 transition-colors"
+          >
+            Instalar
+          </button>
+        </div>}
         {activeTab === 'geral' && <Link
           to="/opcoes/meu-plano"
           onClick={() => !isPremium && track(EVENTS.PREMIUM_CARD_CLICKED, { placement: 'opcoes' })}

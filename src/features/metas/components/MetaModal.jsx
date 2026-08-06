@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { COLOR_MAP } from '../../categorias/colorMap.js';
+import { useModalHistory } from '../../../hooks/useModalHistory.js';
 
 const EMPTY = { nome: '', valorAlvo: '', valorAtual: '', corKey: 'azul', aporteTipo: 'nenhum', aporteValor: '', lembreteAporte: false };
 
 /** Create/edit modal for a Meta Financeira (named savings goal with a progress bar). */
 export default function MetaModal({ open, meta, onClose, onSave, onDelete }) {
+  useModalHistory(open, onClose);
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
 

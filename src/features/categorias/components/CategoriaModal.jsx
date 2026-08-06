@@ -4,6 +4,7 @@ import { COLOR_MAP } from '../colorMap.js';
 import { ICON_MAP } from '../iconMap.js';
 import { FEATURES } from '../../../config/premium.js';
 import UsageIndicator from '../../premium/components/UsageIndicator.jsx';
+import { useModalHistory } from '../../../hooks/useModalHistory.js';
 
 const EMPTY = { nome: '', corKey: 'cinza', icone: 'tag' };
 
@@ -11,6 +12,7 @@ const EMPTY = { nome: '', corKey: 'cinza', icone: 'tag' };
 export default function CategoriaModal({ open, tipo, customCount, initialData = null, onClose, onSave }) {
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
+  useModalHistory(open, onClose);
 
   useEffect(() => {
     if (open) {

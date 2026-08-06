@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
 import { getCurrentMonthKey } from '../../../utils/monthKey.js';
+import { useModalHistory } from '../../../hooks/useModalHistory.js';
 
 const EMPTY = { descricao: '', valor: '', diaVencimento: '', categoriaId: '', observacoes: '' };
 
 /** Edits a recorrência template. Already-generated months don't change retroactively. */
 export default function RecorrenciaModal({ open, recorrencia, categorias = [], onClose, onSave, onDelete }) {
+  useModalHistory(open, onClose);
   const [form, setForm] = useState(EMPTY);
   const [pendingGeneratedUpdate, setPendingGeneratedUpdate] = useState(null);
   const [fromMonthKey, setFromMonthKey] = useState(getCurrentMonthKey());

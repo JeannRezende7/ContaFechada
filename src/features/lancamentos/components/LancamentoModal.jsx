@@ -4,6 +4,7 @@ import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { getTodayISODate, shiftISODate, isSaneISODate } from '../../../utils/formatDate.js';
 import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
+import { useModalHistory } from '../../../hooks/useModalHistory.js';
 
 const EMPTY = {
   tipo: 'despesa',
@@ -47,6 +48,7 @@ export default function LancamentoModal({
   onDuplicate,
   copyMode = false,
 }) {
+  useModalHistory(open, onClose);
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
   const isNew = !initialData || copyMode;

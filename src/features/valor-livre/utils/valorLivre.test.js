@@ -32,11 +32,11 @@ describe('valor livre', () => {
     ], -374, { casa: 5536 });
 
     expect(resultado.valorLivre).toBe(-374);
-    expect(resultado.itens.map((item) => item.disponivel)).toEqual([0, 0, 0]);
+    expect(resultado.itens.map((item) => item.disponivel)).toEqual([-5536, 0, 0]);
     expect(resultado.naoDistribuido).toBe(-374);
   });
 
-  it('mantém fixa a fotografia mensal enquanto os gastos consomem os limites', () => {
+  it('considera todos os gastos do mês no disponível, inclusive os anteriores à fotografia', () => {
     const resultado = calcularValorLivre([
       { tipo: 'receita', valor: 5260 },
       { tipo: 'despesa', valor: 2045, origemRecorrenciaId: 'fixas' },
@@ -49,7 +49,7 @@ describe('valor livre', () => {
 
     expect(resultado.valorLivre).toBe(848);
     expect(resultado.saldoAtual).toBe(848);
-    expect(resultado.itens.map((item) => item.disponivel)).toEqual([424, 254.4, 169.6]);
+    expect(resultado.itens.map((item) => item.disponivel)).toEqual([-1943, 254.4, 169.6]);
     expect(resultado.naoDistribuido).toBe(0);
   });
 
@@ -98,7 +98,7 @@ describe('valor livre', () => {
     ], distribuicoes, fotografia, gastosIniciais);
 
     expect(depoisDoLancamento.valorLivre).toBe(1000);
-    expect(depoisDoLancamento.itens.map((item) => item.disponivel)).toEqual([500, 200, 200]);
+    expect(depoisDoLancamento.itens.map((item) => item.disponivel)).toEqual([300, 200, 200]);
     expect(depoisDoLancamento.gastosForaDistribuicao.gastoDepoisDaFotografia).toBe(50);
     expect(depoisDoLancamento.naoDistribuido).toBe(-50);
 
@@ -109,7 +109,7 @@ describe('valor livre', () => {
     ], distribuicoes, fotografia, gastosIniciais);
 
     expect(depoisDaEdicao.valorLivre).toBe(1000);
-    expect(depoisDaEdicao.itens.map((item) => item.disponivel)).toEqual([420, 250, 200]);
+    expect(depoisDaEdicao.itens.map((item) => item.disponivel)).toEqual([220, 250, 200]);
     expect(depoisDaEdicao.gastosForaDistribuicao.gastoDepoisDaFotografia).toBe(0);
     expect(depoisDaEdicao.naoDistribuido).toBe(0);
   });

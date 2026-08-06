@@ -72,8 +72,11 @@ export function calcularValorLivre(lancamentos = [], distribuicoes = [], valorBa
       planejado,
       gasto,
       gastoDepoisDaFotografia,
-      disponivel: dinheiro(planejado - gastoDepoisDaFotografia),
-      percentualUsado: planejado > 0 ? Math.min(100, Math.round((gastoDepoisDaFotografia / planejado) * 100)) : 0,
+      // O limite representa o orçamento do mês inteiro. Portanto, todo gasto
+      // da categoria precisa consumi-lo, inclusive os lançamentos existentes
+      // antes da primeira abertura do Planejamento.
+      disponivel: dinheiro(planejado - gasto),
+      percentualUsado: planejado > 0 ? Math.min(100, Math.round((gasto / planejado) * 100)) : 0,
     };
   });
   const totalPlanejado = dinheiro(itens.reduce((total, item) => total + item.planejado, 0));
