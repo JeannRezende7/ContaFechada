@@ -33,6 +33,7 @@
  * @typedef {Object} CategoriasRepository
  * @property {(uid: string) => Promise<object[]>} list
  * @property {(uid: string, data: object) => Promise<object>} create
+ * @property {(uid: string, id: string, data: object) => Promise<void>} update
  * @property {(uid: string, id: string) => Promise<void>} remove
  * @property {(uid: string) => Promise<void>} removeAll
  * @property {(uid: string) => Promise<object[]>} ensureDefaults

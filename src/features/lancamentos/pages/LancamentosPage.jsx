@@ -7,9 +7,9 @@ import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.j
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
 import UsageIndicator from '../../premium/components/UsageIndicator.jsx';
-import { getTodayISODate } from '../../../utils/formatDate.js';
+import { getTodayISODate, isSaneISODate } from '../../../utils/formatDate.js';
 import { getCurrentMonthKey, shiftMonthKey, daysInMonth } from '../../../utils/monthKey.js';
-import { getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
+import { PERIOD_TYPES, getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
 import { buildLancamentoMatcher } from '../utils/searchLancamentos.js';
 import { buildCsv, downloadCsv } from '../../../utils/exportCsv.js';
 import LancamentoModal from '../components/LancamentoModal.jsx';
@@ -33,6 +33,34 @@ import Topbar from '../../../components/layout/Topbar.jsx';
 // para retomada futura, só não são mais referenciados por nenhuma página, o
 // que já basta para o Rollup excluí-los do build de produção.
 
+const PERIOD_SESSION_KEY = 'contafechada:lancamentos-period';
+const VALID_PERIOD_TYPES = new Set(PERIOD_TYPES.map((item) => item.key));
+
+function readPeriodSession() {
+  const fallback = {
+    periodType: 'mes',
+    anchor: getTodayISODate(),
+    customRange: { de: '', ate: '' },
+  };
+
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(PERIOD_SESSION_KEY));
+    if (!stored || !VALID_PERIOD_TYPES.has(stored.periodType) || !isSaneISODate(stored.anchor) || !stored.anchor) {
+      return fallback;
+    }
+    return {
+      periodType: stored.periodType,
+      anchor: stored.anchor,
+      customRange: {
+        de: isSaneISODate(stored.customRange?.de) ? stored.customRange?.de ?? '' : '',
+        ate: isSaneISODate(stored.customRange?.ate) ? stored.customRange?.ate ?? '' : '',
+      },
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 export default function LancamentosPage() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -40,10 +68,19 @@ export default function LancamentosPage() {
   const confirm = useConfirm();
   const confirmChoice = useConfirmChoice();
   const { guardFeature, isPremium, openPaywall, getLimit } = usePremium();
+  const initialPeriod = useMemo(readPeriodSession, []);
   const [tab, setTab] = useState('despesa');
-  const [periodType, setPeriodType] = useState('mes');
-  const [anchor, setAnchor] = useState(getTodayISODate());
-  const [customRange, setCustomRange] = useState({ de: '', ate: '' });
+  const [periodType, setPeriodType] = useState(initialPeriod.periodType);
+  const [anchor, setAnchor] = useState(initialPeriod.anchor);
+  const [customRange, setCustomRange] = useState(initialPeriod.customRange);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(PERIOD_SESSION_KEY, JSON.stringify({ periodType, anchor, customRange }));
+    } catch {
+      // A tela continua funcional quando o armazenamento do navegador estiver indisponível.
+    }
+  }, [periodType, anchor, customRange]);
 
   // Histórico (ROADMAP_MONETIZACAO.txt, Fase 6): free vê só o mês atual e os
   // 2 anteriores. `oldestAllowedDate` vira o piso mínimo de qualquer

@@ -4,6 +4,7 @@ import {
   deleteAllUserDocs,
   listUserDocs,
   batchSetUserDocs,
+  updateUserDoc,
 } from '../../../firebase/firestore.js';
 import { DEFAULT_CATEGORIAS } from '../data/defaultCategorias.js';
 import { slugify } from '../../../utils/slugify.js';
@@ -26,6 +27,10 @@ export function listCategorias(uid) {
 
 export function createCategoria(uid, data) {
   return createUserDoc(uid, COLLECTION, { ...data, padrao: false });
+}
+
+export function updateCategoria(uid, id, data) {
+  return updateUserDoc(uid, COLLECTION, id, data);
 }
 
 export function deleteCategoria(uid, id) {

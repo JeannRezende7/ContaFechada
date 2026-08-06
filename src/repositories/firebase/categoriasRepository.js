@@ -4,6 +4,7 @@ import * as categoriasService from '../../features/categorias/services/categoria
 export const categoriasRepository = {
   list: categoriasService.listCategorias,
   create: categoriasService.createCategoria,
+  update: categoriasService.updateCategoria,
   remove: categoriasService.deleteCategoria,
   removeAll: categoriasService.deleteAllCategorias,
   ensureDefaults: categoriasService.ensureDefaultCategorias,

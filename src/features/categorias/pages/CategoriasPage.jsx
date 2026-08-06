@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, X, Tag } from 'lucide-react';
+import { Pencil, Plus, X, Tag } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { getColor } from '../colorMap.js';
@@ -17,6 +17,7 @@ export default function CategoriasPage() {
   const [categorias, setCategorias] = useState([]);
   const [tab, setTab] = useState('despesa');
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
 
   const reload = async () => {
     if (!uid) return;
@@ -46,6 +47,24 @@ export default function CategoriasPage() {
     reload();
   }
 
+  async function handleSave(dados) {
+    if (!editing) return handleAdd(dados);
+    await repositories.categorias.update(uid, editing.id, dados);
+    setModalOpen(false);
+    setEditing(null);
+    reload();
+  }
+
+  function openNew() {
+    setEditing(null);
+    setModalOpen(true);
+  }
+
+  function openEdit(categoria) {
+    setEditing(categoria);
+    setModalOpen(true);
+  }
+
   async function handleDelete(id) {
     await repositories.categorias.remove(uid, id);
     reload();
@@ -59,7 +78,7 @@ export default function CategoriasPage() {
           <button
             onClick={() => setTab('despesa')}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-              tab === 'despesa' ? 'bg-ink-900 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
+              tab === 'despesa' ? 'bg-ink-900 text-white dark:bg-ledger-500' : 'bg-ink-50 text-ink-500 dark:bg-ink-700 dark:text-ink-100'
             }`}
           >
             Despesas
@@ -67,7 +86,7 @@ export default function CategoriasPage() {
           <button
             onClick={() => setTab('receita')}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-              tab === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
+              tab === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 text-ink-500 dark:bg-ink-700 dark:text-ink-100'
             }`}
           >
             Receitas
@@ -76,7 +95,7 @@ export default function CategoriasPage() {
 
         <div className="flex justify-end mb-4">
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={openNew}
             className="flex items-center gap-1.5 rounded-pill bg-ledger-500 text-white pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
           >
             <Plus size={16} strokeWidth={2.25} />
@@ -91,10 +110,24 @@ export default function CategoriasPage() {
             return (
               <div key={c.id} className="flex flex-col items-center gap-1">
                 <div className="relative">
-                  <span className={`w-14 h-14 rounded-full flex items-center justify-center ${color.dot}`}>
-                    <Icon size={22} strokeWidth={2} className="text-white" />
-                  </span>
                   <button
+                    type="button"
+                    onClick={() => openEdit(c)}
+                    aria-label={`Editar ${c.nome}`}
+                    className={`w-14 h-14 rounded-full flex items-center justify-center ${color.dot} hover:scale-105 focus-visible:ring-2 focus-visible:ring-ledger-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-ink-900 transition-transform`}
+                  >
+                    <Icon size={22} strokeWidth={2} className="text-white" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEdit(c)}
+                    aria-label={`Editar ${c.nome}`}
+                    className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-white dark:bg-ledger-500 shadow-card flex items-center justify-center text-ink-500 dark:text-white hover:text-ledger-600 transition-colors"
+                  >
+                    <Pencil size={11} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => handleDelete(c.id)}
                     aria-label={`Excluir ${c.nome}`}
                     className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white dark:bg-ink-700 shadow-card flex items-center justify-center text-ink-300 hover:text-signal-500 transition-colors"
@@ -115,10 +148,14 @@ export default function CategoriasPage() {
 
       <CategoriaModal
         open={modalOpen}
-        tipo={tab}
+        tipo={editing?.tipo ?? tab}
         customCount={customCount}
-        onClose={() => setModalOpen(false)}
-        onSave={handleAdd}
+        initialData={editing}
+        onClose={() => {
+          setModalOpen(false);
+          setEditing(null);
+        }}
+        onSave={handleSave}
       />
     </>
   );

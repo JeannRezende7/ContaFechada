@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Save } from 'lucide-react';
 import { COLOR_MAP } from '../colorMap.js';
 import { ICON_MAP } from '../iconMap.js';
 import { FEATURES } from '../../../config/premium.js';
@@ -8,16 +8,18 @@ import UsageIndicator from '../../premium/components/UsageIndicator.jsx';
 const EMPTY = { nome: '', corKey: 'cinza', icone: 'tag' };
 
 /** Full-screen-ish form for a new categoria — icons render large since picking one is the whole point of this modal. */
-export default function CategoriaModal({ open, tipo, customCount, onClose, onSave }) {
+export default function CategoriaModal({ open, tipo, customCount, initialData = null, onClose, onSave }) {
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
 
   useEffect(() => {
     if (open) {
-      setForm(EMPTY);
+      setForm(initialData
+        ? { nome: initialData.nome, corKey: initialData.corKey, icone: initialData.icone }
+        : EMPTY);
       setTimeout(() => firstFieldRef.current?.focus(), 0);
     }
-  }, [open]);
+  }, [open, initialData]);
 
   useEffect(() => {
     function handleKey(e) {
@@ -49,9 +51,9 @@ export default function CategoriaModal({ open, tipo, customCount, onClose, onSav
 
         <div className="flex items-center justify-between gap-2 mb-4">
           <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50">
-            Nova categoria de {tipo === 'despesa' ? 'despesa' : 'receita'}
+            {initialData ? 'Editar' : 'Nova'} categoria de {tipo === 'despesa' ? 'despesa' : 'receita'}
           </h2>
-          <UsageIndicator feature={FEATURES.CATEGORIAS_CUSTOM} count={customCount} label="categorias personalizadas" />
+          {!initialData && <UsageIndicator feature={FEATURES.CATEGORIAS_CUSTOM} count={customCount} label="categorias personalizadas" />}
         </div>
 
         <label className="block text-xs font-medium text-ink-300 mb-1">Nome</label>
@@ -108,8 +110,8 @@ export default function CategoriaModal({ open, tipo, customCount, onClose, onSav
             type="submit"
             className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-ledger-500 text-white py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
           >
-            <Plus size={16} strokeWidth={2.25} />
-            Adicionar
+            {initialData ? <Save size={16} strokeWidth={2.25} /> : <Plus size={16} strokeWidth={2.25} />}
+            {initialData ? 'Salvar' : 'Adicionar'}
           </button>
         </div>
       </form>
