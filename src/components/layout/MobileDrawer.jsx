@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   CalendarRange,
-  Home,
+  LayoutDashboard,
   Landmark,
   PieChart,
   Receipt,
@@ -13,8 +13,8 @@ import {
 import BrandIcon from '../ui/BrandIcon.jsx';
 
 const ITEMS = [
-  { to: '/', label: 'Início', icon: Home },
-  { to: '/lancamentos', label: 'Movimento', icon: Receipt },
+  { to: '/', label: 'Lançamentos', icon: Receipt },
+  { to: '/resumo', label: 'Resumo', icon: LayoutDashboard },
   { to: '/planejamento', label: 'Planejamento', icon: CalendarRange },
   { to: '/categorias', label: 'Categorias', icon: Tag },
   { to: '/relatorios', label: 'Relatórios', icon: PieChart },

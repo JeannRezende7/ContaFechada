@@ -16,13 +16,15 @@ export function LancamentoTabs({ tab, onChange }) {
 }
 
 function TabButton({ active, positive = false, onClick, children }) {
-  const activeClass = positive ? 'bg-ledger-500 text-white' : 'bg-ink-900 text-white';
+  const activeClass = positive
+    ? 'bg-ledger-500 text-white shadow-card'
+    : 'bg-ink-900 text-white shadow-card dark:bg-ink-50 dark:text-ink-900';
   return (
     <button
       type="button"
       onClick={onClick}
       className={`flex-1 rounded-xl py-2.5 md:py-3 text-sm md:text-base font-medium transition-colors ${
-        active ? activeClass : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
+        active ? activeClass : 'bg-ink-50 text-ink-500 dark:bg-ink-700 dark:text-ink-100'
       }`}
     >
       {children}

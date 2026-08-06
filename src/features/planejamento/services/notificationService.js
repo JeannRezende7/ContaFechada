@@ -44,7 +44,7 @@ export function buildDueNotifications(lancamentos, { hour = 9, now = new Date(),
           body: item.descricao,
           schedule: { at: new Date(now.getTime() + 5000) },
           channelId: CHANNEL_ID,
-          extra: { route: '/lancamentos', itemId: item.id },
+          extra: { route: '/', itemId: item.id },
         });
       }
       continue;
@@ -62,7 +62,7 @@ export function buildDueNotifications(lancamentos, { hour = 9, now = new Date(),
       // permission, which is unnecessary for a financial reminder.
       schedule: { at: scheduleAt },
       channelId: CHANNEL_ID,
-      extra: { route: '/lancamentos', itemId: item.id },
+      extra: { route: '/', itemId: item.id },
     });
   }
 

@@ -57,8 +57,9 @@ export default function AppRoutes() {
           {/* Módulos financeiros — exclusivos do Premium na Web; o Android
               gratuito continua liberado (RequirePremiumWeb passa direto). */}
           <Route element={<RequirePremiumWeb />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/lancamentos" element={<LancamentosPage />} />
+            <Route path="/" element={<LancamentosPage />} />
+            <Route path="/resumo" element={<DashboardPage />} />
+            <Route path="/lancamentos" element={<Navigate to="/" replace />} />
             <Route path="/categorias" element={<CategoriasPage />} />
             <Route path="/relatorios" element={<RelatoriosPage />} />
             <Route path="/gestor" element={<GestorFinanceiroPage />} />

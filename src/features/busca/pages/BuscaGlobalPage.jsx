@@ -40,10 +40,10 @@ export default function BuscaGlobalPage() {
     ...data.lancamentos.map((item) => ({
       ...item, recurso: item.parcelamentoId ? 'parcelamentos' : 'lancamentos',
       titulo: item.descricao, subtitulo: item.status, data: item.dataVencimento,
-      href: `/lancamentos?q=${encodeURIComponent(item.descricao)}`,
+      href: `/?q=${encodeURIComponent(item.descricao)}`,
     })),
     ...data.categorias.map((item) => ({ ...item, recurso: 'categorias', titulo: item.nome, href: '/categorias' })),
-    ...data.recorrencias.map((item) => ({ ...item, recurso: 'recorrencias', titulo: item.descricao, subtitulo: item.ativo ? 'Ativa' : 'Inativa', href: `/lancamentos?q=${encodeURIComponent(item.descricao)}` })),
+    ...data.recorrencias.map((item) => ({ ...item, recurso: 'recorrencias', titulo: item.descricao, subtitulo: item.ativo ? 'Ativa' : 'Inativa', href: `/?q=${encodeURIComponent(item.descricao)}` })),
   ], [data]);
   const results = useMemo(() => filtrarBuscaGlobal(items, filters).slice(0, 100), [items, filters]);
 

@@ -357,7 +357,7 @@ export function PendingSection({ pending }) {
           </div>
         </div>
       )}
-      <Link to="/lancamentos" className="self-start text-sm font-medium text-ledger-600 hover:underline">
+      <Link to="/" className="self-start text-sm font-medium text-ledger-600 hover:underline">
         Abrir lançamentos para resolver pendências
       </Link>
     </section>

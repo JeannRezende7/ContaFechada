@@ -318,7 +318,7 @@ export function InsightsCard({ insights, locked = false, onUnlock }) {
             <p className="font-medium text-ink-700 dark:text-ink-100">{insight.title || insight}</p>
             {insight.detail && <p className="mt-1 text-xs text-ink-300">{insight.detail}</p>}
             {typeof insight === 'object' && (
-              <Link to={`/lancamentos${insight.query ? `?q=${encodeURIComponent(insight.query)}` : ''}`} className="mt-1.5 inline-block text-xs font-medium text-ledger-600 hover:underline">
+              <Link to={`/${insight.query ? `?q=${encodeURIComponent(insight.query)}` : ''}`} className="mt-1.5 inline-block text-xs font-medium text-ledger-600 hover:underline">
                 Ver lançamentos relacionados
               </Link>
             )}

@@ -16,7 +16,9 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
             type="button"
             onClick={() => onChangePeriodType(opt.key)}
             className={`flex-1 rounded-pill py-1.5 md:py-2 text-xs md:text-sm font-medium transition-colors ${
-              periodType === opt.key ? 'bg-white dark:bg-ink-700 shadow-card text-ink-900 dark:text-ink-50' : 'text-ink-500'
+              periodType === opt.key
+                ? 'bg-white dark:bg-ink-700 shadow-card text-ink-900 dark:text-ink-50'
+                : 'text-ink-500 hover:bg-white/70 dark:text-ink-100 dark:hover:bg-ink-700/70'
             }`}
           >
             {opt.label}
@@ -56,7 +58,7 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
             type="button"
             onClick={() => onChangeAnchor(shiftAnchor(periodType, anchor, -1))}
             aria-label="Anterior"
-            className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-pill text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900 active:scale-95 transition"
+            className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-pill text-ink-500 hover:bg-ink-50 dark:bg-ink-900 dark:text-ink-100 dark:hover:bg-ink-900/70 active:scale-95 transition"
           >
             <ChevronLeft size={20} strokeWidth={1.75} className="md:w-6 md:h-6" />
           </button>
@@ -68,7 +70,7 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
             type="button"
             onClick={() => onChangeAnchor(shiftAnchor(periodType, anchor, 1))}
             aria-label="Próximo"
-            className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-pill text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900 active:scale-95 transition"
+            className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-pill text-ink-500 hover:bg-ink-50 dark:bg-ink-900 dark:text-ink-100 dark:hover:bg-ink-900/70 active:scale-95 transition"
           >
             <ChevronRight size={20} strokeWidth={1.75} className="md:w-6 md:h-6" />
           </button>
