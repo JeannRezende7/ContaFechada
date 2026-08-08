@@ -7,7 +7,6 @@ import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { filtrarBuscaGlobal } from '../utils/buscaGlobal.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
-import { getStatusEfetivo } from '../../lancamentos/utils/statusLancamento.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
@@ -39,8 +38,8 @@ export default function BuscaGlobalPage() {
 
   const items = useMemo(() => [
     ...data.lancamentos.map((item) => ({
-      ...item, status: getStatusEfetivo(item), recurso: item.parcelamentoId ? 'parcelamentos' : 'lancamentos',
-      titulo: item.descricao, subtitulo: getStatusEfetivo(item), data: item.dataVencimento,
+      ...item, recurso: item.parcelamentoId ? 'parcelamentos' : 'lancamentos',
+      titulo: item.descricao, subtitulo: item.status, data: item.dataVencimento,
       href: `/?q=${encodeURIComponent(item.descricao)}`,
     })),
     ...data.categorias.map((item) => ({ ...item, recurso: 'categorias', titulo: item.nome, href: '/categorias' })),

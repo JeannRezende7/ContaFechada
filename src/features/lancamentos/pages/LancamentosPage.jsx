@@ -11,7 +11,6 @@ import { getTodayISODate, isSaneISODate } from '../../../utils/formatDate.js';
 import { getCurrentMonthKey, shiftMonthKey, daysInMonth } from '../../../utils/monthKey.js';
 import { PERIOD_TYPES, getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
 import { buildLancamentoMatcher } from '../utils/searchLancamentos.js';
-import { getStatusEfetivo } from '../utils/statusLancamento.js';
 import { buildCsv, downloadCsv } from '../../../utils/exportCsv.js';
 import LancamentoModal from '../components/LancamentoModal.jsx';
 import RecorrenciaModal from '../components/RecorrenciaModal.jsx';
@@ -199,10 +198,9 @@ export default function LancamentosPage() {
     return lancamentosDoTipo.filter((item) => {
       if (!matcher(item)) return false;
       if (categoryFilter && item.categoriaId !== categoryFilter) return false;
-      const statusEfetivo = getStatusEfetivo(item);
-      if (quickFilter === 'pendente' && statusEfetivo !== 'pendente') return false;
-      if (quickFilter === 'atrasado' && statusEfetivo !== 'atrasado') return false;
-      if (quickFilter === 'concluido' && statusEfetivo !== (tab === 'receita' ? 'recebido' : 'pago')) return false;
+      if (quickFilter === 'pendente' && item.status !== 'pendente') return false;
+      if (quickFilter === 'atrasado' && item.status !== 'atrasado') return false;
+      if (quickFilter === 'concluido' && item.status !== (tab === 'receita' ? 'recebido' : 'pago')) return false;
       if (quickFilter === 'sem_categoria' && item.categoriaId) return false;
       return true;
     });
@@ -562,6 +560,7 @@ export default function LancamentosPage() {
                 <option value="">Alterar status...</option>
                 <option value="pendente">Pendente</option>
                 <option value="agendado">Agendado</option>
+                <option value="atrasado">Atrasado</option>
                 <option value={tab === 'receita' ? 'recebido' : 'pago'}>{tab === 'receita' ? 'Recebido' : 'Pago'}</option>
               </select>
               <button type="button" disabled={saving || !selectedIds.size} onClick={() => setBulkModalOpen(true)} className="rounded-pill bg-ledger-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40">Editar</button>

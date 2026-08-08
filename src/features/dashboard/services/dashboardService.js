@@ -2,7 +2,6 @@ import { listLancamentosByMonth } from '../../lancamentos/services/lancamentosSe
 import { listRecorrencias, ensureGeneratedForMonths } from '../../recorrencias/services/recorrenciasService.js';
 import { shiftMonthKey, getCurrentMonthKey } from '../../../utils/monthKey.js';
 import { getUserDoc, setUserDocMerged, getCollectionRevision } from '../../../firebase/firestore.js';
-import { getStatusEfetivo } from '../../lancamentos/utils/statusLancamento.js';
 
 const dashboardMemory = new Map();
 
@@ -64,7 +63,7 @@ function computeIndicators(lancamentos, monthKey) {
       else totalAPagar += valor;
     }
 
-    if (getStatusEfetivo(item) === 'atrasado') contasAtrasadas += 1;
+    if (item.status === 'atrasado') contasAtrasadas += 1;
 
     if (!ultimoLancamento || item.dataVencimento > ultimoLancamento.dataVencimento) {
       ultimoLancamento = item;

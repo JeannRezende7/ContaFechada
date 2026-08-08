@@ -28,7 +28,7 @@ export default function AcoesEmMassaModal({ open, count, tipo, categorias, onClo
           <select value={value} onChange={(e) => setValue(e.target.value)} className="mt-1 w-full rounded-xl border border-ink-100 px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900">
             {tipo === 'receita'
               ? <><option value="recebido">Recebido</option><option value="pendente">Pendente</option><option value="agendado">Agendado</option></>
-              : <><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="agendado">Agendado</option></>}
+              : <><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="atrasado">Atrasado</option><option value="agendado">Agendado</option></>}
           </select>
         )}
         {action === 'categoriaId' && (

@@ -11,7 +11,7 @@ const STATUS_CONFIG = {
 
 /** A despesa settles as "Pago", a receita as "Recebido" — never both on the same item. */
 function optionsFor(tipo) {
-  return ['pendente', 'agendado', tipo === 'receita' ? 'recebido' : 'pago'];
+  return ['pendente', 'agendado', 'atrasado', tipo === 'receita' ? 'recebido' : 'pago'];
 }
 
 /** Tap to open a small popover and pick a status — no native <select> chrome. */
