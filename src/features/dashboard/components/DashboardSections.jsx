@@ -95,7 +95,7 @@ export function FreeValueSummary({ resumo, monthKey }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-xs text-ink-300">Valor livre do mês</p>
+              <p className="text-xs text-ink-300">Valor livre inicial do mês</p>
               <p className={`money text-xl font-semibold ${resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>
                 {formatCurrency(resumo.valorLivre)}
               </p>

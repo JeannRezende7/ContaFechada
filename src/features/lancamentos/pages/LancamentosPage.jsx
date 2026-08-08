@@ -253,17 +253,6 @@ export default function LancamentosPage() {
       await repositories.lancamentos.createParcelamento(uid, rest);
     } else if (editing && !duplicating) {
       await repositories.lancamentos.update(uid, editing.id, rest);
-      if (rest.categoriaId && rest.categoriaId !== editing.categoriaId) {
-        const createRule = await confirm(`Criar uma regra para categorizar descrições contendo “${rest.descricao}” desta mesma forma nas próximas vezes?`);
-        if (createRule) {
-          await repositories.regrasCategorizacao.create(uid, {
-            termo: rest.descricao.trim(),
-            tipo: rest.tipo,
-            categoriaId: rest.categoriaId,
-            prioridade: 0,
-          });
-        }
-      }
     } else {
       await repositories.lancamentos.create(uid, rest);
     }
@@ -290,14 +279,6 @@ export default function LancamentosPage() {
       await repositories.lancamentos.remove(uid, item.id);
     }
     setModalOpen(false);
-    reload();
-  }
-
-  async function handleDeleteEmMassa() {
-    const label = formatPeriodLabel(periodType, anchor, customRange);
-    const tipoLabel = tab === 'despesa' ? 'despesas' : 'receitas';
-    if (!(await confirm(`Excluir ${lancamentosDoTipo.length} ${tipoLabel} de "${label}"? Essa ação não pode ser desfeita.`))) return;
-    await repositories.lancamentos.removeByIds(uid, lancamentosDoTipo.map((l) => l.id));
     reload();
   }
 
@@ -360,6 +341,11 @@ export default function LancamentosPage() {
     setSelectedIds(new Set());
     setSelecting(false);
     reload();
+  }
+
+  async function setSelectedStatus(status) {
+    if (!status) return;
+    await applyBulk('status', status);
   }
 
   async function handleStatusChange(id, status) {
@@ -441,7 +427,6 @@ export default function LancamentosPage() {
         <LancamentosActions
           filteredCount={lancamentosFiltrados.length}
           totalCount={lancamentosDoTipo.length}
-          onDeleteAll={handleDeleteEmMassa}
           onExport={handleExportCsv}
           onImport={() => {
             if (!guardFeature(FEATURES.IMPORTACAO_EXTRATO)) return;
@@ -460,12 +445,29 @@ export default function LancamentosPage() {
           }}
         />
         {selecting && (
-          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-card bg-white p-3 shadow-card dark:bg-ink-700">
-            <button type="button" onClick={() => setSelectedIds(new Set(lancamentosFiltrados.map((item) => item.id)))} className="text-xs font-medium text-ledger-600">Selecionar todos</button>
-            <span className="flex-1 text-center text-xs text-ink-300">{selectedIds.size} selecionado(s)</span>
-            <button type="button" disabled={!selectedIds.size} onClick={exportSelected} className="text-xs text-ink-500 disabled:opacity-40">Exportar</button>
-            <button type="button" disabled={!selectedIds.size} onClick={() => setBulkModalOpen(true)} className="rounded-pill bg-ledger-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40">Editar</button>
-            <button type="button" disabled={!selectedIds.size} onClick={deleteSelected} className="text-xs text-signal-500 disabled:opacity-40">Excluir</button>
+          <div className="mb-3 rounded-card bg-white p-3 shadow-card dark:bg-ink-700">
+            <div className="flex items-center justify-between gap-3">
+              <button type="button" onClick={() => setSelectedIds(new Set(lancamentosFiltrados.map((item) => item.id)))} className="text-xs font-medium text-ledger-600">Marcar todos</button>
+              <span className="text-xs text-ink-300">{selectedIds.size} selecionado(s)</span>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink-100 pt-3 dark:border-ink-700">
+              <button type="button" disabled={!selectedIds.size} onClick={exportSelected} className="rounded-pill px-2.5 py-1.5 text-xs text-ink-500 hover:bg-ink-50 disabled:opacity-40 dark:hover:bg-ink-900">Exportar</button>
+              <select
+                value=""
+                disabled={!selectedIds.size}
+                onChange={(event) => setSelectedStatus(event.target.value)}
+                aria-label="Alterar status dos selecionados"
+                className="min-w-36 flex-1 rounded-pill border border-ink-100 bg-white px-3 py-1.5 text-xs text-ink-500 disabled:opacity-40 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-100"
+              >
+                <option value="">Alterar status...</option>
+                <option value="pendente">Pendente</option>
+                <option value="agendado">Agendado</option>
+                <option value="atrasado">Atrasado</option>
+                <option value={tab === 'receita' ? 'recebido' : 'pago'}>{tab === 'receita' ? 'Recebido' : 'Pago'}</option>
+              </select>
+              <button type="button" disabled={!selectedIds.size} onClick={() => setBulkModalOpen(true)} className="rounded-pill bg-ledger-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40">Editar</button>
+              <button type="button" disabled={!selectedIds.size} onClick={deleteSelected} className="rounded-pill px-2.5 py-1.5 text-xs text-signal-500 hover:bg-signal-50 disabled:opacity-40">Excluir</button>
+            </div>
           </div>
         )}
         <LancamentosList

@@ -200,8 +200,9 @@ export default function LancamentoModal({
           <button
             type="button"
             onClick={() => handleTipoChange('despesa')}
+            aria-pressed={form.tipo === 'despesa'}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-              form.tipo === 'despesa' ? 'bg-ink-900 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
+              form.tipo === 'despesa' ? 'bg-ledger-500 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
             }`}
           >
             Despesa
@@ -209,6 +210,7 @@ export default function LancamentoModal({
           <button
             type="button"
             onClick={() => handleTipoChange('receita')}
+            aria-pressed={form.tipo === 'receita'}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
               form.tipo === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
             }`}

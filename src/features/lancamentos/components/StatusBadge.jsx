@@ -37,10 +37,12 @@ export default function StatusBadge({ status, tipo, onChange }) {
   }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className={`relative ${open ? 'z-50' : ''}`}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
         className={`flex items-center gap-1.5 text-xs md:text-sm font-medium rounded-pill pl-2.5 pr-2 py-1.5 md:py-2 transition-colors ${config.className}`}
       >
         <Icon size={12} strokeWidth={2.25} className="md:w-3.5 md:h-3.5" />
@@ -49,7 +51,7 @@ export default function StatusBadge({ status, tipo, onChange }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-40 mt-1.5 w-36 rounded-xl border border-ink-100 bg-white dark:bg-ink-700 shadow-card-hover p-1.5 flex flex-col gap-0.5">
+        <div role="listbox" aria-label="Status do lançamento" className="absolute right-0 z-50 mt-1.5 w-36 rounded-xl border border-ink-100 bg-white dark:bg-ink-700 shadow-card-hover p-1.5 flex flex-col gap-0.5">
           {options.map((key) => {
             const opt = STATUS_CONFIG[key];
             const OptIcon = opt.icon;
@@ -58,6 +60,8 @@ export default function StatusBadge({ status, tipo, onChange }) {
                 key={key}
                 type="button"
                 onClick={() => pick(key)}
+                role="option"
+                aria-selected={key === status}
                 className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-left transition-colors ${
                   key === status ? opt.className : 'text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900'
                 }`}

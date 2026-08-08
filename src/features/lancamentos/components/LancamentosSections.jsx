@@ -1,4 +1,4 @@
-import { CheckSquare, Download, FileUp, Plus, Repeat, Search, Sprout, Trash2, X } from 'lucide-react';
+import { CheckSquare, Download, FileUp, Plus, Repeat, Search, Sprout, X } from 'lucide-react';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import LancamentoRow from './LancamentoRow.jsx';
 
@@ -49,7 +49,6 @@ export function LancamentosSearch({ busca, onChange }) {
 export function LancamentosActions({
   filteredCount,
   totalCount,
-  onDeleteAll,
   onExport,
   onImport,
   onToggleSelecting,
@@ -57,51 +56,44 @@ export function LancamentosActions({
   onNew,
 }) {
   return (
-    <div className="flex justify-between items-center mb-4 gap-2">
-      <div className="flex items-center gap-2 min-w-0">
-        <p className="text-sm text-ink-300 shrink-0">{filteredCount} lançamento(s)</p>
+    <div className="mb-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-ink-300">{filteredCount} lançamento(s)</p>
+        <button
+          type="button"
+          onClick={onNew}
+          className="flex shrink-0 items-center gap-1.5 rounded-pill bg-ledger-500 text-white pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
+        >
+          <Plus size={16} strokeWidth={2.25} />
+          Novo <span className="hidden sm:inline text-ledger-200">(N)</span>
+        </button>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 min-w-0">
         {totalCount > 0 && (
-          <button
-            type="button"
-            onClick={onDeleteAll}
-            aria-label="Excluir lançamentos deste período"
-            className="text-ink-300 hover:text-signal-500 transition-colors shrink-0"
-          >
-            <Trash2 size={14} strokeWidth={2} />
+          <button type="button" onClick={onToggleSelecting} className="flex items-center gap-1 text-xs font-medium text-ledger-500 hover:text-ledger-600 transition-colors">
+            <CheckSquare size={14} />
+            {selecting ? 'Sair' : 'Gerenciar vários'}
           </button>
         )}
         {filteredCount > 0 && (
           <button
             type="button"
             onClick={onExport}
-            aria-label="Exportar para CSV"
-            className="text-ink-300 hover:text-ledger-600 transition-colors shrink-0"
+            className="flex items-center gap-1 text-xs text-ink-300 hover:text-ledger-600 transition-colors shrink-0"
           >
             <Download size={14} strokeWidth={2} />
+            Exportar
           </button>
         )}
         <button
           type="button"
           onClick={onImport}
-          aria-label="Importar extrato CSV ou OFX"
-          className="text-ink-300 hover:text-ledger-600 transition-colors shrink-0"
+          className="flex items-center gap-1 text-xs text-ink-300 hover:text-ledger-600 transition-colors shrink-0"
         >
           <FileUp size={14} strokeWidth={2} />
+          Importar
         </button>
-        {totalCount > 0 && (
-          <button type="button" onClick={onToggleSelecting} aria-label="Selecionar lançamentos" className={selecting ? 'text-ledger-600' : 'text-ink-300 hover:text-ledger-600'}>
-            <CheckSquare size={14} />
-          </button>
-        )}
       </div>
-      <button
-        type="button"
-        onClick={onNew}
-        className="flex items-center gap-1.5 rounded-pill bg-ledger-500 text-white pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
-      >
-        <Plus size={16} strokeWidth={2.25} />
-        Novo <span className="hidden sm:inline text-ledger-200">(N)</span>
-      </button>
     </div>
   );
 }

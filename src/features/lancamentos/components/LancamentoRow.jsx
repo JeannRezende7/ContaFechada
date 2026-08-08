@@ -13,8 +13,8 @@ export default function LancamentoRow({ lancamento, categoria, onStatusChange, o
   return (
     <div
       onClick={() => selecting ? onToggle(lancamento.id) : onClick(lancamento)}
-      className="flex items-center justify-between gap-3 px-4 py-3 md:px-5 md:py-4 bg-white dark:bg-ink-700 rounded-card shadow-card
-                 cursor-pointer hover:shadow-card-hover hover:-translate-y-px transition-all"
+      className="relative flex items-center justify-between gap-3 px-4 py-3 md:px-5 md:py-4 bg-white dark:bg-ink-700 rounded-card shadow-card
+                 cursor-pointer hover:z-20 focus-within:z-20 hover:shadow-card-hover hover:-translate-y-px transition-all"
     >
       <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
         {selecting && (
