@@ -1,5 +1,6 @@
-import { CheckSquare, Download, FileUp, Plus, Repeat, Search, Sprout, X } from 'lucide-react';
+import { CheckSquare, Download, FileUp, LayoutGrid, Plus, Repeat, Search, SlidersHorizontal, Sprout, X } from 'lucide-react';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
+import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import LancamentoRow from './LancamentoRow.jsx';
 
 export function LancamentoTabs({ tab, onChange }) {
@@ -32,16 +33,86 @@ function TabButton({ active, positive = false, onClick, children }) {
   );
 }
 
-export function LancamentosSearch({ busca, onChange }) {
+export function LancamentosSearch({ busca, onChange, filtersOpen, filtersActive, onToggleFilters }) {
   return (
-    <div className="relative mb-4">
-      <Search size={16} strokeWidth={2} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-300" />
-      <input
-        value={busca}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder="Pesquisar: pix, mercado, junho, acima de 500..."
-        className="w-full rounded-pill border border-ink-100 bg-white dark:bg-ink-900 dark:border-ink-700 text-ink-900 dark:text-ink-50 pl-10 pr-4 py-2.5 text-sm focus:border-ledger-500 transition-colors"
-      />
+    <div className="mb-4 flex items-center gap-2">
+      <div className="relative min-w-0 flex-1">
+        <Search size={16} strokeWidth={2} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-300" />
+        <input
+          value={busca}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="Pesquisar: pix, mercado, junho, acima de 500..."
+          className="w-full rounded-pill border border-ink-100 bg-white dark:bg-ink-900 dark:border-ink-700 text-ink-900 dark:text-ink-50 pl-10 pr-4 py-2.5 text-sm focus:border-ledger-500 transition-colors"
+        />
+      </div>
+      <button
+        type="button"
+        onClick={onToggleFilters}
+        aria-label="Abrir filtros"
+        aria-expanded={filtersOpen}
+        className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors ${
+          filtersOpen || filtersActive
+            ? 'border-ledger-500 bg-ledger-500 text-white'
+            : 'border-ink-100 bg-white text-ink-300 hover:text-ledger-600 dark:border-ink-700 dark:bg-ink-900'
+        }`}
+      >
+        <SlidersHorizontal size={17} strokeWidth={2} />
+        {filtersActive && !filtersOpen && <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-ledger-500 dark:border-ink-900" />}
+      </button>
+    </div>
+  );
+}
+
+const QUICK_FILTERS = [
+  { key: 'todos', label: 'Todos' },
+  { key: 'pendente', label: 'Pendentes' },
+  { key: 'atrasado', label: 'Atrasados' },
+  { key: 'concluido', label: 'Pagos/recebidos' },
+  { key: 'sem_categoria', label: 'Sem categoria' },
+];
+
+export function LancamentosFilters({ open, quickFilter, categoryFilter, categorias, onQuickChange, onCategoryChange, onClear }) {
+  if (!open) return null;
+  return (
+    <div className="mb-4 rounded-card bg-white p-3 shadow-card dark:bg-ink-700 sm:p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Filtrar lançamentos</p>
+        <button type="button" onClick={onClear} className="text-xs text-ledger-600 hover:underline">Limpar</button>
+      </div>
+      <div className="space-y-3">
+        <div>
+          <p className="mb-1.5 text-xs text-ink-300">Status</p>
+          <div className="flex flex-wrap gap-2" aria-label="Filtros rápidos">
+            {QUICK_FILTERS.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                aria-pressed={quickFilter === filter.key}
+                onClick={() => onQuickChange(filter.key)}
+                className={`rounded-pill px-3 py-1.5 text-xs font-medium transition-colors ${
+                  quickFilter === filter.key
+                    ? 'bg-ledger-500 text-white'
+                    : 'bg-ink-50 text-ink-500 hover:text-ledger-600 dark:bg-ink-900 dark:text-ink-100'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="border-t border-ink-100 pt-3 dark:border-ink-700">
+          <p className="mb-1.5 text-xs text-ink-300">Categoria</p>
+          <div className="max-w-md">
+            <CategoriaPicker
+              categorias={categorias}
+              value={categoryFilter}
+              onChange={onCategoryChange}
+              emptyLabel="Todas as categorias"
+              EmptyIcon={LayoutGrid}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -109,6 +180,7 @@ export function LancamentosList({
   selecting = false,
   selectedIds = new Set(),
   onToggle,
+  filtersActive = false,
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -139,7 +211,9 @@ export function LancamentosList({
       )}
       {totalCount > 0 && items.length === 0 && (
         <p className="text-sm text-ink-300 text-center py-8">
-          Nenhum lançamento encontrado para &ldquo;{busca}&rdquo;.
+          {filtersActive
+            ? 'Nenhum lançamento corresponde aos filtros selecionados.'
+            : <>Nenhum lançamento encontrado para &ldquo;{busca}&rdquo;.</>}
         </p>
       )}
     </div>

@@ -5,6 +5,7 @@ import {
   ChevronRight,
   Clock,
   Flame,
+  Info,
   Landmark,
   Pencil,
   PieChart,
@@ -95,7 +96,15 @@ export function FreeValueSummary({ resumo, monthKey }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-xs text-ink-300">Valor livre inicial do mês</p>
+              <p className="flex items-center gap-1 text-xs text-ink-300">
+                Valor livre inicial do mês
+                <Info
+                  size={13}
+                  className="text-ink-300"
+                  aria-label="Receitas do mês menos contas fixas"
+                  title="Cálculo: receitas do mês menos contas fixas"
+                />
+              </p>
               <p className={`money text-xl font-semibold ${resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>
                 {formatCurrency(resumo.valorLivre)}
               </p>

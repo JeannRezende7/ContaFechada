@@ -11,6 +11,7 @@ import { getTodayISODate, isSaneISODate } from '../../../utils/formatDate.js';
 import { getCurrentMonthKey, shiftMonthKey, daysInMonth } from '../../../utils/monthKey.js';
 import { PERIOD_TYPES, getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
 import { buildLancamentoMatcher } from '../utils/searchLancamentos.js';
+import { getStatusEfetivo } from '../utils/statusLancamento.js';
 import { buildCsv, downloadCsv } from '../../../utils/exportCsv.js';
 import LancamentoModal from '../components/LancamentoModal.jsx';
 import RecorrenciaModal from '../components/RecorrenciaModal.jsx';
@@ -20,6 +21,7 @@ import {
   ActiveRecurrences,
   LancamentosActions,
   LancamentosList,
+  LancamentosFilters,
   LancamentosSearch,
   LancamentoTabs,
 } from '../components/LancamentosSections.jsx';
@@ -123,11 +125,16 @@ export default function LancamentosPage() {
   const [recorrenciaModalOpen, setRecorrenciaModalOpen] = useState(false);
   const [editingRecorrencia, setEditingRecorrencia] = useState(null);
   const [busca, setBusca] = useState(() => searchParams.get('q') || '');
+  const [quickFilter, setQuickFilter] = useState('todos');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [carregado, setCarregado] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [selecting, setSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState('');
 
   const { gte, lte } = getRangeForPeriod(periodType, anchor, customRange);
 
@@ -165,6 +172,12 @@ export default function LancamentosPage() {
     reload();
   }, [reload]);
 
+  useEffect(() => {
+    if (!feedback) return undefined;
+    const timer = setTimeout(() => setFeedback(''), 4000);
+    return () => clearTimeout(timer);
+  }, [feedback]);
+
   // Categorias don't depend on the selected period — loaded once per user.
   useEffect(() => {
     if (!uid) return;
@@ -183,12 +196,28 @@ export default function LancamentosPage() {
 
   const lancamentosFiltrados = useMemo(() => {
     const matcher = buildLancamentoMatcher(busca, categoriasById);
-    return lancamentosDoTipo.filter(matcher);
-  }, [lancamentosDoTipo, busca, categoriasById]);
+    return lancamentosDoTipo.filter((item) => {
+      if (!matcher(item)) return false;
+      if (categoryFilter && item.categoriaId !== categoryFilter) return false;
+      const statusEfetivo = getStatusEfetivo(item);
+      if (quickFilter === 'pendente' && statusEfetivo !== 'pendente') return false;
+      if (quickFilter === 'atrasado' && statusEfetivo !== 'atrasado') return false;
+      if (quickFilter === 'concluido' && statusEfetivo !== (tab === 'receita' ? 'recebido' : 'pago')) return false;
+      if (quickFilter === 'sem_categoria' && item.categoriaId) return false;
+      return true;
+    });
+  }, [lancamentosDoTipo, busca, categoriasById, categoryFilter, quickFilter, tab]);
+
+  const categoriasDoTipo = useMemo(
+    () => categorias.filter((categoria) => categoria.tipo === tab),
+    [categorias, tab]
+  );
 
   useEffect(() => {
     setSelectedIds(new Set());
     setSelecting(false);
+    setQuickFilter('todos');
+    setCategoryFilter('');
   }, [tab, gte, lte]);
 
   // Totals reflect the whole period regardless of the despesa/receita tab —
@@ -218,12 +247,15 @@ export default function LancamentosPage() {
   }, [modalOpen]);
 
   async function handleSave(data) {
+    setSaving(true);
+    setFeedback('');
     const { recorrente, parcelado, simulacao, ...rest } = data;
-    if (recorrente) {
-      const ativasCount = recorrencias.filter((r) => r.ativo).length;
-      if (!guardFeature(FEATURES.RECORRENCIAS, { count: ativasCount })) return;
-      await repositories.recorrencias.create(uid, rest);
-    } else if (simulacao) {
+    try {
+      if (recorrente) {
+        const ativasCount = recorrencias.filter((r) => r.ativo).length;
+        if (!guardFeature(FEATURES.RECORRENCIAS, { count: ativasCount })) return;
+        await repositories.recorrencias.create(uid, rest);
+      } else if (simulacao) {
       const total = Math.max(0, Number(rest.valorTotal) || 0);
       const entrada = Math.min(total, Math.max(0, Number(rest.entrada) || 0));
       if (entrada > 0) {
@@ -249,37 +281,49 @@ export default function LancamentosPage() {
           categoriaId: rest.categoriaId,
         });
       }
-    } else if (parcelado) {
-      await repositories.lancamentos.createParcelamento(uid, rest);
-    } else if (editing && !duplicating) {
-      await repositories.lancamentos.update(uid, editing.id, rest);
-    } else {
-      await repositories.lancamentos.create(uid, rest);
+      } else if (parcelado) {
+        await repositories.lancamentos.createParcelamento(uid, rest);
+      } else if (editing && !duplicating) {
+        await repositories.lancamentos.update(uid, editing.id, rest);
+      } else {
+        await repositories.lancamentos.create(uid, rest);
+      }
+      setModalOpen(false);
+      setDuplicating(false);
+      await reload();
+      setFeedback(editing && !duplicating ? 'Lançamento atualizado.' : 'Lançamento criado.');
+    } catch {
+      setFeedback('Não foi possível salvar o lançamento. Tente novamente.');
+    } finally {
+      setSaving(false);
     }
-    setModalOpen(false);
-    setDuplicating(false);
-    reload();
   }
 
   async function handleDeleteLancamento(item, { futureInstallments = false, futureRecorrencia = false, allRecorrencia = false } = {}) {
-    if (futureInstallments && item.parcelamentoId && item.totalParcelas) {
-      const ids = [];
-      for (let n = item.parcelaAtual; n <= item.totalParcelas; n++) {
-        ids.push(`${item.parcelamentoId}_${n}`);
+    setSaving(true);
+    try {
+      if (futureInstallments && item.parcelamentoId && item.totalParcelas) {
+        const ids = [];
+        for (let n = item.parcelaAtual; n <= item.totalParcelas; n++) ids.push(`${item.parcelamentoId}_${n}`);
+        await repositories.lancamentos.removeByIds(uid, ids);
+      } else if ((futureRecorrencia || allRecorrencia) && item.origemRecorrenciaId) {
+        await repositories.lancamentos.removeGeneratedFromRecorrencia(
+          uid,
+          item.origemRecorrenciaId,
+          futureRecorrencia ? { fromMonthKey: item.mesReferencia } : {}
+        );
+        if (allRecorrencia) await repositories.recorrencias.remove(uid, item.origemRecorrenciaId);
+      } else {
+        await repositories.lancamentos.remove(uid, item.id);
       }
-      await repositories.lancamentos.removeByIds(uid, ids);
-    } else if ((futureRecorrencia || allRecorrencia) && item.origemRecorrenciaId) {
-      await repositories.lancamentos.removeGeneratedFromRecorrencia(
-        uid,
-        item.origemRecorrenciaId,
-        futureRecorrencia ? { fromMonthKey: item.mesReferencia } : {}
-      );
-      if (allRecorrencia) await repositories.recorrencias.remove(uid, item.origemRecorrenciaId);
-    } else {
-      await repositories.lancamentos.remove(uid, item.id);
+      setModalOpen(false);
+      await reload();
+      setFeedback('Lançamento(s) excluído(s).');
+    } catch {
+      setFeedback('Não foi possível excluir o lançamento. Tente novamente.');
+    } finally {
+      setSaving(false);
     }
-    setModalOpen(false);
-    reload();
   }
 
   function handleExportCsv() {
@@ -321,6 +365,9 @@ export default function LancamentosPage() {
   }
 
   async function applyBulk(action, value) {
+    const count = selectedIds.size;
+    setSaving(true);
+    setFeedback('');
     const byId = Object.fromEntries(lancamentos.map((item) => [item.id, item]));
     const updates = Object.fromEntries([...selectedIds].map((id) => {
       const nextValue = action === 'observacoes'
@@ -328,19 +375,35 @@ export default function LancamentosPage() {
         : value || null;
       return [id, { [action]: nextValue }];
     }));
-    await repositories.lancamentos.updateEmMassa(uid, updates);
-    setBulkModalOpen(false);
-    setSelectedIds(new Set());
-    setSelecting(false);
-    reload();
+    try {
+      await repositories.lancamentos.updateEmMassa(uid, updates);
+      setBulkModalOpen(false);
+      setSelectedIds(new Set());
+      setSelecting(false);
+      await reload();
+      setFeedback(`${count} lançamento(s) atualizado(s).`);
+    } catch {
+      setFeedback('Não foi possível atualizar os lançamentos. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function deleteSelected() {
     if (!await confirm(`Excluir ${selectedIds.size} lançamento(s) selecionado(s)?`)) return;
-    await repositories.lancamentos.removeByIds(uid, [...selectedIds]);
-    setSelectedIds(new Set());
-    setSelecting(false);
-    reload();
+    const count = selectedIds.size;
+    setSaving(true);
+    try {
+      await repositories.lancamentos.removeByIds(uid, [...selectedIds]);
+      setSelectedIds(new Set());
+      setSelecting(false);
+      await reload();
+      setFeedback(`${count} lançamento(s) excluído(s).`);
+    } catch {
+      setFeedback('Não foi possível excluir os lançamentos. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function setSelectedStatus(status) {
@@ -349,8 +412,16 @@ export default function LancamentosPage() {
   }
 
   async function handleStatusChange(id, status) {
-    await repositories.lancamentos.setStatus(uid, id, status);
-    reload();
+    setSaving(true);
+    try {
+      await repositories.lancamentos.setStatus(uid, id, status);
+      await reload();
+      setFeedback('Status atualizado.');
+    } catch {
+      setFeedback('Não foi possível atualizar o status. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleSaveRecorrencia(id, data, { updateGeneratedFromMonth = null } = {}) {
@@ -423,7 +494,36 @@ export default function LancamentosPage() {
           />
         </div>
 
-        <LancamentosSearch busca={busca} onChange={setBusca} />
+        <LancamentosSearch
+          busca={busca}
+          onChange={setBusca}
+          filtersOpen={filtersOpen}
+          filtersActive={Boolean(categoryFilter || quickFilter !== 'todos')}
+          onToggleFilters={() => setFiltersOpen((current) => !current)}
+        />
+        <LancamentosFilters
+          open={filtersOpen}
+          quickFilter={quickFilter}
+          categoryFilter={categoryFilter}
+          categorias={categoriasDoTipo}
+          onQuickChange={(filter) => {
+            setQuickFilter(filter);
+            if (filter === 'sem_categoria') setCategoryFilter('');
+          }}
+          onCategoryChange={(categoriaId) => {
+            setCategoryFilter(categoriaId);
+            if (categoriaId && quickFilter === 'sem_categoria') setQuickFilter('todos');
+          }}
+          onClear={() => {
+            setQuickFilter('todos');
+            setCategoryFilter('');
+          }}
+        />
+        {feedback && (
+          <p role="status" aria-live="polite" className={`mb-3 rounded-xl px-3 py-2 text-sm ${feedback.startsWith('Não foi') ? 'bg-signal-50 text-signal-500' : 'bg-ledger-50 text-ledger-600'}`}>
+            {feedback}
+          </p>
+        )}
         <LancamentosActions
           filteredCount={lancamentosFiltrados.length}
           totalCount={lancamentosDoTipo.length}
@@ -454,7 +554,7 @@ export default function LancamentosPage() {
               <button type="button" disabled={!selectedIds.size} onClick={exportSelected} className="rounded-pill px-2.5 py-1.5 text-xs text-ink-500 hover:bg-ink-50 disabled:opacity-40 dark:hover:bg-ink-900">Exportar</button>
               <select
                 value=""
-                disabled={!selectedIds.size}
+                disabled={saving || !selectedIds.size}
                 onChange={(event) => setSelectedStatus(event.target.value)}
                 aria-label="Alterar status dos selecionados"
                 className="min-w-36 flex-1 rounded-pill border border-ink-100 bg-white px-3 py-1.5 text-xs text-ink-500 disabled:opacity-40 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-100"
@@ -462,11 +562,10 @@ export default function LancamentosPage() {
                 <option value="">Alterar status...</option>
                 <option value="pendente">Pendente</option>
                 <option value="agendado">Agendado</option>
-                <option value="atrasado">Atrasado</option>
                 <option value={tab === 'receita' ? 'recebido' : 'pago'}>{tab === 'receita' ? 'Recebido' : 'Pago'}</option>
               </select>
-              <button type="button" disabled={!selectedIds.size} onClick={() => setBulkModalOpen(true)} className="rounded-pill bg-ledger-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40">Editar</button>
-              <button type="button" disabled={!selectedIds.size} onClick={deleteSelected} className="rounded-pill px-2.5 py-1.5 text-xs text-signal-500 hover:bg-signal-50 disabled:opacity-40">Excluir</button>
+              <button type="button" disabled={saving || !selectedIds.size} onClick={() => setBulkModalOpen(true)} className="rounded-pill bg-ledger-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40">Editar</button>
+              <button type="button" disabled={saving || !selectedIds.size} onClick={deleteSelected} className="rounded-pill px-2.5 py-1.5 text-xs text-signal-500 hover:bg-signal-50 disabled:opacity-40">Excluir</button>
             </div>
           </div>
         )}
@@ -488,6 +587,7 @@ export default function LancamentosPage() {
           selecting={selecting}
           selectedIds={selectedIds}
           onToggle={toggleSelected}
+          filtersActive={Boolean(busca || categoryFilter || quickFilter !== 'todos')}
         />
 
         <UsageIndicator feature={FEATURES.RECORRENCIAS} count={recorrenciasAtivasCount} label="recorrências ativas" />
@@ -514,6 +614,7 @@ export default function LancamentosPage() {
           setDuplicating(false);
         }}
         onSave={handleSave}
+        saving={saving}
         onDelete={handleDeleteLancamento}
         copyMode={duplicating}
         onDuplicate={(item) => {
@@ -552,6 +653,7 @@ export default function LancamentosPage() {
         categorias={categorias}
         onClose={() => setBulkModalOpen(false)}
         onApply={applyBulk}
+        applying={saving}
       />
     </>
   );

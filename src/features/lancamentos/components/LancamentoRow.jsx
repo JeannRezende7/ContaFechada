@@ -4,6 +4,7 @@ import { formatDateBR } from '../../../utils/formatDate.js';
 import { getColor } from '../../categorias/colorMap.js';
 import { getIcon } from '../../categorias/iconMap.js';
 import StatusBadge from './StatusBadge.jsx';
+import { getStatusEfetivo } from '../utils/statusLancamento.js';
 
 export default function LancamentoRow({ lancamento, categoria, onStatusChange, onClick, selecting, selected, onToggle }) {
   const isReceita = lancamento.tipo === 'receita';
@@ -66,7 +67,7 @@ export default function LancamentoRow({ lancamento, categoria, onStatusChange, o
         </span>
         {!selecting && <div onClick={(e) => e.stopPropagation()}>
           <StatusBadge
-            status={lancamento.status}
+            status={getStatusEfetivo(lancamento)}
             tipo={lancamento.tipo}
             onChange={(status) => onStatusChange(lancamento.id, status)}
           />

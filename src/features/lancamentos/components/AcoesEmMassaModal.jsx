@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function AcoesEmMassaModal({ open, count, tipo, categorias, onClose, onApply }) {
+export default function AcoesEmMassaModal({ open, count, tipo, categorias, onClose, onApply, applying = false }) {
   const [action, setAction] = useState('status');
   const [value, setValue] = useState(tipo === 'receita' ? 'recebido' : 'pago');
   if (!open) return null;
@@ -28,7 +28,7 @@ export default function AcoesEmMassaModal({ open, count, tipo, categorias, onClo
           <select value={value} onChange={(e) => setValue(e.target.value)} className="mt-1 w-full rounded-xl border border-ink-100 px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900">
             {tipo === 'receita'
               ? <><option value="recebido">Recebido</option><option value="pendente">Pendente</option><option value="agendado">Agendado</option></>
-              : <><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="atrasado">Atrasado</option><option value="agendado">Agendado</option></>}
+              : <><option value="pago">Pago</option><option value="pendente">Pendente</option><option value="agendado">Agendado</option></>}
           </select>
         )}
         {action === 'categoriaId' && (
@@ -41,8 +41,8 @@ export default function AcoesEmMassaModal({ open, count, tipo, categorias, onClo
         {action === 'observacoes' && <textarea rows="3" value={value} onChange={(e) => setValue(e.target.value)} className="mt-1 w-full resize-none rounded-xl border border-ink-100 px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900" />}
 
         <div className="mt-5 flex gap-2">
-          <button onClick={onClose} className="flex-1 rounded-xl py-2.5 text-sm text-ink-500">Cancelar</button>
-          <button disabled={action !== 'categoriaId' && !value} onClick={() => onApply(action, value)} className="flex-1 rounded-xl bg-ledger-500 py-2.5 text-sm font-medium text-white disabled:opacity-50">Aplicar</button>
+          <button disabled={applying} onClick={onClose} className="flex-1 rounded-xl py-2.5 text-sm text-ink-500 disabled:opacity-50">Cancelar</button>
+          <button disabled={applying || (action !== 'categoriaId' && !value)} onClick={() => onApply(action, value)} className="flex-1 rounded-xl bg-ledger-500 py-2.5 text-sm font-medium text-white disabled:cursor-wait disabled:opacity-50">{applying ? 'Aplicando…' : 'Aplicar'}</button>
         </div>
       </div>
     </div>

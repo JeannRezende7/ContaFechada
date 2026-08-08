@@ -47,6 +47,7 @@ export default function LancamentoModal({
   onDelete,
   onDuplicate,
   copyMode = false,
+  saving = false,
 }) {
   useModalHistory(open, onClose);
   const [form, setForm] = useState(EMPTY);
@@ -132,12 +133,12 @@ export default function LancamentoModal({
     }
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const valor = Number(form.valor);
     const dataVencimento = form.dataVencimento || getTodayISODate();
     if (isNew && form.modo === 'recorrente') {
-      onSave({
+      await onSave({
         recorrente: true,
         tipo: form.tipo,
         descricao: form.descricao,
@@ -148,7 +149,7 @@ export default function LancamentoModal({
         categoriaId: form.categoriaId || null,
       });
     } else if (isNew && form.modo === 'simulacao') {
-      onSave({
+      await onSave({
         simulacao: true,
         tipo: 'despesa',
         descricao: form.descricao,
@@ -160,7 +161,7 @@ export default function LancamentoModal({
         categoriaId: form.categoriaId || null,
       });
     } else if (isNew && form.modo === 'parcelado') {
-      onSave({
+      await onSave({
         parcelado: true,
         tipo: form.tipo,
         descricao: form.descricao,
@@ -171,7 +172,7 @@ export default function LancamentoModal({
         categoriaId: form.categoriaId || null,
       });
     } else {
-      onSave({
+      await onSave({
         recorrente: false,
         tipo: form.tipo,
         descricao: form.descricao,
@@ -433,15 +434,17 @@ export default function LancamentoModal({
           <button
             type="button"
             onClick={onClose}
+            disabled={saving}
             className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className="flex-1 rounded-xl bg-ledger-500 text-white py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
+            disabled={saving}
+            className="flex-1 rounded-xl bg-ledger-500 text-white py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all disabled:cursor-wait disabled:opacity-60"
           >
-            Salvar
+            {saving ? 'Salvando…' : 'Salvar'}
           </button>
         </div>
 

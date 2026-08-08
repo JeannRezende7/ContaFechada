@@ -8,7 +8,7 @@ import { getIcon } from '../iconMap.js';
  * <select> — the colored icon doubles as a visual index while browsing,
  * not just after picking.
  */
-export default function CategoriaPicker({ categorias, value, onChange, compact = false }) {
+export default function CategoriaPicker({ categorias, value, onChange, compact = false, emptyLabel = 'Sem categoria', EmptyIcon = Ban }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
 
@@ -42,7 +42,7 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          title={selecionada ? selecionada.nome : 'Sem categoria'}
+          title={selecionada ? selecionada.nome : emptyLabel}
           className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
             selecionada ? getColor(selecionada.corKey).dot : 'border-2 border-dashed border-ink-200 hover:border-ink-300'
           }`}
@@ -53,7 +53,7 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
               return <Icon size={14} strokeWidth={2.25} className="text-white" />;
             })()
           ) : (
-            <Ban size={13} strokeWidth={1.75} className="text-ink-300" />
+            <EmptyIcon size={13} strokeWidth={1.75} className="text-ink-300" />
           )}
         </button>
       ) : (
@@ -75,7 +75,7 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
               <span className="truncate">{selecionada.nome}</span>
             </span>
           ) : (
-            <span className="text-ink-300">Sem categoria</span>
+            <span className="text-ink-300">{emptyLabel}</span>
           )}
           <ChevronDown size={16} strokeWidth={2} className={`text-ink-300 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
@@ -94,9 +94,9 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
                   !value ? 'border-ink-900 bg-ink-50 dark:bg-ink-900' : 'border-ink-100 text-ink-300 hover:border-ink-300'
                 }`}
               >
-                <Ban size={18} strokeWidth={1.75} className={!value ? 'text-ink-900 dark:text-ink-50' : 'text-ink-300'} />
+                <EmptyIcon size={18} strokeWidth={1.75} className={!value ? 'text-ink-900 dark:text-ink-50' : 'text-ink-300'} />
               </span>
-              <span className="text-[11px] text-ink-500 text-center leading-tight">Sem categoria</span>
+              <span className="text-[11px] text-ink-500 text-center leading-tight">{emptyLabel}</span>
             </button>
 
             {ordenadas.map((c) => {
