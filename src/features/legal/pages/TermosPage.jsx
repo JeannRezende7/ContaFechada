@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import BrandIcon from '../../../components/ui/BrandIcon.jsx';
 
 /**
- * RASCUNHO (ROADMAP_MONETIZACAO.txt, Fase 11: "Publicar Termos de Uso e
+ * RASCUNHO (docs/ROADMAP_MONETIZACAO.txt, Fase 11: "Publicar Termos de Uso e
  * Politica de Privacidade") — escrito a partir do que o app efetivamente faz
  * hoje (login Google, dados financeiros no Firestore, plano Gratuito/Premium
  * com MercadoPago). NÃO é aconselhamento jurídico: precisa de revisão de um
@@ -95,7 +95,7 @@ export default function TermosPage() {
           <section>
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">8. Contato</h2>
             <p>
-              Dúvidas sobre estes termos: <span className="italic">canal de suporte a definir</span> (ROADMAP_MONETIZACAO.txt,
+              Dúvidas sobre estes termos: <span className="italic">canal de suporte a definir</span> (docs/ROADMAP_MONETIZACAO.txt,
               Fase 11 — pendente).
             </p>
           </section>

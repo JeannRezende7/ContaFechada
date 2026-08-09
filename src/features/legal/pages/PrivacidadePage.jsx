@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import BrandIcon from '../../../components/ui/BrandIcon.jsx';
 
 /**
- * RASCUNHO (ROADMAP_MONETIZACAO.txt, Fase 11) — escrito a partir do que o
+ * RASCUNHO (docs/ROADMAP_MONETIZACAO.txt, Fase 11) — escrito a partir do que o
  * app efetivamente faz hoje: Firebase Authentication (login Google) +
  * Cloud Firestore (dados financeiros), sem Analytics/Functions/Storage
  * ainda em uso além do que está descrito abaixo. NÃO é aconselhamento
@@ -81,7 +81,7 @@ export default function PrivacidadePage() {
             </ul>
             <p className="mt-1.5">
               Para outras solicitações (correção, portabilidade, informações sobre uso de dados):{' '}
-              <span className="italic">canal de contato a definir</span> (ROADMAP_MONETIZACAO.txt, Fase 11 — pendente).
+              <span className="italic">canal de contato a definir</span> (docs/ROADMAP_MONETIZACAO.txt, Fase 11 — pendente).
             </p>
           </section>
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Concessão manual de Premium para testes/parceiros (ROADMAP_MONETIZACAO.txt,
+ * Concessão manual de Premium para testes/parceiros (docs/ROADMAP_MONETIZACAO.txt,
  * Fase 2/11). Não existe backend de cobrança ainda — este script é a única
  * forma prevista de promover um usuário até a Fase 8/9 existirem, e roda
  * com o Admin SDK, que ignora as Firestore Rules (o cliente web/Android

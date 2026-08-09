@@ -147,9 +147,9 @@ export default function Paywall({ open, context, onClose }) {
   }
 
   async function handleAssinar() {
-    // Fase 10 (ROADMAP_LOCAL_FIRST_PREMIUM.md): "Remover checkout externo do
+    // Fase 10 (docs/ROADMAP_LOCAL_FIRST_PREMIUM.md): "Remover checkout externo do
     // build Android" — no Android, cobrança precisa passar pelo Google Play
-    // Billing (ainda não integrado, ver ROADMAP_MONETIZACAO.txt Fase 9), não
+    // Billing (ainda não integrado, ver docs/ROADMAP_MONETIZACAO.txt Fase 9), não
     // pelo checkout Web do MercadoPago. Misturar os dois violaria a política
     // de pagamentos da Play Store pra assinaturas digitais.
     if (__NATIVE_ANDROID_BUILD__ || Capacitor.isNativePlatform()) {

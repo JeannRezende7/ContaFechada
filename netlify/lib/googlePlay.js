@@ -1,12 +1,12 @@
 /**
  * Chamadas à Google Play Developer API usadas por
- * `functions/validate-android-purchase.js` (ROADMAP_MONETIZACAO.txt, Fase
+ * `functions/validate-android-purchase.js` (docs/ROADMAP_MONETIZACAO.txt, Fase
  * 9). Extraídas pra cá pra poder testar cada chamada isoladamente
  * (mockando `fetch`) sem precisar simular a function serverless inteira.
  *
  * NÃO TESTADO contra a API real do Google Play — sem Android Studio, conta
  * Google Play Console nem uma compra de teste real neste ambiente (mesma
- * limitação já registrada em ROADMAP_MONETIZACAO.txt), só dá pra confirmar
+ * limitação já registrada em docs/ROADMAP_MONETIZACAO.txt), só dá pra confirmar
  * a forma da requisição/resposta contra a documentação pública, não o
  * comportamento real do servidor do Google.
  */

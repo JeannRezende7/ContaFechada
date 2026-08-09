@@ -5,7 +5,7 @@
  * for current users until this is flipped.
  *
  * Only flip this once billing, restauração de compra and subscription admin
- * are tested end to end (ROADMAP_MONETIZACAO.txt, objetivo).
+ * are tested end to end (docs/ROADMAP_MONETIZACAO.txt, objetivo).
  */
 export const PREMIUM_ENFORCED = false;
 
@@ -131,7 +131,7 @@ export const PLAN_COMPARISON = [
   { label: 'Busca', free: 'No Movimento', premium: 'Global com filtros avançados' },
 ];
 
-/** Preços propostos — validar antes do lançamento (ROADMAP_MONETIZACAO.txt, secao 1). */
+/** Preços propostos — validar antes do lançamento (docs/ROADMAP_MONETIZACAO.txt, secao 1). */
 export const PRICING = {
   mensal: 12.9,
   anual: 99.9,
@@ -140,7 +140,7 @@ export const PRICING = {
 };
 
 /**
- * Janela de elegibilidade da "oferta de fundador" (ROADMAP_MONETIZACAO.txt,
+ * Janela de elegibilidade da "oferta de fundador" (docs/ROADMAP_MONETIZACAO.txt,
  * Marco 4: "decidir e implementar a regra de elegibilidade/janela de
  * tempo"). Só quem nunca teve nenhuma assinatura (nunca iniciou teste nem
  * compra) e está dentro do prazo abaixo vê o preço promocional — ajuste a

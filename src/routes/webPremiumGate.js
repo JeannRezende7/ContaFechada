@@ -1,7 +1,7 @@
 /**
  * Fase 10 do roadmap local-first: na Web, os módulos financeiros são
  * exclusivos de quem tem Premium ativo — o Android gratuito continua
- * liberado (ver ROADMAP_LOCAL_FIRST_PREMIUM.md). Extraído do componente de
+ * liberado (ver docs/ROADMAP_LOCAL_FIRST_PREMIUM.md). Extraído do componente de
  * rota (`RequirePremiumWeb.jsx`) pra poder ser testado sem montar
  * React/react-router — este projeto não tem harness de teste de
  * componente (jsdom/Testing Library) configurado, só testes de lógica.

@@ -4,7 +4,7 @@ import { PRICING } from '../../src/config/premium.js';
 
 /**
  * Cria uma assinatura recorrente (Preapproval) no MercadoPago e devolve a URL
- * de checkout pra onde o app redireciona o usuário (ROADMAP_MONETIZACAO.txt,
+ * de checkout pra onde o app redireciona o usuário (docs/ROADMAP_MONETIZACAO.txt,
  * Fase 8). O Firestore só é atualizado depois, pelo webhook — esta função
  * nunca escreve em users/{uid}/private/subscription, exatamente pra não
  * liberar Premium "pelo retorno do navegador".

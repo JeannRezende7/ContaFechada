@@ -3,7 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 
 /**
- * Shared Admin SDK bootstrap for every Netlify Function (ROADMAP_MONETIZACAO.txt,
+ * Shared Admin SDK bootstrap for every Netlify Function (docs/ROADMAP_MONETIZACAO.txt,
  * Fase 8). Reads the service account from FIREBASE_SERVICE_ACCOUNT — set this
  * in the Netlify dashboard (Site configuration > Environment variables) as
  * the *raw JSON contents* of a service account key (Firebase Console >

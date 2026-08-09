@@ -4,7 +4,7 @@ import { applyMercadoPagoPreapproval } from '../lib/subscriptionWriter.js';
 
 /**
  * Cancela a assinatura Web do usuário autenticado no MercadoPago e
- * resincroniza o Firestore com o resultado real (ROADMAP_MONETIZACAO.txt,
+ * resincroniza o Firestore com o resultado real (docs/ROADMAP_MONETIZACAO.txt,
  * Fase 8/11 — "Cancelamento preserva acesso ate o fim do periodo pago"). O
  * acesso Premium continua até `currentPeriodEnd`: quem decide isso é
  * `applyMercadoPagoPreapproval`/`toSubscriptionState`, que tratam

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Consulta um usuário por uid ou e-mail (ROADMAP_MONETIZACAO.txt, Fase 11:
+ * Consulta um usuário por uid ou e-mail (docs/ROADMAP_MONETIZACAO.txt, Fase 11:
  * "Consultar usuario por email/uid" / "Ver plano, status, provedor e
  * expiracao"). Somente leitura — nunca altera nada.
  *

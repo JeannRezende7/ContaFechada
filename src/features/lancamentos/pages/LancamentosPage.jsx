@@ -29,7 +29,7 @@ import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 
-// A importação de fatura em PDF foi desativada (ROADMAP_MONETIZACAO.txt,
+// A importação de fatura em PDF foi desativada (docs/ROADMAP_MONETIZACAO.txt,
 // item 2) — o componente, o parser e o pdf.worker continuam no repositório
 // para retomada futura, só não são mais referenciados por nenhuma página, o
 // que já basta para o Rollup excluí-los do build de produção.
@@ -83,7 +83,7 @@ export default function LancamentosPage() {
     }
   }, [periodType, anchor, customRange]);
 
-  // Histórico (ROADMAP_MONETIZACAO.txt, Fase 6): free vê só o mês atual e os
+  // Histórico (docs/ROADMAP_MONETIZACAO.txt, Fase 6): free vê só o mês atual e os
   // 2 anteriores. `oldestAllowedDate` vira o piso mínimo de qualquer
   // navegação de período — funciona igual para dia/semana/mês/ano porque
   // comparamos direto a data inicial do intervalo resultante, sem precisar

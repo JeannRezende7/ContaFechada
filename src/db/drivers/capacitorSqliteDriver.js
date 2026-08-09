@@ -2,7 +2,7 @@
  * Driver de produção sobre `@capacitor-community/sqlite`. AINDA NÃO
  * TESTADO CONTRA UM DISPOSITIVO/EMULADOR REAL — este ambiente de
  * desenvolvimento não tem Android Studio, `adb` nem `ANDROID_HOME`
- * instalados (mesma limitação já registrada em ROADMAP_MONETIZACAO.txt
+ * instalados (mesma limitação já registrada em docs/ROADMAP_MONETIZACAO.txt
  * para o Google Play Billing). O wrapper segue a API pública documentada
  * do plugin (`query`/`run`/`execute` de uma `SQLiteDBConnection` já aberta),
  * mas precisa ser validado manualmente antes de qualquer uso real:

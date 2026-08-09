@@ -12,7 +12,7 @@ import Topbar from '../../../components/layout/Topbar.jsx';
 import MetaModal from '../components/MetaModal.jsx';
 import { formatMonthLabel, getCurrentMonthKey } from '../../../utils/monthKey.js';
 
-/** Uma meta já atingida não conta no limite (metas concluídas não contam, ROADMAP_MONETIZACAO.txt Fase 6). */
+/** Uma meta já atingida não conta no limite (metas concluídas não contam, docs/ROADMAP_MONETIZACAO.txt Fase 6). */
 function isMetaAtiva(meta) {
   const alvo = Number(meta.valorAlvo) || 0;
   const atual = Number(meta.valorAtual) || 0;

@@ -5,7 +5,7 @@ import { acknowledgeSubscriptionPurchase, getSubscriptionPurchaseV2 } from '../l
 
 /**
  * Valida uma compra do Google Play Billing direto na Google Play Developer
- * API antes de conceder Premium (ROADMAP_MONETIZACAO.txt, Fase 9: "Validar
+ * API antes de conceder Premium (docs/ROADMAP_MONETIZACAO.txt, Fase 9: "Validar
  * compra no backend" — nunca confiar só no que o SDK do cliente reporta,
  * que pode ser adulterado num APK modificado).
  *

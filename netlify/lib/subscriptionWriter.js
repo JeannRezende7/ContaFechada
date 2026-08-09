@@ -3,7 +3,7 @@ import { getAdminDb } from './firebaseAdmin.js';
 
 /**
  * MercadoPago `preapproval.status` -> our internal subscriptionStatus
- * (ROADMAP_MONETIZACAO.txt, Fase 2/8). `pending` means the user started
+ * (docs/ROADMAP_MONETIZACAO.txt, Fase 2/8). `pending` means the user started
  * checkout but hasn't authorized the recurring charge yet — treated as
  * "sem assinatura" until it flips to `authorized`.
  */

@@ -68,7 +68,7 @@ export async function deleteAllUserData(uid) {
  * da exclusão completa da conta (e por isso também remove a conta do
  * Firebase Auth). Não toca no SQLite local — os dados no aparelho
  * continuam lá; só a cópia na nuvem é removida antes do prazo normal de
- * retenção (90 dias, ver FASE0_DECISOES.md).
+ * retenção (90 dias, ver docs/FASE0_DECISOES.md).
  */
 export async function deleteCloudCopyOnly(uid) {
   await Promise.all(COLLECTIONS.map((name) => deleteAllUserDocs(uid, name)));

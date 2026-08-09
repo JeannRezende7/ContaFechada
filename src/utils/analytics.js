@@ -1,7 +1,7 @@
 import { getAnalyticsReady } from '../firebase/config.js';
 
 /**
- * Event catalog (ROADMAP_MONETIZACAO.txt, Fase 10 "Eventos minimos") — one
+ * Event catalog (docs/ROADMAP_MONETIZACAO.txt, Fase 10 "Eventos minimos") — one
  * named export per event, called from wherever the corresponding user
  * action/state transition happens. Every call is fire-and-forget: analytics
  * must never be able to break or slow down the feature it's observing.

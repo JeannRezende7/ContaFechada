@@ -18,7 +18,7 @@ import ImportarRecorrenciasModal from '../components/ImportarRecorrenciasModal.j
 import LancamentoRow from '../../lancamentos/components/LancamentoRow.jsx';
 import LancamentoModal from '../../lancamentos/components/LancamentoModal.jsx';
 
-// A importação de fatura em PDF foi desativada (ROADMAP_MONETIZACAO.txt,
+// A importação de fatura em PDF foi desativada (docs/ROADMAP_MONETIZACAO.txt,
 // item 2) — mantida no repositório para retomada futura, só não é mais
 // referenciada por nenhuma página.
 

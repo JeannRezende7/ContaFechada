@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Resincroniza a assinatura Web de um usuário direto com o MercadoPago
- * (ROADMAP_MONETIZACAO.txt, Fase 11: "Reprocessar/sincronizar assinatura com
+ * (docs/ROADMAP_MONETIZACAO.txt, Fase 11: "Reprocessar/sincronizar assinatura com
  * o provedor") — útil quando um webhook falhou ou atrasou. Reaproveita a
  * mesma lógica de tradução MercadoPago -> Firestore que o webhook usa
  * (netlify/lib/subscriptionWriter.js), então nunca diverge do comportamento

@@ -19,7 +19,7 @@ const PAYMENT_STATUS_LABEL = {
 };
 
 /**
- * Recebe as notificações do MercadoPago (ROADMAP_MONETIZACAO.txt, Fase 8).
+ * Recebe as notificações do MercadoPago (docs/ROADMAP_MONETIZACAO.txt, Fase 8).
  * Nunca confia no corpo da notificação por si só — valida a assinatura e
  * depois busca o preapproval de volta na API do MercadoPago pelo id, e é
  * esse objeto (a fonte de verdade do provedor) que vira o novo estado da

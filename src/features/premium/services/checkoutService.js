@@ -23,7 +23,7 @@ async function callApi(path, body) {
 /**
  * Starts a MercadoPago checkout for the given plan ('mensal' | 'anual') and
  * returns the URL to redirect the user to. Backed by
- * netlify/functions/create-checkout.js (ROADMAP_MONETIZACAO.txt, Fase 8) —
+ * netlify/functions/create-checkout.js (docs/ROADMAP_MONETIZACAO.txt, Fase 8) —
  * requires MERCADOPAGO_ACCESS_TOKEN configured on Netlify, so this will
  * fail until that's set up.
  */

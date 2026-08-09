@@ -23,7 +23,7 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 /**
- * Analytics (ROADMAP_MONETIZACAO.txt, Fase 10) — resolves to the real
+ * Analytics (docs/ROADMAP_MONETIZACAO.txt, Fase 10) — resolves to the real
  * instance or `null`, never throws. Three things can make it unavailable:
  * no VITE_FIREBASE_MEASUREMENT_ID configured, a browser without the
  * storage/cookie APIs it needs (some private-browsing modes), or the
