@@ -45,6 +45,7 @@ describe('lancamentosService', () => {
       field: 'dataVencimento',
       gte: '2026-02-01',
       lte: '2026-02-31',
+      direction: 'desc',
       source: 'cache',
     });
   });

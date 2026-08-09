@@ -53,10 +53,10 @@ describe('sqlite lancamentosRepository', () => {
     await repo.create('u1', { ...BASE, dataVencimento: '2026-08-01' });
 
     const julho = await repo.listByMonth('u1', '2026-07');
-    expect(julho.map((i) => i.dataVencimento)).toEqual(['2026-07-01', '2026-07-31']);
+    expect(julho.map((i) => i.dataVencimento)).toEqual(['2026-07-31', '2026-07-01']);
 
     const range = await repo.listByRange('u1', '2026-06-30', '2026-07-01');
-    expect(range.map((i) => i.dataVencimento)).toEqual(['2026-06-30', '2026-07-01']);
+    expect(range.map((i) => i.dataVencimento)).toEqual(['2026-07-01', '2026-06-30']);
   });
 
   it('update bumps localVersion and moves synced -> pending, but leaves local as local', async () => {

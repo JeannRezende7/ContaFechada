@@ -44,7 +44,7 @@ function rowToLancamento(row) {
 export function createLancamentosRepository(driver) {
   async function listByRange(_uid, gte, lte) {
     const rows = await driver.all(
-      'SELECT * FROM lancamentos WHERE deleted_at IS NULL AND data_vencimento >= ? AND data_vencimento <= ? ORDER BY data_vencimento ASC',
+      'SELECT * FROM lancamentos WHERE deleted_at IS NULL AND data_vencimento >= ? AND data_vencimento <= ? ORDER BY data_vencimento DESC',
       [gte, lte]
     );
     return rows.map(rowToLancamento);

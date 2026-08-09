@@ -51,6 +51,7 @@ export default function LancamentoModal({
 }) {
   useModalHistory(open, onClose);
   const [form, setForm] = useState(EMPTY);
+  const [ajusteValor, setAjusteValor] = useState('');
   const firstFieldRef = useRef(null);
   const isNew = !initialData || copyMode;
   const confirm = useConfirm();
@@ -68,6 +69,7 @@ export default function LancamentoModal({
 
   useEffect(() => {
     if (open) {
+      setAjusteValor('');
       setForm(
         initialData
           ? { ...EMPTY, ...initialData, observacoes: initialData.observacoes ?? '' }
@@ -94,6 +96,18 @@ export default function LancamentoModal({
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function aplicarAjuste(operacao) {
+    const ajuste = Number(String(ajusteValor).replace(',', '.'));
+    const valorAtual = Number(form.valor);
+    if (!Number.isFinite(ajuste) || ajuste <= 0 || !Number.isFinite(valorAtual)) return;
+
+    const novoValor = operacao === 'subtrair'
+      ? Math.max(0, valorAtual - ajuste)
+      : valorAtual + ajuste;
+    update('valor', novoValor.toFixed(2));
+    setAjusteValor('');
   }
 
   function handleTipoChange(tipo) {
@@ -308,6 +322,44 @@ export default function LancamentoModal({
             )}
           </div>
         </div>
+
+        {!isNew && (
+          <div className="mb-3 rounded-xl border border-ink-100 bg-ink-50/60 p-3 dark:border-ink-700 dark:bg-ink-900">
+            <label className="block text-xs font-medium text-ink-500 dark:text-ink-100 mb-1">
+              Ajustar valor
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={ajusteValor}
+                onChange={(e) => setAjusteValor(e.target.value)}
+                className="money min-w-0 flex-1 rounded-xl border border-ink-100 bg-white px-3.5 py-2.5 text-sm text-ink-900 focus:border-ledger-500 dark:border-ink-700 dark:bg-ink-700 dark:text-ink-50"
+                placeholder="Ex: 22,39"
+                aria-label="Valor do ajuste"
+              />
+              <button
+                type="button"
+                onClick={() => aplicarAjuste('subtrair')}
+                className="rounded-xl border border-ink-100 bg-white px-4 text-lg font-medium text-signal-500 hover:bg-signal-50 dark:border-ink-700 dark:bg-ink-700"
+                aria-label="Subtrair do valor"
+              >
+                −
+              </button>
+              <button
+                type="button"
+                onClick={() => aplicarAjuste('somar')}
+                className="rounded-xl bg-ledger-500 px-4 text-lg font-medium text-white hover:bg-ledger-600"
+                aria-label="Somar ao valor"
+              >
+                +
+              </button>
+            </div>
+            <p className="mt-1.5 text-[11px] text-ink-300">
+              Informe a diferença e escolha − ou +. O campo Valor acima será atualizado.
+            </p>
+          </div>
+        )}
 
         {isNew && form.modo === 'recorrente' && (
           <div className="mb-3">

@@ -40,7 +40,9 @@ export function createSqliteRepositories(driver) {
     ...lancamentosBase,
     async listAll() { return lancamentosBase.list(); },
     async listByRange(_uid, gte, lte) {
-      return (await lancamentosBase.list()).filter((item) => item.dataVencimento >= gte && item.dataVencimento <= lte);
+      return (await lancamentosBase.list())
+        .filter((item) => item.dataVencimento >= gte && item.dataVencimento <= lte)
+        .sort((a, b) => b.dataVencimento.localeCompare(a.dataVencimento));
     },
     async listByMonth(uid, monthKey) {
       return lancamentos.listByRange(uid, `${monthKey}-01`, `${monthKey}-31`);

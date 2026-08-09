@@ -39,7 +39,7 @@ const COLLECTION = 'lancamentos';
 /** Lists only the lançamentos due within the given 'YYYY-MM' month. */
 export function listLancamentosByMonth(uid, monthKey, { source = 'default' } = {}) {
   const { gte, lte } = monthRangeBounds(monthKey);
-  return listUserDocsInRange(uid, COLLECTION, { field: 'dataVencimento', gte, lte, source });
+  return listUserDocsInRange(uid, COLLECTION, { field: 'dataVencimento', gte, lte, direction: 'desc', source });
 }
 
 /** Lists every lançamento regardless of date — used by the Gestor Financeiro's analysis and import picker. */
@@ -54,7 +54,7 @@ export function hasAnyLancamento(uid) {
 
 /** Lists lançamentos due within an arbitrary inclusive ['YYYY-MM-DD', 'YYYY-MM-DD'] range. */
 export function listLancamentosByRange(uid, gte, lte) {
-  return listUserDocsInRange(uid, COLLECTION, { field: 'dataVencimento', gte, lte });
+  return listUserDocsInRange(uid, COLLECTION, { field: 'dataVencimento', gte, lte, direction: 'desc' });
 }
 
 export function createLancamento(uid, data) {

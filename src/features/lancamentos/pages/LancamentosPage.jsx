@@ -203,7 +203,7 @@ export default function LancamentosPage() {
       if (quickFilter === 'concluido' && item.status !== (tab === 'receita' ? 'recebido' : 'pago')) return false;
       if (quickFilter === 'sem_categoria' && item.categoriaId) return false;
       return true;
-    });
+    }).sort((a, b) => b.dataVencimento.localeCompare(a.dataVencimento));
   }, [lancamentosDoTipo, busca, categoriasById, categoryFilter, quickFilter, tab]);
 
   const categoriasDoTipo = useMemo(
