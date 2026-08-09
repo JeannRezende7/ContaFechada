@@ -41,7 +41,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.3",
     "eslint-plugin-react-hooks": "^4.6.2",
-    "firebase-admin": "^14.2.0",
+    "firebase-admin": "^13.6.0",
     "globals": "^15.15.0",
     "google-auth-library": "^10.9.0",
     "mercadopago": "^3.2.0",
