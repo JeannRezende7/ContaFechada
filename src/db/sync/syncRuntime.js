@@ -5,7 +5,23 @@ import { readFirstSyncState } from './firstSyncController.js';
 import { runSyncCycle } from './runSyncCycle.js';
 
 const REMOTE_COLLECTION = { configuracoes: 'config' };
+const DOMAIN_BATCH_SIZE = 2;
 let running;
+let domainCursor = 0;
+
+export function selectNextSyncDomains(domains = LOCAL_FIRST_DOMAINS, batchSize = DOMAIN_BATCH_SIZE) {
+  if (!domains.length || batchSize <= 0) return [];
+  const count = Math.min(batchSize, domains.length);
+  const selected = Array.from({ length: count }, (_, offset) =>
+    domains[(domainCursor + offset) % domains.length]
+  );
+  domainCursor = (domainCursor + count) % domains.length;
+  return selected;
+}
+
+export function resetSyncDomainCursorForTests() {
+  domainCursor = 0;
+}
 
 export async function purgeConfirmedTombstones(driver) {
   const result = await driver.run(
@@ -19,7 +35,13 @@ export async function purgeConfirmedTombstones(driver) {
   return result.changes;
 }
 
-export async function runAutomaticSync({ uid, isPremium, isOnline = navigator.onLine }) {
+export async function runAutomaticSync({
+  uid,
+  isPremium,
+  isOnline = navigator.onLine,
+  uploadOnly = false,
+  domains,
+}) {
   if (running) return running;
   running = (async () => {
     const driver = await getLocalDatabase();
@@ -31,11 +53,12 @@ export async function runAutomaticSync({ uid, isPremium, isOnline = navigator.on
       return { skipped: true, reason: 'primeira_sincronizacao_pendente' };
     }
     const remote = createFirestoreTransferAdapter(uid);
+    const selectedDomains = uploadOnly ? [] : (domains ?? selectNextSyncDomains());
     const result = await runSyncCycle({
       driver,
       uid,
       uploader: remote,
-      entidades: LOCAL_FIRST_DOMAINS,
+      entidades: selectedDomains,
       isPremium,
       isOnline,
       storage: 'documents',
@@ -43,7 +66,7 @@ export async function runAutomaticSync({ uid, isPremium, isOnline = navigator.on
         listUserDocsUpdatedSince(uid, REMOTE_COLLECTION[domain] ?? domain, since),
     });
     if (!result.skipped) await purgeConfirmedTombstones(driver);
-    return result;
+    return { ...result, domains: selectedDomains };
   })().finally(() => { running = undefined; });
   return running;
 }

@@ -78,7 +78,7 @@ export default function DashboardPage() {
     // An empty cache is not shown as a real zero balance because it may only
     // mean the query has never been cached on this device.
     if (!memory) {
-      getDashboardData(uid, monthKey, { source: 'cache' })
+      getDashboardData(uid, monthKey, { source: 'cache', dataRepositories: repositories })
         .then((cached) => {
           if (cancelled || serverApplied || cached.documentCount === 0) return;
           cachePainted = true;
@@ -102,7 +102,7 @@ export default function DashboardPage() {
       );
     });
 
-    Promise.race([getDashboardData(uid, monthKey, { source: 'server' }), timeout])
+    Promise.race([getDashboardData(uid, monthKey, { source: 'server', dataRepositories: repositories }), timeout])
       .then((data) => {
         if (cancelled) return;
         serverApplied = true;
@@ -118,7 +118,7 @@ export default function DashboardPage() {
         // Recurrences are maintenance work, not a prerequisite for painting
         // totals. Refresh only if the background pass creates something.
         const syncStartedAt = performance.now();
-        syncDashboardRecorrencias(uid, monthKey)
+        syncDashboardRecorrencias(uid, monthKey, repositories)
           .then((updated) => {
             if (cancelled || !updated) return;
             setIndicators(updated.indicators);

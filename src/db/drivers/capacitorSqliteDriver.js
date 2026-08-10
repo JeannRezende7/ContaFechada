@@ -20,10 +20,12 @@
  * @returns {import('./driver.js').SqlDriver}
  */
 export function createCapacitorSqliteDriver(connection) {
-  async function run(sql, params = []) {
-    const result = await connection.run(sql, params);
+  async function runWithTransactionMode(sql, params = [], transaction = true) {
+    const result = await connection.run(sql, params, transaction);
     return { changes: result?.changes?.changes ?? 0 };
   }
+
+  const run = (sql, params = []) => runWithTransactionMode(sql, params, true);
 
   async function all(sql, params = []) {
     const result = await connection.query(sql, params);
@@ -38,12 +40,17 @@ export function createCapacitorSqliteDriver(connection) {
   const driver = { run, all, get };
 
   driver.transaction = async function transaction(fn) {
-    await connection.execute('BEGIN TRANSACTION');
+    await connection.beginTransaction();
+    const transactionDriver = {
+      run: (sql, params = []) => runWithTransactionMode(sql, params, false),
+      all,
+      get,
+    };
     try {
-      await fn(driver);
-      await connection.execute('COMMIT');
+      await fn(transactionDriver);
+      await connection.commitTransaction();
     } catch (error) {
-      await connection.execute('ROLLBACK');
+      await connection.rollbackTransaction();
       throw error;
     }
   };

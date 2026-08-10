@@ -11,18 +11,32 @@ export default function OnboardingWizard({ uid, open, onClose }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(INITIAL);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   if (!open) return null;
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
 
   async function skip() {
-    await repositories.configuracoes.skipOnboarding(uid);
-    onClose();
+    setSaving(true);
+    setError('');
+    try {
+      await repositories.configuracoes.skipOnboarding(uid);
+      onClose();
+    } catch (cause) {
+      console.error('Falha ao pular onboarding', cause);
+      setError('Não foi possível salvar. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   }
   async function finish() {
     setSaving(true);
+    setError('');
     try {
       await repositories.configuracoes.completeOnboarding(uid, form);
       onClose();
+    } catch (cause) {
+      console.error('Falha ao concluir onboarding', cause);
+      setError('Não foi possível concluir. Tente novamente.');
     } finally {
       setSaving(false);
     }
@@ -36,9 +50,10 @@ export default function OnboardingWizard({ uid, open, onClose }) {
         {step === 1 && <RecurringForm title="Sua renda principal" description="Ela será criada como receita recorrente mensal." prefix="income" form={form} update={update} />}
         {step === 2 && <RecurringForm title="Primeira conta recorrente" description="Você pode pular e cadastrar outras depois." prefix="expense" form={form} update={update} />}
         {step === 3 && <Summary form={form} />}
+        {error && <p role="alert" className="mt-4 rounded-xl bg-signal-50 p-3 text-sm text-signal-600">{error}</p>}
         <div className="mt-7 flex items-center gap-2">
           {step === 0
-            ? <button onClick={skip} className="text-sm text-ink-300 hover:text-ink-500">Pular por agora</button>
+            ? <button disabled={saving} onClick={skip} className="text-sm text-ink-300 hover:text-ink-500 disabled:opacity-50">Pular por agora</button>
             : <button onClick={() => setStep((value) => value - 1)} className="flex items-center gap-1 text-sm text-ink-500"><ChevronLeft size={15} /> Voltar</button>}
           <button disabled={saving} onClick={step === 3 ? finish : () => setStep((value) => value + 1)} className="ml-auto flex items-center gap-1 rounded-pill bg-ledger-500 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50">
             {step === 3 ? (saving ? 'Salvando…' : 'Concluir') : <>Continuar <ChevronRight size={15} /></>}

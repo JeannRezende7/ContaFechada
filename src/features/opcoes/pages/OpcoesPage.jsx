@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogOut, MonitorDown } from 'lucide-react';
+import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogIn, LogOut, MonitorDown } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -33,8 +33,7 @@ export default function OpcoesPage() {
 
   async function handleSignOut() {
     if (isLocalSession) {
-      endLocalMode();
-      window.location.replace('/entrar');
+      window.location.assign('/entrar');
       return;
     }
     await signOutUser();
@@ -224,14 +223,15 @@ export default function OpcoesPage() {
               {isLocalSession ? 'Modo gratuito local' : (user?.displayName || 'Minha conta')}
             </p>
             {user?.email && <p className="text-xs text-ink-300 truncate mt-0.5">{user.email}</p>}
+            {isLocalSession && <p className="mt-0.5 text-xs text-ink-300">Entre sem perder os dados deste aparelho.</p>}
           </div>
           <button
             type="button"
             onClick={handleSignOut}
             className="shrink-0 flex items-center gap-1.5 rounded-pill bg-ink-50 dark:bg-ink-900 text-ink-500 dark:text-ink-100 px-3.5 py-2 text-sm font-medium hover:bg-signal-50 hover:text-signal-500 transition-colors"
           >
-            <LogOut size={15} strokeWidth={2} />
-            Sair
+            {isLocalSession ? <LogIn size={15} strokeWidth={2} /> : <LogOut size={15} strokeWidth={2} />}
+            {isLocalSession ? 'Fazer login' : 'Sair'}
           </button>
         </section>
 
@@ -308,7 +308,7 @@ export default function OpcoesPage() {
           <ChevronRight size={16} className="text-ink-300 shrink-0" strokeWidth={2} />
         </Link>}
 
-        <div className={`${activeTab !== 'geral' ? 'hidden' : 'flex'} bg-white dark:bg-ink-700 rounded-card shadow-card p-4 items-center justify-between gap-3`}>
+        <div className={`${activeTab !== 'avancado' ? 'hidden' : 'flex'} bg-white dark:bg-ink-700 rounded-card shadow-card p-4 items-center justify-between gap-3`}>
           <div className="min-w-0 flex items-start gap-3">
             <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
               <Landmark size={15} strokeWidth={1.75} />

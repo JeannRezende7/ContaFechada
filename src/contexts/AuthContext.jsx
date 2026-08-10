@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
         setInitializationError(null);
         try {
           await retryLocalDatabase();
-          await initializeRepositories();
+          await initializeRepositories({ force: true });
         } catch (error) {
           setInitializationError(error);
         } finally {
@@ -60,7 +60,7 @@ export function AuthProvider({ children }) {
         setInitializationError(null);
         try {
           await recreateLocalDatabase();
-          await initializeRepositories();
+          await initializeRepositories({ force: true });
         } catch (error) {
           setInitializationError(error);
         } finally {

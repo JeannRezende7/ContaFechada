@@ -11,7 +11,7 @@ import BrandIcon from '../../../components/ui/BrandIcon.jsx';
  */
 export default function PrivacidadePage() {
   return (
-    <div className="min-h-screen bg-paper dark:bg-ink-900 px-4 py-8 md:py-12">
+    <div className="min-h-screen bg-paper px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] dark:bg-ink-900 md:py-12">
       <div className="max-w-2xl mx-auto">
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-ink-300 hover:text-ink-500 mb-6 transition-colors">
           <ArrowLeft size={15} strokeWidth={2} />

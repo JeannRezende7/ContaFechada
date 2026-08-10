@@ -18,7 +18,7 @@ async function retryErrors() {
 
 export default function SyncDiagnosticsRoute() {
   if (!isNativeLocalDatabaseAvailable()) {
-    return <main className="p-6 text-sm text-ink-300">O diagnóstico de sincronização está disponível no aplicativo Android.</main>;
+    return <main className="px-6 pb-6 pt-[max(1.5rem,env(safe-area-inset-top))] text-sm text-ink-300">O diagnóstico de sincronização está disponível no aplicativo Android.</main>;
   }
   return (
     <SyncDiagnosticsPage

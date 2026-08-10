@@ -30,7 +30,7 @@ export default function SyncDiagnosticsPage({ loadHealth, retryErrors, platform 
   }
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-4 p-4 md:p-8">
+    <main className="mx-auto flex max-w-2xl flex-col gap-4 px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] md:p-8">
       <div className="flex items-center justify-between gap-3">
         <div><h1 className="font-display text-xl font-semibold">Diagnóstico</h1><p className="text-sm text-ink-300">Informações técnicas deste aparelho.</p></div>
         <button type="button" onClick={exportReport} disabled={!health} className="flex items-center gap-2 rounded-pill bg-ink-50 px-3 py-2 text-sm disabled:opacity-50 dark:bg-ink-700">

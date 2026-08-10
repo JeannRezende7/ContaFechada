@@ -11,13 +11,13 @@ export default function Topbar({ title, icon: Icon }) {
   const { openMenu } = useMobileMenu();
 
   return (
-    <header className="flex items-center justify-between px-4 py-3 md:px-8 md:py-5 border-b border-ink-100 dark:border-ink-700 bg-paper/95 dark:bg-ink-900/95 backdrop-blur sticky top-0 z-10">
+    <header className="sticky top-0 z-10 flex items-center justify-between border-b border-ink-100 bg-paper/95 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur dark:border-ink-700 dark:bg-ink-900/95 md:px-8 md:py-5">
       <div className="flex min-w-0 items-center gap-2">
         <button
           type="button"
           onClick={openMenu}
           aria-label="Abrir menu principal"
-          className="flex shrink-0 items-center rounded-full p-1.5 text-ink-500 hover:bg-ink-50 hover:text-ledger-600 dark:text-ink-100 dark:hover:bg-ink-700 md:hidden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-500 hover:bg-ink-50 hover:text-ledger-600 dark:text-ink-100 dark:hover:bg-ink-700 md:hidden"
         >
           <Menu size={21} />
         </button>

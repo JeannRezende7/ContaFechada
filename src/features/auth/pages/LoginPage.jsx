@@ -9,7 +9,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { startLocalMode } = useAuth();
+  const { startLocalMode, isLocalSession } = useAuth();
 
   async function handleSignIn() {
     setError(null);
@@ -28,9 +28,13 @@ export default function LoginPage() {
   return (
     <div>
       <h2 className="font-display text-xl font-semibold mb-1">Vamos organizar as contas?</h2>
-      <p className="text-ink-300 text-sm mb-6">Sem senha, sem complicação — entre com sua conta Google.</p>
+      <p className="text-ink-300 text-sm mb-6">
+        {isLocalSession
+          ? 'Entre com sua conta Google para habilitar a nuvem. Seus dados locais serão mantidos e preparados para sincronização.'
+          : 'Sem senha, sem complicação — entre com sua conta Google.'}
+      </p>
       <GoogleButton onClick={handleSignIn} loading={loading} />
-      {isNativeLocalDatabaseAvailable() && (
+      {isNativeLocalDatabaseAvailable() && !isLocalSession && (
         <>
           <button
             type="button"

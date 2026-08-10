@@ -51,7 +51,7 @@ export default function FirstSyncGate({ children }) {
   if (complete) return children;
   if (!controller) return <p role="status" className="p-6 text-sm text-ink-300">Preparando seus dados locais…</p>;
   return (
-    <main className="mx-auto max-w-3xl p-4 md:p-8">
+    <main className="mx-auto max-w-3xl px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] md:p-8">
       <FirstSyncFlow controller={controller} onComplete={() => {
         setComplete(true);
         window.dispatchEvent(new Event('contafechada:first-sync-complete'));

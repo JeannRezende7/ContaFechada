@@ -3,7 +3,7 @@ import BrandIcon from '../components/ui/BrandIcon.jsx';
 
 export default function AuthLayout() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-ink-900 to-ink-700 flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-gradient-to-b from-ink-900 to-ink-700 flex items-center justify-center px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <BrandIcon size={56} className="w-14 h-14 shadow-pop mb-4" />

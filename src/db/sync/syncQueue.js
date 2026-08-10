@@ -14,6 +14,11 @@ import { nextRetryDelayMs } from './backoff.js';
 const MAX_ATTEMPTS = 8;
 const VALID_OPERATIONS = new Set(['create', 'update', 'delete']);
 
+function notifyPendingSync(entidade) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('contafechada:sync-pending', { detail: { entidade } }));
+}
+
 function rowToOperation(row) {
   return {
     id: row.id,
@@ -68,12 +73,14 @@ export async function enqueue(driver, { entidade, registroId, operacao, payload 
        VALUES (?, ?, ?, ?, ?, 'pending', 0, NULL, ?, NULL)`,
       [crypto.randomUUID(), entidade, registroId, operacao, payload ? JSON.stringify(payload) : null, new Date().toISOString()]
     );
+    notifyPendingSync(entidade);
     return;
   }
 
   const { operacao: nextOperacao, drop } = consolidate(existing.operacao, operacao);
   if (drop) {
     await driver.run('DELETE FROM sync_queue WHERE id = ?', [existing.id]);
+    notifyPendingSync(entidade);
     return;
   }
 
@@ -82,6 +89,7 @@ export async function enqueue(driver, { entidade, registroId, operacao, payload 
     payload ? JSON.stringify(payload) : existing.payload,
     existing.id,
   ]);
+  notifyPendingSync(entidade);
 }
 
 /** Próximo lote de operações prontas pra envio — pendentes, sem tentativa futura agendada ainda no futuro. */

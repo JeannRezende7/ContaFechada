@@ -113,11 +113,12 @@ function computeComparacao(lancamentosAtual, lancamentosAnterior) {
   return { despesaAtual, despesaAnterior, percentual, porCategoriaAtual, porCategoriaAnterior };
 }
 
-async function loadDashboardMonths(uid, monthKey, source = 'default') {
+async function loadDashboardMonths(uid, monthKey, source = 'default', dataRepositories = null) {
   const anterior = shiftMonthKey(monthKey, -1);
+  const listByMonth = dataRepositories?.lancamentos?.listByMonth ?? listLancamentosByMonth;
   const [lancamentosAtual, lancamentosAnterior] = await Promise.all([
-    listLancamentosByMonth(uid, monthKey, { source }),
-    listLancamentosByMonth(uid, anterior, { source }),
+    listByMonth(uid, monthKey, { source }),
+    listByMonth(uid, anterior, { source }),
   ]);
 
   return {
@@ -133,8 +134,8 @@ async function loadDashboardMonths(uid, monthKey, source = 'default') {
  * Fast first paint: only the two month queries needed for the visible totals.
  * Recurrence synchronization deliberately does not block these values.
  */
-export async function getDashboardData(uid, monthKey, { source = 'default' } = {}) {
-  const data = await loadDashboardMonths(uid, monthKey, source);
+export async function getDashboardData(uid, monthKey, { source = 'default', dataRepositories = null } = {}) {
+  const data = await loadDashboardMonths(uid, monthKey, source, dataRepositories);
   // A non-empty IndexedDB result is useful for later navigation in the same
   // session. An empty cache is ignored because it may only be a cache miss.
   if (source !== 'cache' || data.documentCount > 0) {
@@ -148,12 +149,14 @@ export async function getDashboardData(uid, monthKey, { source = 'default' } = {
  * range query; only when new instances are written do we re-read the totals.
  * Returns null in the common no-change case.
  */
-export async function syncDashboardRecorrencias(uid, monthKey) {
+export async function syncDashboardRecorrencias(uid, monthKey, dataRepositories = null) {
   const anterior = shiftMonthKey(monthKey, -1);
-  const recorrencias = await listRecorrencias(uid);
-  const gerouAlgo = await ensureGeneratedForMonths(uid, [anterior, monthKey], recorrencias);
+  const list = dataRepositories?.recorrencias?.list ?? listRecorrencias;
+  const ensureForMonths = dataRepositories?.recorrencias?.ensureGeneratedForMonths ?? ensureGeneratedForMonths;
+  const recorrencias = await list(uid);
+  const gerouAlgo = await ensureForMonths(uid, [anterior, monthKey], recorrencias);
   if (!gerouAlgo) return null;
-  const data = await loadDashboardMonths(uid, monthKey, 'server');
+  const data = await loadDashboardMonths(uid, monthKey, 'server', dataRepositories);
   setDashboardMemoryCache(uid, monthKey, data);
   return data;
 }

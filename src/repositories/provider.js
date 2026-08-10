@@ -37,11 +37,12 @@ const firebaseRepositories = {
 let activeRepositories = firebaseRepositories;
 let initialization;
 
-export async function initializeRepositories() {
+export async function initializeRepositories({ force = false } = {}) {
   if (!isNativeLocalDatabaseAvailable()) {
     activeRepositories = firebaseRepositories;
     return activeRepositories;
   }
+  if (force) initialization = undefined;
   if (!initialization) {
     initialization = getLocalDatabase()
       .then((driver) => {

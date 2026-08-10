@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Cloud, CloudOff } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 
 export default function ConnectionStatus() {
+  const { isLocalSession } = useAuth();
   const [online, setOnline] = useState(() => navigator.onLine);
 
   useEffect(() => {
@@ -14,6 +16,8 @@ export default function ConnectionStatus() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  if (isLocalSession) return null;
 
   return (
     <span
