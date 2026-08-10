@@ -37,42 +37,32 @@ export const FEATURES = {
 };
 
 /**
- * 'limit'    — free up to N (see FREE_LIMITS), unlimited on premium.
- * 'boolean'  — all-or-nothing: free never gets it, premium always does.
- * Kept as its own map (instead of guessing from FREE_LIMITS having a value)
- * so a limit of 0 is representable and a boolean feature can never be
- * mistaken for "limit not configured yet".
+ * `free` keeps the complete local experience available to everyone.
+ * `boolean` marks convenience, cloud, automation and advanced-analysis
+ * features that become Premium when enforcement is enabled.
  */
 const FEATURE_KIND = {
-  [FEATURES.CATEGORIAS_CUSTOM]: 'limit',
-  [FEATURES.RECORRENCIAS]: 'limit',
-  [FEATURES.METAS]: 'limit',
-  [FEATURES.HISTORICO]: 'limit',
+  [FEATURES.CATEGORIAS_CUSTOM]: 'free',
+  [FEATURES.RECORRENCIAS]: 'free',
+  [FEATURES.METAS]: 'free',
+  [FEATURES.HISTORICO]: 'free',
   [FEATURES.RELATORIOS_AVANCADOS]: 'boolean',
-  [FEATURES.GESTOR_AVANCADO]: 'boolean',
+  [FEATURES.GESTOR_AVANCADO]: 'free',
   [FEATURES.INSIGHTS_AVANCADOS]: 'boolean',
-  [FEATURES.EXPORTACAO_AVANCADA]: 'boolean',
-  [FEATURES.PLANEJAMENTO_AVANCADO]: 'boolean',
+  [FEATURES.EXPORTACAO_AVANCADA]: 'free',
+  [FEATURES.PLANEJAMENTO_AVANCADO]: 'free',
   [FEATURES.IMPORTACAO_EXTRATO]: 'boolean',
   [FEATURES.REGRAS_CATEGORIZACAO]: 'boolean',
   [FEATURES.ACOES_EM_MASSA]: 'boolean',
   [FEATURES.BUSCA_GLOBAL]: 'boolean',
-  [FEATURES.METAS_AUTOMATICAS]: 'boolean',
+  [FEATURES.METAS_AUTOMATICAS]: 'free',
 };
 
 /**
- * Free-tier caps, only enforced once PREMIUM_ENFORCED is true. Every
- * quantitative limit in the whole app is defined here and nowhere else —
- * changing a number never requires touching a page component.
- *
- * HISTORICO is in "meses anteriores ao mes atual" (2 = mes atual + 2
- * anteriores acessiveis, como descrito no plano gratuito).
+ * Kept as a compatibility export for UI helpers. Core usage no longer has
+ * quantitative caps: users retain full access to their local data.
  */
 export const FREE_LIMITS = {
-  [FEATURES.CATEGORIAS_CUSTOM]: 5,
-  [FEATURES.RECORRENCIAS]: 2,
-  [FEATURES.METAS]: 2,
-  [FEATURES.HISTORICO]: 2,
 };
 
 /** Copy used by "Meu Plano" and the paywall — kept next to the rules they describe. */
@@ -81,53 +71,44 @@ export const PLAN_DETAILS = {
     label: 'Gratuito',
     beneficios: [
       'Lançamentos manuais ilimitados',
-      'Dashboard básico',
-      'Categorias padrão + até 5 personalizadas',
-      'Até 2 recorrências ativas',
-      'Até 2 metas ativas',
-      'Relatório básico do mês atual',
-      'Histórico do mês atual e dos 2 meses anteriores',
-      'Gestor Financeiro com indicadores básicos do mês atual',
-      'Exportação CSV do mês atual',
+      'Parcelamentos, categorias e recorrências ilimitados',
+      'Histórico completo no dispositivo',
+      'Dashboard e relatórios mensais',
+      'Gestor Financeiro e planejamento do valor livre',
+      'Exportação CSV completa',
     ],
   },
   [PLAN.PREMIUM]: {
     label: 'Premium',
     beneficios: [
-      'Categorias personalizadas ilimitadas',
-      'Recorrências ilimitadas',
-      'Metas ilimitadas',
-      'Histórico completo',
+      'Sincronização e backup automático na nuvem',
+      'Acesso Web e uso em vários dispositivos',
       'Relatórios de múltiplos períodos e comparação entre meses',
       'Projeções e insights financeiros avançados',
-      'Gestor Financeiro completo',
-      'Filtros e exportações avançadas',
-      'Acesso antecipado a novos recursos',
-      'Planejamento do valor livre e simulador de compras',
       'Importação CSV/OFX e ações em massa',
-      'Busca global, regras automáticas e aportes em metas',
+      'Busca global e regras automáticas de categorização',
+      'Acesso antecipado a novos recursos',
     ],
   },
 };
 
 /**
  * Linha a linha, Gratuito vs Premium — usado pela tabela comparativa em
- * "Meu Plano" e no paywall. Os números vêm de FREE_LIMITS pra nunca
- * dessincronizar do que é de fato aplicado.
+ * "Meu Plano" e no paywall. Esta é a fonte única da comunicação comercial.
  */
 export const PLAN_COMPARISON = [
   { label: 'Lançamentos manuais', free: 'Ilimitados', premium: 'Ilimitados' },
-  { label: 'Categorias personalizadas', free: `Até ${FREE_LIMITS[FEATURES.CATEGORIAS_CUSTOM]}`, premium: 'Ilimitadas' },
-  { label: 'Recorrências ativas', free: `Até ${FREE_LIMITS[FEATURES.RECORRENCIAS]}`, premium: 'Ilimitadas' },
-  { label: 'Metas ativas', free: `Até ${FREE_LIMITS[FEATURES.METAS]}`, premium: 'Ilimitadas' },
-  { label: 'Histórico acessível', free: `Mês atual + ${FREE_LIMITS[FEATURES.HISTORICO]} meses`, premium: 'Completo' },
-  { label: 'Relatórios', free: 'Básico do mês atual', premium: 'Múltiplos períodos e comparação' },
-  { label: 'Gestor Financeiro', free: 'Indicadores básicos do mês atual', premium: 'Completo, com projeções' },
+  { label: 'Categorias e recorrências', free: 'Ilimitadas', premium: 'Ilimitadas' },
+  { label: 'Histórico no dispositivo', free: 'Completo', premium: 'Completo' },
+  { label: 'Sincronização e backup na nuvem', free: 'Não incluído', premium: 'Incluído' },
+  { label: 'Acesso Web e multidispositivo', free: 'Não incluído', premium: 'Incluído' },
+  { label: 'Relatórios', free: 'Mensais', premium: 'Comparações e evolução' },
+  { label: 'Gestor Financeiro', free: 'Indicadores completos', premium: 'Com insights e projeções' },
   { label: 'Insights e sugestões', free: 'Não incluído', premium: 'Avançados' },
-  { label: 'Exportação', free: 'CSV do mês atual', premium: 'Avançada, múltiplos períodos' },
-  { label: 'Planejamento', free: 'Distribuição mensal', premium: 'Distribuição avançada e simulador de compras' },
+  { label: 'Exportação CSV', free: 'Completa', premium: 'Completa' },
+  { label: 'Planejamento do valor livre', free: 'Incluído', premium: 'Incluído' },
   { label: 'Importação bancária', free: 'Não incluída', premium: 'CSV e OFX' },
-  { label: 'Automação', free: 'Recorrências limitadas', premium: 'Regras de categoria e metas automáticas' },
+  { label: 'Automação', free: 'Recorrências', premium: 'Regras de categoria' },
   { label: 'Busca', free: 'No Movimento', premium: 'Global com filtros avançados' },
 ];
 
@@ -163,8 +144,8 @@ export function getLimit(feature) {
   return FEATURE_KIND[feature] === 'limit' ? (FREE_LIMITS[feature] ?? null) : null;
 }
 
-export function isLimitFeature(feature) {
-  return FEATURE_KIND[feature] === 'limit';
+export function isLimitFeature() {
+  return false;
 }
 
 export function isBooleanFeature(feature) {
@@ -191,21 +172,13 @@ export function checkGate(feature, ctx = {}) {
     return { allowed: false, reason: 'premium_required' };
   }
 
-  const limit = FREE_LIMITS[feature];
-  if (limit != null && (ctx.count ?? 0) >= limit) {
-    return { allowed: false, reason: 'limit_reached', limit };
-  }
   return { allowed: true };
 }
 
 /**
- * Oldest 'YYYY-MM' month key a free user may navigate to (mes atual - N
- * meses, N = FREE_LIMITS.historico). Premium/unenforced has no floor.
- * Takes `shiftMonthKey`/`currentMonthKey` as params instead of importing
- * monthKey.js directly, keeping this module dependency-free and easy to
- * unit test in isolation.
+ * Compatibility helper for older screens. History is now always complete,
+ * so navigation never has a minimum month.
  */
-export function getOldestAllowedMonthKey({ isPremium, currentMonthKey, shiftMonthKey, enforced = PREMIUM_ENFORCED }) {
-  if (!enforced || isPremium) return null;
-  return shiftMonthKey(currentMonthKey, -FREE_LIMITS[FEATURES.HISTORICO]);
+export function getOldestAllowedMonthKey() {
+  return null;
 }

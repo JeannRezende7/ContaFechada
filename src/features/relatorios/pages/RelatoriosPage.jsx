@@ -16,11 +16,11 @@ import {
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { useTheme } from '../../../contexts/ThemeContext.jsx';
-import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
+import { FEATURES } from '../../../config/premium.js';
 import PremiumBadge from '../../premium/components/PremiumBadge.jsx';
 import { getGastosPorCategoria, getEvolucaoMensal } from '../services/relatoriosService.js';
 import { getColor } from '../../categorias/colorMap.js';
-import { getCurrentMonthKey, shiftMonthKey } from '../../../utils/monthKey.js';
+import { getCurrentMonthKey } from '../../../utils/monthKey.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
@@ -53,7 +53,7 @@ function EvolucaoTooltip({ active, payload, label }) {
 export default function RelatoriosPage() {
   const { user } = useAuth();
   const uid = user?.uid;
-  const { canUse, isPremium, openPaywall, getLimit } = usePremium();
+  const { canUse, openPaywall } = usePremium();
   const { theme } = useTheme();
   const chartSurfaceColor = theme === 'dark' ? '#334155' : '#F8FAFC';
   const chartGridColor = theme === 'dark' ? '#475569' : '#E2E8F0';
@@ -62,18 +62,7 @@ export default function RelatoriosPage() {
   const [categoriaData, setCategoriaData] = useState({ items: [], totalGeral: 0 });
   const [evolucao, setEvolucao] = useState([]);
 
-  // Histórico (Fase 6): free vê só o mês atual e os 2 anteriores.
-  const oldestAllowedMonthKey = getOldestAllowedMonthKey({
-    isPremium,
-    currentMonthKey: getCurrentMonthKey(),
-    shiftMonthKey,
-  });
-
   function tryChangeMonth(nextMonthKey) {
-    if (oldestAllowedMonthKey && nextMonthKey < oldestAllowedMonthKey) {
-      openPaywall({ feature: FEATURES.HISTORICO, reason: 'limit_reached', limit: getLimit(FEATURES.HISTORICO) });
-      return;
-    }
     setMonthKey(nextMonthKey);
   }
 

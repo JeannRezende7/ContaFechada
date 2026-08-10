@@ -4,8 +4,6 @@ import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { getColor } from '../colorMap.js';
 import { getIcon } from '../iconMap.js';
-import { usePremium } from '../../../contexts/PremiumContext.jsx';
-import { FEATURES } from '../../../config/premium.js';
 import CategoriaModal from '../components/CategoriaModal.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import RegrasCategorizacao from '../components/RegrasCategorizacao.jsx';
@@ -13,7 +11,6 @@ import RegrasCategorizacao from '../components/RegrasCategorizacao.jsx';
 export default function CategoriasPage() {
   const { user } = useAuth();
   const uid = user?.uid;
-  const { guardFeature } = usePremium();
   const [categorias, setCategorias] = useState([]);
   const [tab, setTab] = useState('despesa');
   const [modalOpen, setModalOpen] = useState(false);
@@ -38,10 +35,7 @@ export default function CategoriasPage() {
     [categorias, tab]
   );
 
-  const customCount = useMemo(() => categorias.filter((c) => !c.padrao).length, [categorias]);
-
   async function handleAdd(dados) {
-    if (!guardFeature(FEATURES.CATEGORIAS_CUSTOM, { count: customCount })) return;
     await repositories.categorias.create(uid, { ...dados, ordem: Date.now() });
     setModalOpen(false);
     reload();
@@ -149,7 +143,6 @@ export default function CategoriasPage() {
       <CategoriaModal
         open={modalOpen}
         tipo={editing?.tipo ?? tab}
-        customCount={customCount}
         initialData={editing}
         onClose={() => {
           setModalOpen(false);

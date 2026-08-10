@@ -301,7 +301,7 @@ export default function OpcoesPage() {
             <div>
               <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Meu Plano</p>
               <p className="text-xs text-ink-300 mt-0.5">
-                {isPremium ? 'Premium ativo · gerenciar assinatura' : 'Você está no plano Gratuito · conheça o Premium'}
+                {isPremium ? 'Premium ativo · gerenciar assinatura' : 'Nuvem, acesso Web e automações com o Premium'}
               </p>
             </div>
           </div>

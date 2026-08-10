@@ -2,14 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Plus, Save } from 'lucide-react';
 import { COLOR_MAP } from '../colorMap.js';
 import { ICON_MAP } from '../iconMap.js';
-import { FEATURES } from '../../../config/premium.js';
-import UsageIndicator from '../../premium/components/UsageIndicator.jsx';
 import { useModalHistory } from '../../../hooks/useModalHistory.js';
 
 const EMPTY = { nome: '', corKey: 'cinza', icone: 'tag' };
 
 /** Full-screen-ish form for a new categoria — icons render large since picking one is the whole point of this modal. */
-export default function CategoriaModal({ open, tipo, customCount, initialData = null, onClose, onSave }) {
+export default function CategoriaModal({ open, tipo, initialData = null, onClose, onSave }) {
   const [form, setForm] = useState(EMPTY);
   const firstFieldRef = useRef(null);
   useModalHistory(open, onClose);
@@ -55,7 +53,6 @@ export default function CategoriaModal({ open, tipo, customCount, initialData = 
           <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50">
             {initialData ? 'Editar' : 'Nova'} categoria de {tipo === 'despesa' ? 'despesa' : 'receita'}
           </h2>
-          {!initialData && <UsageIndicator feature={FEATURES.CATEGORIAS_CUSTOM} count={customCount} label="categorias personalizadas" />}
         </div>
 
         <label className="block text-xs font-medium text-ink-300 mb-1">Nome</label>

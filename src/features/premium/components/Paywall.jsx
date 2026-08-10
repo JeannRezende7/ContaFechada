@@ -15,41 +15,13 @@ import PlanComparisonTable from './PlanComparisonTable.jsx';
  * (Fase 5: "Adaptar titulo e texto ao recurso que causou o bloqueio").
  */
 const FEATURE_COPY = {
-  [FEATURES.CATEGORIAS_CUSTOM]: {
-    title: 'Categorias personalizadas ilimitadas',
-    desc: 'O plano Gratuito permite até 5 categorias personalizadas.',
-  },
-  [FEATURES.RECORRENCIAS]: {
-    title: 'Recorrências ilimitadas',
-    desc: 'O plano Gratuito permite até 2 recorrências ativas ao mesmo tempo.',
-  },
-  [FEATURES.METAS]: {
-    title: 'Metas ilimitadas',
-    desc: 'O plano Gratuito permite até 2 metas ativas ao mesmo tempo.',
-  },
-  [FEATURES.HISTORICO]: {
-    title: 'Histórico completo',
-    desc: 'O plano Gratuito mostra o mês atual e os 2 meses anteriores.',
-  },
   [FEATURES.RELATORIOS_AVANCADOS]: {
     title: 'Relatórios avançados',
     desc: 'Compare meses e acompanhe a evolução com filtros avançados.',
   },
-  [FEATURES.GESTOR_AVANCADO]: {
-    title: 'Gestor Financeiro completo',
-    desc: 'Projeções, comparações e análises históricas fazem parte do Premium.',
-  },
   [FEATURES.INSIGHTS_AVANCADOS]: {
     title: 'Insights financeiros avançados',
     desc: 'Sugestões mais completas sobre sua saúde financeira.',
-  },
-  [FEATURES.EXPORTACAO_AVANCADA]: {
-    title: 'Exportação avançada',
-    desc: 'Exporte outros períodos e use filtros avançados.',
-  },
-  [FEATURES.PLANEJAMENTO_AVANCADO]: {
-    title: 'Planejamento do valor livre',
-    desc: 'Distribua o valor livre, acompanhe suas finalidades e simule compras ao criar lançamentos.',
   },
   [FEATURES.IMPORTACAO_EXTRATO]: {
     title: 'Importação bancária',
@@ -65,17 +37,13 @@ const FEATURE_COPY = {
   },
   [FEATURES.BUSCA_GLOBAL]: {
     title: 'Busca global',
-    desc: 'Pesquise todo o histórico, metas, categorias e recorrências com filtros avançados.',
-  },
-  [FEATURES.METAS_AUTOMATICAS]: {
-    title: 'Metas automáticas',
-    desc: 'Automatize aportes por valor, receita ou saldo mensal com o Premium.',
+    desc: 'Pesquise lançamentos, categorias e recorrências em todo o histórico com filtros avançados.',
   },
 };
 
 const DISCOVERY_COPY = {
   title: 'Conheça o Conta Fechada Premium',
-  desc: 'Desbloqueie os recursos avançados e use o mesmo plano no Web e no Android.',
+  desc: 'Proteja seus dados na nuvem, acesse pela Web e ganhe automações e análises avançadas.',
 };
 
 function formatBRL(value) {

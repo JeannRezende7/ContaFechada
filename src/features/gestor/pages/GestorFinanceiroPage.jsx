@@ -3,7 +3,7 @@ import { Landmark, Sparkles, ListPlus, Trash2, Repeat, Plus } from 'lucide-react
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
-import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
+import { FEATURES } from '../../../config/premium.js';
 import PremiumBadge from '../../premium/components/PremiumBadge.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { analisarFinancas } from '../utils/analiseFinanceira.js';
@@ -11,7 +11,7 @@ import MonthNav from '../../../components/ui/MonthNav.jsx';
 import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
-import { getCurrentMonthKey, shiftMonthKey } from '../../../utils/monthKey.js';
+import { getCurrentMonthKey } from '../../../utils/monthKey.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import ImportarDoMovimentoModal from '../components/ImportarDoMovimentoModal.jsx';
 import ImportarRecorrenciasModal from '../components/ImportarRecorrenciasModal.jsx';
@@ -26,7 +26,7 @@ export default function GestorFinanceiroPage() {
   const { user } = useAuth();
   const uid = user?.uid;
   const confirm = useConfirm();
-  const { canUse, isPremium, openPaywall, getLimit } = usePremium();
+  const { canUse, openPaywall } = usePremium();
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey());
   const [usaMovimento, setUsaMovimento] = useState(null);
   const [lancamentos, setLancamentos] = useState(null);
@@ -64,18 +64,7 @@ export default function GestorFinanceiroPage() {
     return analisarFinancas(lancamentos, monthKey);
   }, [lancamentos, monthKey]);
 
-  // Histórico (Fase 6): free vê só o mês atual e os 2 anteriores.
-  const oldestAllowedMonthKey = getOldestAllowedMonthKey({
-    isPremium,
-    currentMonthKey: getCurrentMonthKey(),
-    shiftMonthKey,
-  });
-
   function tryChangeMonth(nextMonthKey) {
-    if (oldestAllowedMonthKey && nextMonthKey < oldestAllowedMonthKey) {
-      openPaywall({ feature: FEATURES.HISTORICO, reason: 'limit_reached', limit: getLimit(FEATURES.HISTORICO) });
-      return;
-    }
     setMonthKey(nextMonthKey);
   }
 

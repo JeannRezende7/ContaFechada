@@ -1,0 +1,132 @@
+CONTA FECHADA — PLANOS E RECURSOS
+=================================
+
+Atualizado em: 09/08/2026
+
+
+VISÃO GERAL
+-----------
+
+O plano Gratuito oferece um controle financeiro completo no dispositivo.
+O Premium acrescenta segurança na nuvem, acesso em vários dispositivos,
+automação e ferramentas avançadas de análise.
+
+Princípio do produto:
+
+- O usuário não paga para acessar, organizar ou exportar os próprios dados.
+- O Premium cobra por conveniência, nuvem, produtividade e análises avançadas.
+- Cancelar o Premium nunca apaga os dados locais do usuário.
+
+
+PLANO GRATUITO
+--------------
+
+Controle financeiro:
+
+- Lançamentos de receitas e despesas ilimitados.
+- Parcelamentos ilimitados.
+- Categorias padrão e personalizadas ilimitadas.
+- Recorrências ilimitadas.
+- Histórico completo no dispositivo.
+- Busca dentro da tela de lançamentos.
+
+Visualização e organização:
+
+- Dashboard com saldo, valores a pagar e valores a receber.
+- Comparação e indicadores básicos do mês.
+- Relatórios mensais por categoria.
+- Gestor Financeiro com indicadores completos.
+- Planejamento e distribuição do valor livre.
+- Tema claro e escuro.
+
+Portabilidade:
+
+- Exportação CSV completa.
+- Exportação dos dados do próprio usuário.
+
+Plataforma e armazenamento:
+
+- Aplicativo Android.
+- Dados armazenados localmente no dispositivo com SQLite.
+- Funcionamento local mesmo sem conexão com a internet.
+
+
+PLANO PREMIUM
+-------------
+
+O Premium inclui tudo do plano Gratuito, mais:
+
+Nuvem e dispositivos:
+
+- Sincronização automática com o Firestore.
+- Backup automático dos dados sincronizados na nuvem.
+- Acesso pela Web.
+- Uso da mesma conta em vários dispositivos.
+
+Importação e produtividade:
+
+- Importação de extratos bancários CSV e OFX.
+- Revisão dos lançamentos antes da importação.
+- Proteção contra importações duplicadas.
+- Edição, exportação e exclusão de lançamentos em massa.
+- Regras automáticas de categorização.
+
+Análises avançadas:
+
+- Relatórios comparativos entre meses.
+- Evolução financeira em vários períodos.
+- Insights e sugestões financeiras avançadas.
+- Projeções baseadas no histórico.
+- Busca global com filtros avançados.
+
+Benefícios adicionais:
+
+- Acesso antecipado a novos recursos.
+
+
+RECURSOS QUE NÃO FAZEM MAIS PARTE DOS PLANOS
+---------------------------------------------
+
+- Metas não estão disponíveis como uma área acessível no produto atual.
+- Por isso, metas e metas automáticas não são anunciadas como benefício do
+  plano Gratuito nem do Premium.
+- Importação de fatura em PDF permanece desativada e não é anunciada.
+
+
+PREÇOS PROPOSTOS
+----------------
+
+- Plano mensal: R$ 12,90.
+- Plano anual: R$ 99,90.
+- Oferta de fundador no primeiro ano: R$ 69,90.
+- Teste Premium: 14 dias, sujeito à ativação comercial.
+
+Os preços ainda devem ser validados antes do lançamento oficial.
+
+
+SITUAÇÃO ATUAL DA COBRANÇA
+--------------------------
+
+No código, PREMIUM_ENFORCED permanece como false.
+
+Isso significa que os bloqueios comerciais ainda não estão ativados para os
+usuários. A tabela acima representa a divisão planejada para quando o Premium
+for lançado oficialmente.
+
+A sincronização na nuvem já consulta o estado Premium separadamente. Portanto,
+é necessário validar todo o fluxo de assinatura, restauração de compra e
+recuperação de dados antes de ativar PREMIUM_ENFORCED.
+
+
+RESUMO COMERCIAL
+----------------
+
+Gratuito:
+
+  Controle financeiro completo no aparelho, com histórico e exportação.
+
+Premium:
+
+  Gratuito + nuvem + Web + multidispositivo + importação + automações
+  + relatórios e insights avançados.
+

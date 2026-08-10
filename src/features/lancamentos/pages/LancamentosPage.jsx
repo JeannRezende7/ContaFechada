@@ -5,10 +5,9 @@ import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
-import { FEATURES, getOldestAllowedMonthKey } from '../../../config/premium.js';
-import UsageIndicator from '../../premium/components/UsageIndicator.jsx';
+import { FEATURES } from '../../../config/premium.js';
 import { getTodayISODate, isSaneISODate } from '../../../utils/formatDate.js';
-import { getCurrentMonthKey, shiftMonthKey, daysInMonth } from '../../../utils/monthKey.js';
+import { getCurrentMonthKey, daysInMonth } from '../../../utils/monthKey.js';
 import { PERIOD_TYPES, getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
 import { buildLancamentoMatcher } from '../utils/searchLancamentos.js';
 import { buildCsv, downloadCsv } from '../../../utils/exportCsv.js';
@@ -68,7 +67,7 @@ export default function LancamentosPage() {
   const uid = user?.uid;
   const confirm = useConfirm();
   const confirmChoice = useConfirmChoice();
-  const { guardFeature, isPremium, openPaywall, getLimit } = usePremium();
+  const { guardFeature } = usePremium();
   const initialPeriod = useMemo(readPeriodSession, []);
   const [tab, setTab] = useState('despesa');
   const [periodType, setPeriodType] = useState(initialPeriod.periodType);
@@ -83,36 +82,11 @@ export default function LancamentosPage() {
     }
   }, [periodType, anchor, customRange]);
 
-  // Histórico (docs/ROADMAP_MONETIZACAO.txt, Fase 6): free vê só o mês atual e os
-  // 2 anteriores. `oldestAllowedDate` vira o piso mínimo de qualquer
-  // navegação de período — funciona igual para dia/semana/mês/ano porque
-  // comparamos direto a data inicial do intervalo resultante, sem precisar
-  // de lógica separada por granularidade.
-  const oldestAllowedMonthKey = getOldestAllowedMonthKey({
-    isPremium,
-    currentMonthKey: getCurrentMonthKey(),
-    shiftMonthKey,
-  });
-  const oldestAllowedDate = oldestAllowedMonthKey ? `${oldestAllowedMonthKey}-01` : null;
-
   function tryChangeAnchor(nextAnchor) {
-    if (oldestAllowedDate) {
-      const { gte } = getRangeForPeriod(periodType, nextAnchor, customRange);
-      if (gte < oldestAllowedDate) {
-        openPaywall({ feature: FEATURES.HISTORICO, reason: 'limit_reached', limit: getLimit(FEATURES.HISTORICO) });
-        return;
-      }
-    }
     setAnchor(nextAnchor);
   }
 
-  // 'Período' (customRange) não passa pelo anchor — validamos direto a data
-  // "De" contra o piso do histórico gratuito, sem travar edição do "Até".
   function tryChangeCustomRange(next) {
-    if (oldestAllowedDate && next?.de && next.de < oldestAllowedDate) {
-      openPaywall({ feature: FEATURES.HISTORICO, reason: 'limit_reached', limit: getLimit(FEATURES.HISTORICO) });
-      return;
-    }
     setCustomRange(next);
   }
   const [lancamentos, setLancamentos] = useState([]);
@@ -250,8 +224,6 @@ export default function LancamentosPage() {
     const { recorrente, parcelado, simulacao, ...rest } = data;
     try {
       if (recorrente) {
-        const ativasCount = recorrencias.filter((r) => r.ativo).length;
-        if (!guardFeature(FEATURES.RECORRENCIAS, { count: ativasCount })) return;
         await repositories.recorrencias.create(uid, rest);
       } else if (simulacao) {
       const total = Math.max(0, Number(rest.valorTotal) || 0);
@@ -325,12 +297,6 @@ export default function LancamentosPage() {
   }
 
   function handleExportCsv() {
-    // Exportação (Fase 6): grátis só exporta o mês atual — qualquer outro
-    // período/granularidade (dia, semana, ano, período customizado, ou um
-    // mês diferente do atual) é "exportação avançada".
-    const isExportacaoDoMesAtual = periodType === 'mes' && anchor.slice(0, 7) === getCurrentMonthKey();
-    if (!isExportacaoDoMesAtual && !guardFeature(FEATURES.EXPORTACAO_AVANCADA)) return;
-
     const label = formatPeriodLabel(periodType, anchor, customRange);
     exportItems(lancamentosFiltrados, label);
   }
@@ -348,8 +314,6 @@ export default function LancamentosPage() {
   }
 
   function exportSelected() {
-    const isExportacaoDoMesAtual = periodType === 'mes' && anchor.slice(0, 7) === getCurrentMonthKey();
-    if (!isExportacaoDoMesAtual && !guardFeature(FEATURES.EXPORTACAO_AVANCADA)) return;
     exportItems(lancamentosFiltrados.filter((item) => selectedIds.has(item.id)), 'selecionados');
   }
 
@@ -452,7 +416,6 @@ export default function LancamentosPage() {
   }
 
   const ativos = recorrencias.filter((r) => r.ativo && r.tipo === tab);
-  const recorrenciasAtivasCount = recorrencias.filter((r) => r.ativo).length;
 
   if (!carregado) {
     return (
@@ -589,7 +552,6 @@ export default function LancamentosPage() {
           filtersActive={Boolean(busca || categoryFilter || quickFilter !== 'todos')}
         />
 
-        <UsageIndicator feature={FEATURES.RECORRENCIAS} count={recorrenciasAtivasCount} label="recorrências ativas" />
 
         <ActiveRecurrences
           items={ativos}

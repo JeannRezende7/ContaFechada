@@ -6,6 +6,7 @@
 - [Roadmap local-first premium](ROADMAP_LOCAL_FIRST_PREMIUM.md)
 - [Decisões da fase 0](FASE0_DECISOES.md)
 - [Nomenclatura financeira](NOMENCLATURA_FINANCEIRA.md)
+- [Planos e recursos](PLANOS_E_RECURSOS.txt)
 - [Melhorias](melhorias.txt)
 - [Ajustes realizados](ajustes.txt)
 
