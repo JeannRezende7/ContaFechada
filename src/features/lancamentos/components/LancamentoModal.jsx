@@ -52,7 +52,7 @@ export default function LancamentoModal({
   useModalHistory(open, onClose);
   const [form, setForm] = useState(EMPTY);
   const [ajusteValor, setAjusteValor] = useState('');
-  const firstFieldRef = useRef(null);
+  const valueFieldRef = useRef(null);
   const isNew = !initialData || copyMode;
   const confirm = useConfirm();
   const confirmChoice = useConfirmChoice();
@@ -80,7 +80,7 @@ export default function LancamentoModal({
               mesInicio: defaultMonthKey ?? EMPTY.mesInicio,
             }
       );
-      setTimeout(() => firstFieldRef.current?.focus(), 0);
+      setTimeout(() => valueFieldRef.current?.focus(), 0);
     }
   }, [open, initialData, defaultTipo, defaultDate, defaultMonthKey]);
 
@@ -268,22 +268,13 @@ export default function LancamentoModal({
           </p>
         )}
 
-        <label className="block text-xs font-medium text-ink-300 mb-1">Descrição</label>
-        <input
-          ref={firstFieldRef}
-          required
-          value={form.descricao}
-          onChange={(e) => update('descricao', e.target.value)}
-          className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm mb-3 focus:border-ledger-500 transition-colors"
-          placeholder="Ex: Aluguel"
-        />
-
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="block text-xs font-medium text-ink-300 mb-1">
               {isNew && ['parcelado', 'simulacao'].includes(form.modo) ? 'Valor total' : 'Valor'}
             </label>
             <input
+              ref={valueFieldRef}
               required
               type="number"
               step="0.01"
@@ -322,6 +313,15 @@ export default function LancamentoModal({
             )}
           </div>
         </div>
+
+        <label className="block text-xs font-medium text-ink-300 mb-1">Descrição</label>
+        <input
+          required
+          value={form.descricao}
+          onChange={(e) => update('descricao', e.target.value)}
+          className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm mb-3 focus:border-ledger-500 transition-colors"
+          placeholder="Ex: Aluguel"
+        />
 
         {!isNew && (
           <div className="mb-3 rounded-xl border border-ink-100 bg-ink-50/60 p-3 dark:border-ink-700 dark:bg-ink-900">

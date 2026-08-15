@@ -7,7 +7,7 @@ import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.j
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
 import { getTodayISODate, isSaneISODate } from '../../../utils/formatDate.js';
-import { getCurrentMonthKey, daysInMonth } from '../../../utils/monthKey.js';
+import { getCurrentMonthKey } from '../../../utils/monthKey.js';
 import { PERIOD_TYPES, getRangeForPeriod, monthKeysInRange, formatPeriodLabel } from '../../../utils/periodRange.js';
 import { buildLancamentoMatcher } from '../utils/searchLancamentos.js';
 import { buildCsv, downloadCsv } from '../../../utils/exportCsv.js';
@@ -111,15 +111,13 @@ export default function LancamentosPage() {
 
   const { gte, lte } = getRangeForPeriod(periodType, anchor, customRange);
 
-  // Novo lançamento nasce no mês que o usuário está navegando, não sempre em
-  // "hoje" — se ele está vendo agosto, o padrão é um dia de agosto (mesmo dia
-  // do mês de hoje, ajustado para caber no mês), preservando "hoje" quando o
-  // mês navegado é o mês corrente.
+  // Novo lançamento nasce no mês que o usuário está navegando. No mês atual,
+  // preserva hoje; em outro mês, começa pelo primeiro dia.
   const defaultMonthKeyForNovo = periodType === 'mes' ? anchor.slice(0, 7) : getCurrentMonthKey();
   const defaultDateForNovo =
     defaultMonthKeyForNovo === getCurrentMonthKey()
       ? getTodayISODate()
-      : `${defaultMonthKeyForNovo}-${String(Math.min(Number(getTodayISODate().slice(8, 10)), daysInMonth(defaultMonthKeyForNovo))).padStart(2, '0')}`;
+      : `${defaultMonthKeyForNovo}-01`;
 
   const reload = useCallback(async () => {
     if (!uid) return;
