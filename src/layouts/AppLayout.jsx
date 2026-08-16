@@ -10,6 +10,7 @@ import { repositories } from '../repositories/index.js';
 import SyncManager from '../features/sync/components/SyncManager.jsx';
 import { MobileMenuProvider } from '../contexts/MobileMenuContext.jsx';
 import { WEB_ACCESS_ENABLED } from '../config/premium.js';
+import InitialCloudRestoreGate from '../features/backup/components/InitialCloudRestoreGate.jsx';
 
 /** Mobile-first: bottom nav + stacked content. From md breakpoint up: sidebar layout. */
 export default function AppLayout() {
@@ -45,7 +46,7 @@ export default function AppLayout() {
       </div>
       <div className="flex-1 min-w-0">
         <TrialBanner />
-        <Outlet />
+        <InitialCloudRestoreGate><Outlet /></InitialCloudRestoreGate>
       </div>
       <MobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       <OnboardingWizard uid={user?.uid} open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />

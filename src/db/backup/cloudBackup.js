@@ -3,6 +3,7 @@ import { createFirestoreTransferAdapter, downloadRemoteSnapshot, LOCAL_FIRST_DOM
 
 export const CLOUD_BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const LAST_BACKUP_KEY_PREFIX = 'cloudBackup:lastAt:';
+let initialRestoreRunning;
 
 export async function getLastCloudBackupAt(uid, driver) {
   const db = driver ?? await getLocalDatabase();
@@ -42,4 +43,24 @@ export async function restoreCloudBackup(uid, { driver, remote } = {}) {
   const safetyBackup = await persistFirstSyncBackup(db);
   const result = await downloadRemoteSnapshot({ driver: db, remote: adapter, replace: true });
   return { ...result, safetyBackup };
+}
+
+/** Restores legacy/cloud data only on a truly empty installation. */
+export async function restoreCloudBackupIfLocalEmpty(uid, { driver, remote } = {}) {
+  if (initialRestoreRunning) return initialRestoreRunning;
+  initialRestoreRunning = (async () => {
+    const db = driver ?? await getLocalDatabase();
+    const local = await db.get('SELECT COUNT(*) AS count FROM local_documents WHERE deleted_at IS NULL');
+    if (Number(local?.count) > 0) return { restored: false, reason: 'local_not_empty' };
+
+    const adapter = remote ?? createFirestoreTransferAdapter(uid);
+    const remoteCounts = await Promise.all(LOCAL_FIRST_DOMAINS.map(async (domain) => (await adapter.list(domain)).length));
+    const remoteCount = remoteCounts.reduce((total, count) => total + count, 0);
+    if (remoteCount === 0) return { restored: false, reason: 'cloud_empty' };
+
+    const safetyBackup = await persistFirstSyncBackup(db);
+    const result = await downloadRemoteSnapshot({ driver: db, remote: adapter, replace: true });
+    return { ...result, safetyBackup, remoteCount, restored: true };
+  })().finally(() => { initialRestoreRunning = undefined; });
+  return initialRestoreRunning;
 }
