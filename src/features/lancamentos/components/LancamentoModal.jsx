@@ -155,7 +155,7 @@ export default function LancamentoModal({
       await onSave({
         recorrente: true,
         tipo: form.tipo,
-        descricao: form.descricao,
+        descricao: form.descricao.trim(),
         valor,
         diaVencimento: Number(form.diaVencimento),
         mesInicio: form.mesInicio,
@@ -166,7 +166,7 @@ export default function LancamentoModal({
       await onSave({
         simulacao: true,
         tipo: 'despesa',
-        descricao: form.descricao,
+        descricao: form.descricao.trim(),
         valorTotal: valor,
         entrada: Math.max(0, Number(form.entrada) || 0),
         numParcelas: Number(form.numParcelas),
@@ -178,7 +178,7 @@ export default function LancamentoModal({
       await onSave({
         parcelado: true,
         tipo: form.tipo,
-        descricao: form.descricao,
+        descricao: form.descricao.trim(),
         valorTotal: valor,
         numParcelas: Number(form.numParcelas),
         dataVencimento,
@@ -189,7 +189,7 @@ export default function LancamentoModal({
       await onSave({
         recorrente: false,
         tipo: form.tipo,
-        descricao: form.descricao,
+        descricao: form.descricao.trim(),
         valor,
         dataVencimento,
         status: form.status,
@@ -278,7 +278,7 @@ export default function LancamentoModal({
               required
               type="number"
               step="0.01"
-              min="0"
+              min="0.01"
               value={form.valor}
               onChange={(e) => update('valor', e.target.value)}
               className="money w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm focus:border-ledger-500 transition-colors"
@@ -314,9 +314,8 @@ export default function LancamentoModal({
           </div>
         </div>
 
-        <label className="block text-xs font-medium text-ink-300 mb-1">Descrição</label>
+        <label className="block text-xs font-medium text-ink-300 mb-1">Descrição (opcional)</label>
         <input
-          required
           value={form.descricao}
           onChange={(e) => update('descricao', e.target.value)}
           className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm mb-3 focus:border-ledger-500 transition-colors"

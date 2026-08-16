@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { copyFileSync, existsSync, readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -16,6 +16,13 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    mode !== 'android' && {
+      name: 'publish-android-download',
+      closeBundle() {
+        const apk = new URL('./downloads/conta-fechada.apk', import.meta.url);
+        if (existsSync(apk)) copyFileSync(apk, new URL('./dist/conta-fechada.apk', import.meta.url));
+      },
+    },
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png'],

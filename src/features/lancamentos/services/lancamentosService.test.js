@@ -73,6 +73,20 @@ describe('lancamentosService', () => {
     expect(items[2]).toMatchObject({ parcelaAtual: 3, totalParcelas: 3, status: 'pendente' });
   });
 
+  it('creates useful installment labels when the optional description is empty', () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue('parcelamento-sem-descricao');
+
+    const { itemsById } = buildParcelamentoItems({
+      tipo: 'despesa',
+      descricao: '',
+      valorTotal: 20,
+      numParcelas: 2,
+      dataVencimento: '2026-08-16',
+    });
+
+    expect(Object.values(itemsById).map((item) => item.descricao)).toEqual(['Parcela 1/2', 'Parcela 2/2']);
+  });
+
   it('expands an imported installment from the current parcel to the final one', () => {
     const { novos, totalConsiderados } = buildImportPayload([
       {

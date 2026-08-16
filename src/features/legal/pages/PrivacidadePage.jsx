@@ -37,28 +37,27 @@ export default function PrivacidadePage() {
               lançamentos, categorias, recorrências, metas e as configurações do app. Se você assinar o Premium,
               também guardamos o status da sua assinatura (plano, período pago, se veio da Google Play ou da Web) —
               nunca dados de cartão, que ficam só com o processador de pagamento (MercadoPago) ou a Google Play.
-              Cada registro também carrega um identificador técnico do aparelho que o criou (não é um dado
-              pessoal, não identifica você fora do app) — usado só para sincronizar corretamente entre
-              dispositivos quando você usa o Conta Fechada em mais de um.
+              Cada registro também pode carregar um identificador técnico do aparelho que o criou, usado para
+              manter a integridade do banco local e das cópias de segurança.
             </p>
           </section>
 
           <section>
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">2. Onde os dados ficam</h2>
             <p>
-              Autenticação: Firebase Authentication (Google). Dados financeiros: Cloud Firestore (Google Cloud),
-              vinculados exclusivamente à sua conta — nenhum outro usuário tem acesso a eles.
+              No aplicativo Android, os dados financeiros ficam principalmente no banco local do aparelho.
+              A autenticação usa Firebase Authentication (Google). Para assinantes Premium, uma cópia periódica
+              de segurança é armazenada no Cloud Firestore e vinculada exclusivamente à conta do titular.
             </p>
           </section>
 
           <section>
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">3. Funcionamento offline</h2>
             <p>
-              Para carregar mais rápido e permitir consulta com conexão instável, o app mantém uma cópia local
-              no armazenamento do navegador dos dados já sincronizados neste dispositivo. Sair da
-              conta limpa os caches rápidos da sessão, mas a cópia offline pode permanecer no navegador. Em Opções,
-              você pode usar “Limpar dados deste dispositivo” para apagar essa cópia sem excluir os dados da nuvem.
-              Ao excluir a conta, o app também tenta remover automaticamente o cache local.
+              O aplicativo Android funciona localmente e não depende de conexão para consultar ou editar os dados.
+              O backup Premium não é sincronização entre dispositivos: a restauração só ocorre quando você
+              solicita essa ação em Opções. Antes de limpar o aparelho, recomendamos criar um backup local ou
+              confirmar que existe uma cópia Premium recente.
             </p>
           </section>
 

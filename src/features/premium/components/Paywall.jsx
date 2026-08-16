@@ -43,7 +43,7 @@ const FEATURE_COPY = {
 
 const DISCOVERY_COPY = {
   title: 'Conheça o Conta Fechada Premium',
-  desc: 'Proteja seus dados na nuvem, acesse pela Web e ganhe automações e análises avançadas.',
+  desc: 'Proteja seus dados com backup diário na nuvem e ganhe automações e análises avançadas.',
 };
 
 function formatBRL(value) {

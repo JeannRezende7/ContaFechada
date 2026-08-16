@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogIn, LogOut, MonitorDown } from 'lucide-react';
+import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogIn, LogOut, MonitorDown, Cloud, RotateCcw } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -19,6 +19,7 @@ import {
   isNativeLocalDatabaseAvailable,
   restoreLatestRecoverySnapshot,
 } from '../../../db/localDatabase.js';
+import { createCloudBackup, getLastCloudBackupAt, restoreCloudBackup } from '../../../db/backup/cloudBackup.js';
 
 export default function OpcoesPage() {
   const { user, isLocalSession, endLocalMode } = useAuth();
@@ -29,6 +30,7 @@ export default function OpcoesPage() {
   const [gestorUsaMovimento, setGestorUsaMovimentoState] = useState(true);
   const [recoverySnapshot, setRecoverySnapshot] = useState(null);
   const [installState, setInstallState] = useState(getPwaInstallState);
+  const [lastCloudBackupAt, setLastCloudBackupAt] = useState(null);
   const importInputRef = useRef(null);
 
   async function handleSignOut() {
@@ -54,6 +56,11 @@ export default function OpcoesPage() {
   }, [isPremium]);
 
   useEffect(() => subscribeToPwaInstall(setInstallState), []);
+
+  useEffect(() => {
+    if (!isPremium || !user?.uid || !isNativeLocalDatabaseAvailable()) return;
+    getLastCloudBackupAt(user.uid).then(setLastCloudBackupAt).catch(() => {});
+  }, [isPremium, user?.uid]);
 
   async function handleInstallApp() {
     const result = await requestPwaInstall();
@@ -102,10 +109,35 @@ export default function OpcoesPage() {
   async function handleExportarDados() {
     setLoading('exportar');
     try {
-      const data = isLocalSession ? await exportLocalData() : await exportUserData(user.uid);
+      const data = isNativeLocalDatabaseAvailable() ? await exportLocalData() : await exportUserData(user.uid);
       downloadJson(`conta-fechada-meus-dados-${user.uid}.json`, data);
     } finally {
       setLoading(null);
+    }
+  }
+
+  async function handleCloudBackup() {
+    setLoading('cloud-backup');
+    try {
+      const result = await createCloudBackup(user.uid);
+      setLastCloudBackupAt(result.completedAt);
+      await confirm('Backup em nuvem concluído.');
+    } catch (error) {
+      await confirm(`Não foi possível fazer o backup em nuvem: ${error.message}`);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleCloudRestore() {
+    if (!(await confirm('Restaurar o backup da nuvem? Os dados atuais deste aparelho serão substituídos. Uma cópia de segurança local será criada antes.'))) return;
+    setLoading('cloud-restore');
+    try {
+      await restoreCloudBackup(user.uid);
+      window.location.reload();
+    } catch (error) {
+      setLoading(null);
+      await confirm(`Não foi possível restaurar o backup da nuvem: ${error.message}`);
     }
   }
 
@@ -119,8 +151,8 @@ export default function OpcoesPage() {
       return;
     }
     const confirmado = await confirm(
-      'Limpar os dados financeiros armazenados neste dispositivo? Seus dados continuarão seguros na nuvem e serão baixados novamente no próximo login. ' +
-        'Alterações feitas offline que ainda não foram sincronizadas podem ser perdidas. O app será desconectado e recarregado.'
+      'Apagar os dados financeiros deste dispositivo? Eles não serão restaurados automaticamente. ' +
+        'Faça um backup local ou Premium antes de continuar. O app será desconectado e recarregado.'
     );
     if (!confirmado) return;
 
@@ -235,26 +267,34 @@ export default function OpcoesPage() {
           </button>
         </section>
 
-        <div className="grid grid-cols-2 gap-1 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
+        <div className="grid grid-cols-3 gap-1 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
           <button type="button" onClick={() => setActiveTab('geral')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'geral' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Geral</button>
           <button type="button" onClick={() => setActiveTab('avancado')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'avancado' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Avançado</button>
+          <button type="button" onClick={() => setActiveTab('backup')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'backup' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Backup</button>
         </div>
 
-        {activeTab === 'avancado' && isLocalSession && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        {activeTab === 'backup' && isNativeLocalDatabaseAvailable() && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+          <div><p className="text-sm font-medium">Fazer backup local</p><p className="mt-0.5 text-xs text-ink-300">Salva todos os dados em um arquivo JSON neste aparelho.</p></div>
+          <button type="button" onClick={handleExportarDados} disabled={loading === 'exportar'} className="shrink-0 rounded-pill bg-ink-50 px-3.5 py-2 text-sm font-medium dark:bg-ink-900"><Download size={15} className="inline mr-1" />{loading === 'exportar' ? 'Salvando…' : 'Fazer backup'}</button>
+        </div>}
+
+        {activeTab === 'backup' && isNativeLocalDatabaseAvailable() && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Importar backup local</p>
+            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Restaurar backup local</p>
             <p className="text-xs text-ink-300 mt-0.5">Substitui os dados deste aparelho por um JSON exportado pelo Conta Fechada.</p>
           </div>
           <input ref={importInputRef} type="file" accept="application/json,.json" onChange={handleImportarDados} className="sr-only" />
           <button type="button" onClick={() => importInputRef.current?.click()} disabled={loading === 'importar'} className="shrink-0 rounded-pill bg-ink-50 px-3.5 py-2 text-sm font-medium dark:bg-ink-900">
-            {loading === 'importar' ? 'Importando…' : 'Importar'}
+            {loading === 'importar' ? 'Restaurando…' : 'Restaurar'}
           </button>
         </div>}
 
-        {activeTab === 'avancado' && isNativeLocalDatabaseAvailable() && <Link to="/opcoes/diagnostico" className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
-          <div><p className="text-sm font-medium">Diagnóstico de sincronização</p><p className="text-xs text-ink-300">Fila, erros, conflitos, métricas e exportação para suporte.</p></div>
-          <ChevronRight size={16} className="text-ink-300" />
-        </Link>}
+        {activeTab === 'backup' && isPremium && !isLocalSession && isNativeLocalDatabaseAvailable() && <div className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
+          <div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ledger-50 text-ledger-600"><Cloud size={16} /></span><div><p className="text-sm font-medium">Backup em nuvem Premium</p><p className="mt-0.5 text-xs text-ink-300">Automático a cada 24 horas quando o app estiver aberto e conectado.</p><p className="mt-1 text-xs text-ink-300">{lastCloudBackupAt ? `Último backup: ${new Date(lastCloudBackupAt).toLocaleString('pt-BR')}` : 'Nenhum backup concluído neste aparelho.'}</p></div></div>
+          <div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={handleCloudBackup} disabled={loading === 'cloud-backup'} className="rounded-pill bg-ledger-500 px-3 py-2 text-sm font-medium text-white disabled:opacity-50">{loading === 'cloud-backup' ? 'Salvando…' : 'Fazer agora'}</button><button type="button" onClick={handleCloudRestore} disabled={loading === 'cloud-restore'} className="rounded-pill bg-ink-50 px-3 py-2 text-sm font-medium dark:bg-ink-900 disabled:opacity-50"><RotateCcw size={14} className="inline mr-1" />{loading === 'cloud-restore' ? 'Restaurando…' : 'Restaurar nuvem'}</button></div>
+        </div>}
+
+        {activeTab === 'backup' && !isPremium && <Link to="/opcoes/meu-plano" className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700"><p className="text-sm font-medium">Backup em nuvem</p><p className="mt-1 text-xs text-ink-300">Assinantes Premium recebem backup automático diário e restauração pela nuvem.</p></Link>}
 
         {activeTab === 'avancado' && recoverySnapshot && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
           <p className="text-sm font-medium">Snapshot de recuperação</p>
@@ -301,7 +341,7 @@ export default function OpcoesPage() {
             <div>
               <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Meu Plano</p>
               <p className="text-xs text-ink-300 mt-0.5">
-                {isPremium ? 'Premium ativo · gerenciar assinatura' : 'Nuvem, acesso Web e automações com o Premium'}
+                {isPremium ? 'Premium ativo · gerenciar assinatura' : 'Backup em nuvem e automações com o Premium'}
               </p>
             </div>
           </div>
@@ -347,7 +387,7 @@ export default function OpcoesPage() {
             <div>
               <p className="text-sm font-medium text-ink-900 dark:text-ink-50">{isLocalSession ? 'Apagar dados locais' : 'Limpar dados deste dispositivo'}</p>
               <p className="text-xs text-ink-300 mt-0.5">
-                {isLocalSession ? 'Apaga permanentemente os dados deste aparelho.' : 'Remove o cache offline local, sem apagar os dados salvos na nuvem.'}
+                Apaga os dados deste aparelho. Faça um backup antes.
               </p>
             </div>
           </div>

@@ -25,6 +25,9 @@ const AdminSubscriptionsPage = __NATIVE_ANDROID_BUILD__
   ? null
   : lazyWithRetry(() => import('../features/admin/pages/AdminSubscriptionsPage.jsx'));
 const SyncDiagnosticsRoute = lazyWithRetry(() => import('../features/sync/pages/SyncDiagnosticsRoute.jsx'));
+const DownloadAppPage = __NATIVE_ANDROID_BUILD__
+  ? null
+  : lazyWithRetry(() => import('../features/download/pages/DownloadAppPage.jsx'));
 
 export default function AppRoutes() {
   return (
@@ -38,6 +41,8 @@ export default function AppRoutes() {
         {/* Públicas — precisam ser legíveis por quem ainda nem tem conta. */}
         <Route path="/termos" element={<TermosPage />} />
         <Route path="/privacidade" element={<PrivacidadePage />} />
+        {!__NATIVE_ANDROID_BUILD__ && <Route path="/" element={<DownloadAppPage />} />}
+        {!__NATIVE_ANDROID_BUILD__ && <Route path="/baixar-app" element={<DownloadAppPage />} />}
 
         <Route
           element={
@@ -57,7 +62,7 @@ export default function AppRoutes() {
           {/* Módulos financeiros — exclusivos do Premium na Web; o Android
               gratuito continua liberado (RequirePremiumWeb passa direto). */}
           <Route element={<RequirePremiumWeb />}>
-            <Route path="/" element={<LancamentosPage />} />
+            {__NATIVE_ANDROID_BUILD__ && <Route path="/" element={<LancamentosPage />} />}
             <Route path="/resumo" element={<DashboardPage />} />
             <Route path="/lancamentos" element={<Navigate to="/" replace />} />
             <Route path="/categorias" element={<CategoriasPage />} />

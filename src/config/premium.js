@@ -8,6 +8,7 @@
  * are tested end to end (docs/ROADMAP_MONETIZACAO.txt, objetivo).
  */
 export const PREMIUM_ENFORCED = false;
+export const WEB_ACCESS_ENABLED = false;
 
 export const PLAN = {
   FREE: 'free',
@@ -81,8 +82,8 @@ export const PLAN_DETAILS = {
   [PLAN.PREMIUM]: {
     label: 'Premium',
     beneficios: [
-      'Sincronização e backup automático na nuvem',
-      'Acesso Web e uso em vários dispositivos',
+      'Backup automático diário na nuvem',
+      'Restauração segura em caso de troca ou perda do aparelho',
       'Relatórios de múltiplos períodos e comparação entre meses',
       'Projeções e insights financeiros avançados',
       'Importação CSV/OFX e ações em massa',
@@ -100,8 +101,8 @@ export const PLAN_COMPARISON = [
   { label: 'Lançamentos manuais', free: 'Ilimitados', premium: 'Ilimitados' },
   { label: 'Categorias e recorrências', free: 'Ilimitadas', premium: 'Ilimitadas' },
   { label: 'Histórico no dispositivo', free: 'Completo', premium: 'Completo' },
-  { label: 'Sincronização e backup na nuvem', free: 'Não incluído', premium: 'Incluído' },
-  { label: 'Acesso Web e multidispositivo', free: 'Não incluído', premium: 'Incluído' },
+  { label: 'Backup automático na nuvem', free: 'Não incluído', premium: 'Diário' },
+  { label: 'Restauração pela nuvem', free: 'Não incluído', premium: 'Incluído' },
   { label: 'Relatórios', free: 'Mensais', premium: 'Comparações e evolução' },
   { label: 'Gestor Financeiro', free: 'Indicadores completos', premium: 'Com insights e projeções' },
   { label: 'Insights e sugestões', free: 'Não incluído', premium: 'Avançados' },

@@ -229,7 +229,7 @@ export default function LancamentosPage() {
       if (entrada > 0) {
         await repositories.lancamentos.create(uid, {
           tipo: 'despesa',
-          descricao: `${rest.descricao} (entrada)`,
+          descricao: rest.descricao?.trim() ? `${rest.descricao.trim()} (entrada)` : 'Entrada',
           valor: entrada,
           dataVencimento: rest.dataVencimento,
           dataPagamento: rest.dataVencimento,
@@ -579,7 +579,7 @@ export default function LancamentosPage() {
         onDuplicate={(item) => {
           const copy = {
             ...item,
-            descricao: `${item.descricao} (cópia)`,
+            descricao: item.descricao?.trim() ? `${item.descricao.trim()} (cópia)` : '',
             origemRecorrenciaId: null,
             parcelamentoId: null,
             parcelaAtual: null,

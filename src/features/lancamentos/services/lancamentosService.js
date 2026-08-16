@@ -148,7 +148,7 @@ export function buildParcelamentoItems({ tipo, descricao, valorTotal, numParcela
     const diaClamped = clampDayToMonth(monthKey, dia);
     itemsById[`${parcelamentoId}_${i + 1}`] = {
       tipo,
-      descricao: `${descricao} (${i + 1}/${numParcelas})`,
+      descricao: descricao?.trim() ? `${descricao.trim()} (${i + 1}/${numParcelas})` : `Parcela ${i + 1}/${numParcelas}`,
       valor: i === numParcelas - 1 ? valorUltima : valorParcela,
       dataVencimento: `${monthKey}-${String(diaClamped).padStart(2, '0')}`,
       dataPagamento: null,

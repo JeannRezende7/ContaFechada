@@ -30,7 +30,7 @@ export default function LoginPage() {
       <h2 className="font-display text-xl font-semibold mb-1">Vamos organizar as contas?</h2>
       <p className="text-ink-300 text-sm mb-6">
         {isLocalSession
-          ? 'Entre com sua conta Google para habilitar a nuvem. Seus dados locais serão mantidos e preparados para sincronização.'
+          ? 'Entre com sua conta Google sem perder os dados deste aparelho. Assinantes Premium também podem ativar o backup em nuvem.'
           : 'Sem senha, sem complicação — entre com sua conta Google.'}
       </p>
       <GoogleButton onClick={handleSignIn} loading={loading} />

@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { Navigate, Outlet } from 'react-router-dom';
 import { usePremium } from '../contexts/PremiumContext.jsx';
-import { PREMIUM_ENFORCED } from '../config/premium.js';
+import { PREMIUM_ENFORCED, WEB_ACCESS_ENABLED } from '../config/premium.js';
 import LoadingScreen from '../components/ui/LoadingScreen.jsx';
 import { shouldBlockWebAccess } from './webPremiumGate.js';
 
@@ -15,6 +15,8 @@ import { shouldBlockWebAccess } from './webPremiumGate.js';
 export default function RequirePremiumWeb() {
   const { isPremium, loading } = usePremium();
   const isNativePlatform = Capacitor.isNativePlatform();
+
+  if (!isNativePlatform && !WEB_ACCESS_ENABLED) return <Navigate to="/acesso-web" replace />;
 
   if (!isNativePlatform && PREMIUM_ENFORCED && loading) {
     return <LoadingScreen />;

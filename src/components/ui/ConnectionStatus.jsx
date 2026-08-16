@@ -21,8 +21,8 @@ export default function ConnectionStatus() {
 
   return (
     <span
-      title={online ? 'Conectado à nuvem' : 'Sem internet — alterações serão sincronizadas depois'}
-      aria-label={online ? 'Conectado à nuvem' : 'Sem internet. Alterações serão sincronizadas depois.'}
+      title={online ? 'Internet disponível' : 'Sem internet — seus dados continuam salvos no aparelho'}
+      aria-label={online ? 'Internet disponível' : 'Sem internet. Seus dados continuam salvos no aparelho.'}
       className={`inline-flex items-center gap-1.5 rounded-pill px-2 py-1 text-[10px] font-medium ${
         online
           ? 'text-ledger-600'

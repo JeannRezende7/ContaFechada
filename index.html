@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0F172A" />
+    <style>
+      /* Painted before the app bundle loads, keeping the native-to-web transition seamless. */
+      html,
+      body,
+      #root {
+        min-height: 100%;
+        background: #f8fafc;
+      }
+      html.dark,
+      html.dark body,
+      html.dark #root {
+        background: #0f172a;
+      }
+    </style>
     <title>Conta Fechada — sua planilha financeira mensal</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

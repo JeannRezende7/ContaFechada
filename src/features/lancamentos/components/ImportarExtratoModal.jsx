@@ -4,9 +4,10 @@ import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { parseExtrato } from '../utils/parseExtrato.js';
 import { parsePrintExtrato } from '../utils/parsePrintExtrato.js';
+import { extractPdfLines } from '../utils/extractPdfLines.js';
 
 function isValidItem(item) {
-  return item.descricao.trim() && /^\d{4}-\d{2}-\d{2}$/.test(item.dataVencimento) && Number(item.valor) > 0;
+  return /^\d{4}-\d{2}-\d{2}$/.test(item.dataVencimento) && Number(item.valor) > 0;
 }
 
 export default function ImportarExtratoModal({ open, uid, categorias, onClose, onImported }) {
@@ -28,10 +29,12 @@ export default function ImportarExtratoModal({ open, uid, categorias, onClose, o
     setError('');
     try {
       const extension = file.name.split('.').pop()?.toLowerCase();
-      if (!['csv', 'ofx'].includes(extension)) throw new Error('Escolha um arquivo CSV ou OFX.');
-      const parsed = parseExtrato(await file.text(), extension);
+      if (!['csv', 'ofx', 'pdf'].includes(extension)) throw new Error('Escolha um arquivo CSV, OFX ou PDF.');
+      const parsed = extension === 'pdf'
+        ? { items: parsePrintExtrato((await extractPdfLines(file)).join('\n'), tipoPrint), errors: [] }
+        : parseExtrato(await file.text(), extension);
       if (parsed.items.length === 0) throw new Error(parsed.errors[0] || 'Nenhum lançamento válido encontrado.');
-      setItems(parsed.items.map((item) => ({ ...item, categoriaId: null })));
+      setItems(parsed.items.map((item) => ({ ...item, descricao: item.descricao || '', categoriaId: null })));
       setSelected(new Set(parsed.items.map((_, index) => index)));
       setIgnored(parsed.errors.length);
       setStatus('preview');
@@ -130,11 +133,11 @@ export default function ImportarExtratoModal({ open, uid, categorias, onClose, o
           <div className="space-y-3">
             <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-ink-100 px-4 py-5 hover:border-ledger-500 dark:border-ink-700">
               <FileUp className="text-ink-300" />
-              <span className="text-sm text-ink-500">Escolher arquivo CSV ou OFX</span>
-              <input className="hidden" type="file" accept=".csv,.ofx,text/csv,application/x-ofx" onChange={handleFile} />
+              <span className="text-sm text-ink-500">Escolher extrato CSV, OFX ou PDF</span>
+              <input className="hidden" type="file" accept=".csv,.ofx,.pdf,text/csv,application/x-ofx,application/pdf" onChange={handleFile} />
             </label>
             <div className="rounded-xl border border-ink-100 p-3 dark:border-ink-700">
-              <p className="mb-2 text-xs font-medium text-ink-500 dark:text-ink-100">Os lançamentos do print são</p>
+              <p className="mb-2 text-xs font-medium text-ink-500 dark:text-ink-100">Os lançamentos do print ou PDF são</p>
               <div className="mb-3 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => setTipoPrint('despesa')} className={`rounded-lg py-2 text-sm ${tipoPrint === 'despesa' ? 'bg-signal-500 text-white' : 'bg-ink-50 text-ink-500 dark:bg-ink-900'}`}>Saídas</button>
                 <button type="button" onClick={() => setTipoPrint('receita')} className={`rounded-lg py-2 text-sm ${tipoPrint === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 text-ink-500 dark:bg-ink-900'}`}>Entradas</button>
