@@ -1,16 +1,36 @@
-import { signInWithPopup, signOut, onAuthStateChanged, reauthenticateWithPopup, deleteUser } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
+import {
+  GoogleAuthProvider,
+  deleteUser,
+  onAuthStateChanged,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  signInWithCredential,
+  signInWithPopup,
+  signOut,
+} from 'firebase/auth';
 import { auth, googleProvider } from './config.js';
 import { clearSessionCaches } from '../utils/deviceCache.js';
 
-/** Opens the Google OAuth popup and signs the user in. */
-export function signInWithGoogle() {
-  return signInWithPopup(auth, googleProvider);
+async function getNativeGoogleCredential() {
+  const result = await FirebaseAuthentication.signInWithGoogle();
+  const { idToken, accessToken } = result.credential ?? {};
+  if (!idToken && !accessToken) throw new Error('O Google não retornou uma credencial válida.');
+  return GoogleAuthProvider.credential(idToken ?? null, accessToken ?? null);
+}
+
+/** Uses native Google Sign-In in the APK and a popup in regular browsers. */
+export async function signInWithGoogle() {
+  if (!Capacitor.isNativePlatform()) return signInWithPopup(auth, googleProvider);
+  return signInWithCredential(auth, await getNativeGoogleCredential());
 }
 
 /** Signs the current user out. */
 export async function signOutUser() {
   const uid = auth.currentUser?.uid;
   await signOut(auth);
+  if (Capacitor.isNativePlatform()) await FirebaseAuthentication.signOut().catch(() => {});
   clearSessionCaches(uid);
 }
 
@@ -29,7 +49,11 @@ export async function signOutUser() {
 export async function deleteAccount() {
   const user = auth.currentUser;
   if (!user) throw new Error('Nenhum usuário autenticado.');
-  await reauthenticateWithPopup(user, googleProvider);
+  if (Capacitor.isNativePlatform()) {
+    await reauthenticateWithCredential(user, await getNativeGoogleCredential());
+  } else {
+    await reauthenticateWithPopup(user, googleProvider);
+  }
   await deleteUser(user);
 }
 

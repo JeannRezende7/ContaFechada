@@ -6,6 +6,10 @@
     "LocalNotifications": {
       "iconColor": "#19c99a"
     },
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": ["google.com"]
+    },
     "SplashScreen": {
       "backgroundColor": "#0F172AFF",
       "androidScaleType": "CENTER",

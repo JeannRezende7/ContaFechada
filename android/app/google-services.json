@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "747882689573",
+    "project_id": "contafechada-afc46",
+    "storage_bucket": "contafechada-afc46.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:747882689573:android:8d275625a877834d90fbcc",
+        "android_client_info": {
+          "package_name": "com.contafechada.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "747882689573-f1p2719141bm784nnm1rhukh50htavfs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.contafechada.app",
+            "certificate_hash": "a90947d4974046c0e926b6c1ce4f716d16d3dc30"
+          }
+        },
+        {
+          "client_id": "747882689573-vlk6kffgjrnamr47gevj6g1adef8pc4n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmP26hkESOQXP6NgxAH85n_jfeT82TABs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "747882689573-vlk6kffgjrnamr47gevj6g1adef8pc4n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
