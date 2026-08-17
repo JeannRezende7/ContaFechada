@@ -20,7 +20,10 @@ export default defineConfig(({ mode }) => ({
       name: 'publish-android-download',
       closeBundle() {
         const apk = new URL('./downloads/conta-fechada.apk', import.meta.url);
-        if (existsSync(apk)) copyFileSync(apk, new URL('./dist/conta-fechada.apk', import.meta.url));
+        if (existsSync(apk)) {
+          copyFileSync(apk, new URL('./dist/conta-fechada.apk', import.meta.url));
+          copyFileSync(apk, new URL(`./dist/conta-fechada-${version}.apk`, import.meta.url));
+        }
       },
     },
     VitePWA({

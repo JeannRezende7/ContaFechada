@@ -48,7 +48,7 @@
     Cache-Control = "no-cache, no-store, must-revalidate"
 
 [[headers]]
-  for = "/conta-fechada.apk"
+  for = "/*.apk"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
     Content-Type = "application/vnd.android.package-archive"

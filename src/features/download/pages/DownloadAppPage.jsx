@@ -14,8 +14,8 @@ export default function DownloadAppPage() {
           </p>
 
           <a
-            href="/conta-fechada.apk"
-            download="Conta-Fechada.apk"
+            href={`/conta-fechada-${__APP_VERSION__}.apk`}
+            download={`Conta-Fechada-${__APP_VERSION__}.apk`}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-pill bg-ledger-500 px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:bg-ledger-600 hover:shadow-card-hover"
           >
             <Download size={18} /> Baixar aplicativo Android
