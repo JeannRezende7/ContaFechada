@@ -18,7 +18,7 @@ export default function LoginPage() {
       await signInWithGoogle();
       navigate('/');
     } catch (err) {
-      setError('Não foi possível entrar. Tente novamente.');
+      setError(err?.message || 'Não foi possível entrar. Tente novamente.');
       console.error(err);
     } finally {
       setLoading(false);

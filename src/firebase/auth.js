@@ -14,7 +14,10 @@ import { auth, googleProvider } from './config.js';
 import { clearSessionCaches } from '../utils/deviceCache.js';
 
 async function getNativeGoogleCredential() {
-  const result = await FirebaseAuthentication.signInWithGoogle();
+  // Credential Manager is the Android default in recent plugin versions, but
+  // some devices return from its account chooser to an empty/black activity.
+  // The classic native Google flow is more broadly compatible for the APK.
+  const result = await FirebaseAuthentication.signInWithGoogle({ useCredentialManager: false });
   const { idToken, accessToken } = result.credential ?? {};
   if (!idToken && !accessToken) throw new Error('O Google não retornou uma credencial válida.');
   return GoogleAuthProvider.credential(idToken ?? null, accessToken ?? null);
