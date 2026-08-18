@@ -46,10 +46,12 @@ export default function AppLayout() {
       </div>
       <div className="flex-1 min-w-0">
         <TrialBanner />
-        <InitialCloudRestoreGate><Outlet /></InitialCloudRestoreGate>
+        <InitialCloudRestoreGate>
+          <Outlet />
+          <OnboardingWizard uid={user?.uid} open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
+        </InitialCloudRestoreGate>
       </div>
       <MobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
-      <OnboardingWizard uid={user?.uid} open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
     </div>
     </MobileMenuProvider>
   );
