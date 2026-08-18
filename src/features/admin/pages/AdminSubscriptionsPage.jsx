@@ -9,16 +9,10 @@ import {
   revokeAdminPremium,
 } from '../services/adminSubscriptionsService.js';
 
-function formatDate(value) {
-  return value ? new Date(value).toLocaleDateString('pt-BR') : 'Sem prazo';
-}
-
 export default function AdminSubscriptionsPage() {
   const confirm = useConfirm();
   const [subscriptions, setSubscriptions] = useState([]);
   const [identifier, setIdentifier] = useState('');
-  const [days, setDays] = useState(30);
-  const [founder, setFounder] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -48,7 +42,7 @@ export default function AdminSubscriptionsPage() {
     event.preventDefault();
     setLoading(true);
     try {
-      await grantAdminPremium({ identifier: identifier.trim(), days: Number(days), founder });
+      await grantAdminPremium({ identifier: identifier.trim() });
       setIdentifier('');
       await load();
     } catch (nextError) {
@@ -82,18 +76,14 @@ export default function AdminSubscriptionsPage() {
 
   return (
     <>
-      <Topbar title="Controle de assinaturas" icon={Crown} />
+      <Topbar title="Controle do Pro" icon={Crown} />
       <main className="mx-auto flex max-w-5xl flex-col gap-5 p-4 md:p-8">
         {!accessDenied && <section className="rounded-card bg-white p-5 shadow-card dark:bg-ink-700" aria-labelledby="manual-grant-title">
-          <h2 id="manual-grant-title" className="flex items-center gap-2 font-display text-base font-semibold"><UserPlus size={18} /> Conceder Premium manualmente</h2>
-          <form onSubmit={grant} className="mt-4 grid gap-3 sm:grid-cols-[1fr_110px_auto_auto] sm:items-end">
+          <h2 id="manual-grant-title" className="flex items-center gap-2 font-display text-base font-semibold"><UserPlus size={18} /> Conceder Pro vitalício</h2>
+          <form onSubmit={grant} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
             <label className="text-xs text-ink-300">UID ou e-mail
               <input required value={identifier} onChange={(event) => setIdentifier(event.target.value)} className="mt-1 block w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
             </label>
-            <label className="text-xs text-ink-300">Dias
-              <input required type="number" min="1" max="3650" value={days} onChange={(event) => setDays(event.target.value)} className="mt-1 block w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
-            </label>
-            <label className="flex items-center gap-2 py-2.5 text-sm"><input type="checkbox" checked={founder} onChange={(event) => setFounder(event.target.checked)} /> Fundador</label>
             <button disabled={loading} className="rounded-xl bg-ledger-500 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50">Conceder</button>
           </form>
         </section>}
@@ -102,7 +92,7 @@ export default function AdminSubscriptionsPage() {
 
         {!accessDenied && <section className="rounded-card bg-white shadow-card dark:bg-ink-700" aria-labelledby="active-subscriptions-title">
           <div className="flex items-center justify-between border-b border-ink-100 p-4 dark:border-ink-900">
-            <div><h2 id="active-subscriptions-title" className="font-display text-base font-semibold">Assinaturas ativas</h2><p className="text-xs text-ink-300">{subscriptions.length} conta(s)</p></div>
+            <div><h2 id="active-subscriptions-title" className="font-display text-base font-semibold">Contas Pro</h2><p className="text-xs text-ink-300">{subscriptions.length} conta(s)</p></div>
             <button type="button" onClick={load} disabled={loading} aria-label="Atualizar assinaturas" className="rounded-full p-2 text-ledger-600 disabled:opacity-50"><RefreshCw size={17} className={loading ? 'animate-spin' : ''} /></button>
           </div>
           <form onSubmit={(event) => { event.preventDefault(); load({ term: search }); }} className="flex gap-2 border-b border-ink-100 p-3 dark:border-ink-900">
@@ -111,16 +101,16 @@ export default function AdminSubscriptionsPage() {
           </form>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-left text-sm">
-              <thead className="text-xs text-ink-300"><tr><th className="px-4 py-3">Conta</th><th>Origem</th><th>Status</th><th>Validade</th><th>Fundador</th><th><span className="sr-only">Ações</span></th></tr></thead>
+              <thead className="text-xs text-ink-300"><tr><th className="px-4 py-3">Conta</th><th>Origem</th><th>Acesso</th><th><span className="sr-only">Ações</span></th></tr></thead>
               <tbody className="divide-y divide-ink-100 dark:divide-ink-900">
                 {subscriptions.map((item) => (
                   <tr key={item.uid}>
                     <td className="px-4 py-3"><p className="font-medium">{item.displayName || item.email || item.uid}</p>{item.email && <p className="text-xs text-ink-300">{item.email}</p>}<p className="text-[10px] text-ink-300">{item.uid}</p></td>
-                    <td>{item.provider}</td><td>{item.status}</td><td>{formatDate(item.currentPeriodEnd)}</td><td>{item.founder ? 'Sim' : 'Não'}</td>
+                    <td>{item.provider}</td><td>Vitalício</td>
                     <td className="pr-4 text-right"><div className="flex justify-end gap-3"><button type="button" onClick={() => showHistory(item)} className="inline-flex items-center gap-1 text-xs font-medium text-ink-300"><History size={14} /> Histórico</button><button type="button" onClick={() => revoke(item)} aria-label={`Remover Premium de ${item.email || item.uid}`} className="inline-flex items-center gap-1.5 text-xs font-medium text-signal-500"><UserMinus size={14} /> Remover</button></div></td>
                   </tr>
                 ))}
-                {!loading && subscriptions.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-ink-300">Nenhuma assinatura ativa.</td></tr>}
+                {!loading && subscriptions.length === 0 && <tr><td colSpan="4" className="p-8 text-center text-ink-300">Nenhuma conta Pro.</td></tr>}
               </tbody>
             </table>
           </div>

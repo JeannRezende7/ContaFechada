@@ -6,6 +6,8 @@ export function summarizeBackup(snapshot) {
   const domains = {};
   let records = 0;
   let financialTotal = 0;
+  let incomeTotal = 0;
+  let expenseTotal = 0;
   for (const [domain, items] of Object.entries(snapshot ?? {}).sort(([a], [b]) => a.localeCompare(b))) {
     if (!Array.isArray(items)) continue;
     const count = items.length;
@@ -15,8 +17,14 @@ export function summarizeBackup(snapshot) {
     domains[domain] = { count, valueTotal };
     records += count;
     if (valueTotal != null) financialTotal = roundMoney(financialTotal + valueTotal);
+    if (domain === 'lancamentos') {
+      incomeTotal = roundMoney(items.filter((item) => item.tipo === 'receita')
+        .reduce((sum, item) => sum + (Number(item.valor) || 0), 0));
+      expenseTotal = roundMoney(items.filter((item) => item.tipo === 'despesa')
+        .reduce((sum, item) => sum + (Number(item.valor) || 0), 0));
+    }
   }
-  return { records, financialTotal, domains };
+  return { records, financialTotal, incomeTotal, expenseTotal, balance: roundMoney(incomeTotal - expenseTotal), domains };
 }
 
 export function assertBackupEquivalent(expectedSnapshot, actualSnapshot) {

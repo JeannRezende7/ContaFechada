@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarRange } from 'lucide-react';
-import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
@@ -17,15 +16,9 @@ import {
   ForecastSection,
   PendingSection,
   ClosingSection,
-  NotificationsSection,
   InstallmentSimulatorSection,
 } from '../components/PlanejamentoSections.jsx';
 import { calcularFechamento } from '../utils/fechamento.js';
-import {
-  disableNotifications,
-  enableAndScheduleNotifications,
-  getNotificationSettings,
-} from '../services/notificationService.js';
 import { compararParcelamentos } from '../utils/simuladorParcelamento.js';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
@@ -39,7 +32,6 @@ const TABS = [
 const TOOL_TABS = [
   { id: 'orcamentos', label: 'Orçamentos' },
   { id: 'fechamento', label: 'Fechamento' },
-  { id: 'alertas', label: 'Alertas' },
   { id: 'simulador', label: 'Simulador' },
 ];
 
@@ -62,8 +54,6 @@ export default function PlanejamentoPage() {
   const [saldoReal, setSaldoReal] = useState('');
   const [closingNotes, setClosingNotes] = useState('');
   const [carryPending, setCarryPending] = useState(false);
-  const [notificationSettings, setNotificationSettings] = useState(getNotificationSettings);
-  const [notificationFeedback, setNotificationFeedback] = useState('');
   const [simulator, setSimulator] = useState({
     descricao: '', valor: '', entrada: '0', parcelas: '6', diaVencimento: '10', categoriaId: '',
   });
@@ -124,11 +114,6 @@ export default function PlanejamentoPage() {
     lancamentos,
   }), [simulator, monthKey, planejamento.saldoInicial, lancamentos]);
 
-  useEffect(() => {
-    if (loading || !notificationSettings.enabled || lancamentos.length === 0) return;
-    enableAndScheduleNotifications(lancamentos, notificationSettings, budgets).catch(() => {});
-  }, [loading, lancamentos, notificationSettings, budgets]);
-
   async function handleSaveSaldo() {
     setSaving('saldo');
     try {
@@ -162,29 +147,6 @@ export default function PlanejamentoPage() {
       const saved = await repositories.fechamentos.fechar(uid, monthKey, closingSummary, Number(saldoReal), closingNotes, carryPending);
       setFechamento(saved);
       if (carryPending) setLancamentos(await repositories.lancamentos.listAll(uid));
-    } finally {
-      setSaving(null);
-    }
-  }
-
-  async function handleToggleNotifications() {
-    setSaving('alertas');
-    setNotificationFeedback('');
-    try {
-      if (notificationSettings.enabled) {
-        await disableNotifications();
-        setNotificationSettings((current) => ({ ...current, enabled: false }));
-        setNotificationFeedback('Notificações desativadas.');
-      } else {
-        const settings = { enabled: true, hour: Math.min(23, Math.max(0, Number(notificationSettings.hour) || 9)) };
-        const result = await enableAndScheduleNotifications(lancamentos, settings, budgets);
-        setNotificationSettings(settings);
-        setNotificationFeedback(result.native
-          ? `${result.scheduled} lembrete(s) agendado(s) no Android.`
-          : 'Permissão concedida. Os lembretes da PWA aparecem com o app aberto.');
-      }
-    } catch (error) {
-      setNotificationFeedback(error.message);
     } finally {
       setSaving(null);
     }
@@ -312,17 +274,6 @@ export default function PlanejamentoPage() {
                 onCarryPendingChange={setCarryPending}
                 onCloseMonth={handleCloseMonth}
                 saving={saving === 'fechamento'}
-              />
-            )}
-            {toolTab === 'alertas' && (
-              <NotificationsSection
-                enabled={notificationSettings.enabled}
-                hour={notificationSettings.hour}
-                onHourChange={(hour) => setNotificationSettings((current) => ({ ...current, hour }))}
-                onToggle={handleToggleNotifications}
-                saving={saving === 'alertas'}
-                feedback={notificationFeedback}
-                native={Capacitor.isNativePlatform()}
               />
             )}
             {toolTab === 'simulador' && (

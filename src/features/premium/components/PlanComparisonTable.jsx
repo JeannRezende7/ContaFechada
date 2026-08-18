@@ -11,8 +11,8 @@ export default function PlanComparisonTable() {
             <Check size={13} strokeWidth={2.5} />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">{item.label}</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-ink-300">{item.premium}</p>
+            <p className="break-words text-sm font-medium text-ink-900 dark:text-ink-50">{item.label}</p>
+            <p className="mt-0.5 break-words text-xs leading-relaxed text-ink-300">{item.premium}</p>
           </div>
         </li>
       ))}

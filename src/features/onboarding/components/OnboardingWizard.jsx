@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { repositories } from '../../../repositories/index.js';
+import { reportError } from '../../../utils/crashReporting.js';
 
 const INITIAL = {
   incomeDescription: 'Renda principal', incomeValue: '', incomeDay: '5',
@@ -22,7 +23,7 @@ export default function OnboardingWizard({ uid, open, onClose }) {
       await repositories.configuracoes.skipOnboarding(uid);
       onClose();
     } catch (cause) {
-      console.error('Falha ao pular onboarding', cause);
+      reportError(cause, 'skip_onboarding');
       setError('Não foi possível salvar. Tente novamente.');
     } finally {
       setSaving(false);
@@ -35,7 +36,7 @@ export default function OnboardingWizard({ uid, open, onClose }) {
       await repositories.configuracoes.completeOnboarding(uid, form);
       onClose();
     } catch (cause) {
-      console.error('Falha ao concluir onboarding', cause);
+      reportError(cause, 'complete_onboarding');
       setError('Não foi possível concluir. Tente novamente.');
     } finally {
       setSaving(false);

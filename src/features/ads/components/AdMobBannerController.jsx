@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { getAdMobRuntimeConfig } from '../../../config/ads.js';
 import { applyBannerLayout } from '../utils/adLayout.js';
+import { reportError } from '../../../utils/crashReporting.js';
 
 const AD_ROUTES = new Set(['/', '/resumo']);
 let initialized = false;
@@ -56,7 +57,7 @@ export default function AdMobBannerController() {
     if (shouldShow) {
       showBanner().then((shown) => {
         if (!active && shown) AdMob.removeBanner().catch(() => {});
-      }).catch((error) => console.error('Falha ao mostrar anuncio.', error));
+      }).catch((error) => reportError(error, 'admob_banner'));
     } else {
       clearBannerSpace();
       AdMob.removeBanner().catch(() => {});

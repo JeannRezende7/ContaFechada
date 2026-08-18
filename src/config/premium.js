@@ -8,7 +8,6 @@
  * are tested end to end (docs/ROADMAP_MONETIZACAO.txt, objetivo).
  */
 export const PREMIUM_ENFORCED = true;
-export const WEB_ACCESS_ENABLED = false;
 export const CLOUD_UI_ENABLED = false;
 
 /** Produto nao consumivel cadastrado na Google Play Console. */
@@ -19,9 +18,7 @@ export const GOOGLE_PLAY_PRODUCTS = {
 export const PLAN = {
   FREE: 'free',
   PRO: 'pro',
-  CLOUD: 'cloud',
   // Compatibilidade com assinaturas criadas antes da separação Pro/Nuvem.
-  PREMIUM: 'premium',
 };
 
 /**
@@ -89,7 +86,7 @@ export const PLAN_DETAILS = {
       'Backup e restauração manual por arquivo',
     ],
   },
-  [PLAN.PREMIUM]: {
+  [PLAN.PRO]: {
     label: 'Pro',
     beneficios: [
       'Relatórios de múltiplos períodos e comparação entre meses',
@@ -117,7 +114,6 @@ export const PLAN_COMPARISON = [
 export const PRICING = {
   proLifetime: 39.9,
   proLaunch: 29.9,
-  cloudMonthly: 9.9,
 };
 
 /**
@@ -128,16 +124,6 @@ export const PRICING = {
  * data quando decidir a janela real de lançamento, um único ponto de
  * configuração, sem tocar em nenhuma tela.
  */
-export const FOUNDER_OFFER_DEADLINE = '2026-10-15T23:59:59-03:00';
-
-export function isFounderOfferActive(now = new Date()) {
-  return now.getTime() < new Date(FOUNDER_OFFER_DEADLINE).getTime();
-}
-
-/** @param {{ subscriptionStatus?: string, now?: Date }} [ctx] */
-export function isFounderEligible({ subscriptionStatus, now } = {}) {
-  return isFounderOfferActive(now) && (subscriptionStatus == null || subscriptionStatus === 'none');
-}
 
 /** @returns {number|null} the free-tier cap for `feature`, or null if it isn't a 'limit' feature. */
 export function getLimit(feature) {

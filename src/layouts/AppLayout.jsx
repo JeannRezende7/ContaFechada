@@ -8,7 +8,6 @@ import OnboardingWizard from '../features/onboarding/components/OnboardingWizard
 import { repositories } from '../repositories/index.js';
 import SyncManager from '../features/sync/components/SyncManager.jsx';
 import { MobileMenuProvider } from '../contexts/MobileMenuContext.jsx';
-import { WEB_ACCESS_ENABLED } from '../config/premium.js';
 import InitialCloudRestoreGate from '../features/backup/components/InitialCloudRestoreGate.jsx';
 import AdMobBannerController from '../features/ads/components/AdMobBannerController.jsx';
 
@@ -20,7 +19,7 @@ export default function AppLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() && !WEB_ACCESS_ENABLED) return;
+    if (!Capacitor.isNativePlatform()) return;
     if (!user?.uid) return;
     repositories.configuracoes.getOnboardingState(user.uid).then((state) => setOnboardingOpen(!state.completed && !state.skipped));
     const open = () => setOnboardingOpen(true);
@@ -28,7 +27,7 @@ export default function AppLayout() {
     return () => window.removeEventListener('contafechada:open-onboarding', open);
   }, [user]);
 
-  if (!Capacitor.isNativePlatform() && !WEB_ACCESS_ENABLED && !['/acesso-web', '/controle-assinaturas'].includes(location.pathname)) {
+  if (!Capacitor.isNativePlatform() && location.pathname !== '/controle-assinaturas') {
     return <Navigate to="/baixar-app" replace />;
   }
   return (
@@ -45,7 +44,7 @@ export default function AppLayout() {
           Conta Fechada
         </span>
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1 overflow-x-clip">
         <InitialCloudRestoreGate>
           <Outlet />
           <OnboardingWizard uid={user?.uid} open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />

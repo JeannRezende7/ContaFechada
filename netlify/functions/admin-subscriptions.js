@@ -60,7 +60,7 @@ export function createAdminSubscriptionsHandler({
       if (rawBody.length > 4096) return Response.json({ error: 'payload too large' }, { status: 413 });
       const body = JSON.parse(rawBody);
       if (body.action === 'grant') {
-        const result = await grant({ db, auth, identifier: body.identifier, days: body.days, founder: body.founder, adminUid: admin.uid });
+        const result = await grant({ db, auth, identifier: body.identifier, adminUid: admin.uid });
         return Response.json({ ok: true, ...result });
       }
       if (body.action === 'revoke') {
@@ -70,7 +70,7 @@ export function createAdminSubscriptionsHandler({
       return Response.json({ error: 'invalid action' }, { status: 400 });
     } catch (error) {
       if (error instanceof TypeError) return Response.json({ error: error.message }, { status: 400 });
-      console.error('admin-subscriptions: falha', error);
+      console.error('admin-subscriptions: falha', error?.name ?? 'Error');
       return Response.json({ error: 'admin operation failed' }, { status: 500 });
     }
   };

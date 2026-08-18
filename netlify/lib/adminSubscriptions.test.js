@@ -21,12 +21,10 @@ const auth = {
 };
 
 describe('admin subscriptions', () => {
-  it('lists only effectively active subscription documents', async () => {
-    const future = { toMillis: () => Date.parse('2026-08-30T00:00:00Z') };
-    const past = { toMillis: () => Date.parse('2026-06-01T00:00:00Z') };
+  it('lists only lifetime Pro entitlement documents', async () => {
     const db = fakeDb([
-      { ref: { path: 'users/u1/private/subscription' }, data: () => ({ plan: 'premium', subscriptionStatus: 'active', subscriptionProvider: 'manual', currentPeriodEnd: future }) },
-      { ref: { path: 'users/u2/private/subscription' }, data: () => ({ plan: 'premium', subscriptionStatus: 'active', subscriptionProvider: 'manual', currentPeriodEnd: past }) },
+      { ref: { path: 'users/u1/private/subscription' }, data: () => ({ plan: 'pro', proLifetime: true, subscriptionProvider: 'manual' }) },
+      { ref: { path: 'users/u2/private/subscription' }, data: () => ({ plan: 'free', proLifetime: false }) },
     ]);
     const result = await listActiveSubscriptions({ db, auth, now: new Date('2026-07-30T00:00:00Z') });
     expect(result).toHaveLength(1);
@@ -35,18 +33,13 @@ describe('admin subscriptions', () => {
 
   it('grants and revokes with an audit entry', async () => {
     const db = fakeDb();
-    const grant = await grantManualPremium({ db, auth, identifier: 'user@example.com', days: 30, founder: true, adminUid: 'admin1' });
+    const grant = await grantManualPremium({ db, auth, identifier: 'user@example.com', adminUid: 'admin1' });
     expect(grant.uid).toBe('u1');
-    expect(db.set).toHaveBeenCalledWith(expect.objectContaining({ plan: 'premium', founder: true }), { merge: true });
-    expect(db.add).toHaveBeenCalledWith(expect.objectContaining({ actor: 'admin_panel:admin1', action: 'grant' }));
+    expect(db.set).toHaveBeenCalledWith(expect.objectContaining({ plan: 'pro', proLifetime: true }), { merge: true });
+    expect(db.add).toHaveBeenCalledWith(expect.objectContaining({ actor: 'admin_panel:admin1', action: 'grant_lifetime' }));
 
     await revokeManualPremium({ db, auth, identifier: 'u1', adminUid: 'admin1' });
-    expect(db.set).toHaveBeenLastCalledWith(expect.objectContaining({ plan: 'free', subscriptionStatus: 'expired' }), { merge: true });
-    expect(db.add).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'revoke' }));
-  });
-
-  it('rejects unsafe grant periods', async () => {
-    await expect(grantManualPremium({ db: fakeDb(), auth, identifier: 'u1', days: 0, adminUid: 'a' })).rejects.toThrow();
-    await expect(grantManualPremium({ db: fakeDb(), auth, identifier: 'u1', days: 99999, adminUid: 'a' })).rejects.toThrow();
+    expect(db.set).toHaveBeenLastCalledWith(expect.objectContaining({ plan: 'free', proLifetime: false }), { merge: true });
+    expect(db.add).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'revoke_lifetime' }));
   });
 });

@@ -27,8 +27,8 @@ export function listAdminSubscriptions({ search = '', offset = 0, limit = 50 } =
   return callAdmin(null, `?${query}`);
 }
 
-export function grantAdminPremium({ identifier, days, founder }) {
-  return callAdmin({ action: 'grant', identifier, days, founder });
+export function grantAdminPremium({ identifier }) {
+  return callAdmin({ action: 'grant', identifier });
 }
 
 export function revokeAdminPremium(identifier) {

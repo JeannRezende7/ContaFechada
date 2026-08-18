@@ -4,6 +4,7 @@ import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { isNativeLocalDatabaseAvailable } from '../../../db/localDatabase.js';
 import { createCloudBackup, getLastCloudBackupAt, hasPendingBackupChanges, isCloudBackupDue } from '../../../db/backup/cloudBackup.js';
 import { getLocalDatabase } from '../../../db/localDatabase.js';
+import { reportError } from '../../../utils/crashReporting.js';
 
 const BACKUP_CHECK_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -25,7 +26,7 @@ export default function SyncManager() {
           await createCloudBackup(firebaseUser.uid, { driver });
         }
       } catch (error) {
-        console.error('Falha no backup automático em nuvem.', error);
+        reportError(error, 'cloud_backup');
       }
     };
     const onVisible = () => {

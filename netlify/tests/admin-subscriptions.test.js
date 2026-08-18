@@ -34,8 +34,8 @@ describe('admin subscriptions endpoint', () => {
       subscriptions: [{ uid: 'u1' }],
       nextOffset: null,
     });
-    expect(await (await handler(request('POST', { action: 'grant', identifier: 'u1', days: 30 }))).json()).toMatchObject({ ok: true, uid: 'u1' });
-    expect(deps.grant).toHaveBeenCalledWith(expect.objectContaining({ adminUid: 'admin1', days: 30 }));
+    expect(await (await handler(request('POST', { action: 'grant', identifier: 'u1' }))).json()).toMatchObject({ ok: true, uid: 'u1' });
+    expect(deps.grant).toHaveBeenCalledWith(expect.objectContaining({ adminUid: 'admin1', identifier: 'u1' }));
     expect(await (await handler(request('POST', { action: 'revoke', identifier: 'u1' }))).json()).toMatchObject({ ok: true });
   });
 

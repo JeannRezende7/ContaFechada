@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { reportError } from '../../utils/crashReporting.js';
 
 export default class RouteErrorBoundary extends Component {
   state = { error: null };
@@ -9,6 +10,7 @@ export default class RouteErrorBoundary extends Component {
   }
 
   componentDidCatch(error) {
+    reportError(error, 'route_boundary');
     if (import.meta.env.DEV) console.error('[routes] falha ao carregar tela', error);
   }
 

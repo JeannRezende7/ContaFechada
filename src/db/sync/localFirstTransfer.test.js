@@ -126,4 +126,22 @@ describe('transferência local-first completa', () => {
     expect(local.metas.map((item) => item.id).sort()).toEqual([id, 'remoteOnly'].sort());
     expect(remote.data.metas[id].nome).toBe('Local');
   });
+
+  it('baixa a nuvem quando o login ocorre com banco local vazio', async () => {
+    const remote = fakeRemote({
+      lancamentos: {
+        cloud: {
+          id: 'cloud', tipo: 'receita', descricao: 'Preservado na nuvem', valor: 750,
+          dataVencimento: '2026-08-01', status: 'recebido', updatedAt: '2026-08-01T00:00:00.000Z',
+        },
+      },
+    });
+
+    const result = await mergeLocalAndRemoteSnapshots({ driver, remote, domains: ['lancamentos'] });
+    const local = await readLocalSnapshot(driver);
+
+    expect(result.summary.lancamentos).toEqual({ uploaded: 0, downloaded: 1 });
+    expect(local.lancamentos).toEqual([expect.objectContaining({ id: 'cloud', valor: 750 })]);
+    expect(remote.data.lancamentos.cloud.descricao).toBe('Preservado na nuvem');
+  });
 });

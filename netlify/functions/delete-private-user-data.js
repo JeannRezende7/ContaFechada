@@ -12,7 +12,7 @@ export default async (req) => {
   try {
     user = await verifyIdToken(req.headers.get('authorization'));
   } catch (err) {
-    console.error('delete-private-user-data: token inválido', err);
+    console.error('delete-private-user-data: token inválido', err?.name ?? 'Error');
     return json({ error: 'unauthorized' }, 401);
   }
 
@@ -21,7 +21,7 @@ export default async (req) => {
     await db.recursiveDelete(db.doc(`users/${user.uid}/private/subscription`));
     return json({ ok: true });
   } catch (err) {
-    console.error('delete-private-user-data: falha ao excluir', err);
+    console.error('delete-private-user-data: falha ao excluir', err?.name ?? 'Error');
     return json({ error: 'falha ao excluir dados privados da conta' }, 500);
   }
 };

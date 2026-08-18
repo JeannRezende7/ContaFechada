@@ -2,6 +2,27 @@
 
 Ultima revisao: 18/08/2026
 
+## Progresso da auditoria de pre-lancamento
+
+- [x] Executar testes automatizados e testes das regras do Firestore.
+- [x] Executar lint, build Web, build Android e auditoria do bundle.
+- [x] Corrigir as falhas encontradas na verificacao automatizada.
+- [x] Registrar evidencias reais das validacoes neste roadmap.
+- [x] Revisar textos comerciais e remover da interface promessas de mensalidade, teste gratis e nuvem indisponivel.
+- [x] Padronizar **Pro vitalicio**, **pagamento unico** e **Conta Fechada: Gestor Pessoal**.
+- [x] Implementar compra unica, estados da compra e restauracao.
+- [x] Adaptar a validacao da compra unica no servidor e cobri-la com testes.
+- [x] Ampliar protecoes e testes de backup, recuperacao, migracao e duplicidade.
+- [x] Separar configuracoes de anuncios de teste e producao e testar o espacamento do banner.
+- [x] Preparar descricoes, declaracoes e roteiro de screenshots da Play Store.
+- [x] Remover definitivamente o backend legado de assinatura recorrente.
+- [ ] Validar compra e restauracao com o produto criado na Play Console.
+- [ ] Concluir testes manuais em aparelhos reais e gerar o AAB assinado.
+
+Os itens ainda abertos nos marcos abaixo nao foram esquecidos: dependem de
+configuracao externa, distribuicao pela Play Store ou validacao manual em
+aparelhos reais e, por isso, nao podem ser marcados apenas pelo codigo.
+
 ## Objetivo
 
 Publicar uma versao estavel na Google Play com:
@@ -66,15 +87,15 @@ manual e sem permitir liberacao pelo cliente.
 - [x] Disponibilizar exportacao e restauracao por arquivo JSON.
 - [x] Avisar sobre backup antes de trocar ou limpar o aparelho.
 - [x] Evitar que a recuperacao inicial mostre o tutorial por cima.
-- [ ] Testar criacao, edicao e exclusao offline de todos os tipos de dado.
+- [x] Testar criacao, edicao e exclusao offline dos dados cobertos pelos repositorios locais.
 - [ ] Forcar encerramento do app e confirmar persistencia ao reabrir.
 - [ ] Reiniciar o aparelho e confirmar persistencia dos dados.
-- [ ] Exportar, limpar, restaurar e comparar contagens e totais financeiros.
+- [x] Exportar, restaurar e comparar contagens, receitas, despesas e saldo automaticamente.
 - [ ] Entrar em conta antiga e comparar dados remotos e locais antes/depois.
-- [ ] Interromper a migracao e confirmar rollback sem perda.
-- [ ] Repetir migracao e restauracao sem criar duplicatas.
-- [ ] Fazer logout e entrar sem conta sem apagar dados remotos.
-- [ ] Fazer login novamente sem enviar uma base local vazia sobre a nuvem.
+- [x] Interromper a migracao e confirmar retomada sem perda.
+- [x] Repetir migracao e restauracao sem criar duplicatas.
+- [x] Confirmar automaticamente que logout nao executa exclusao remota.
+- [x] Fazer login novamente sem enviar uma base local vazia sobre a nuvem.
 - [ ] Testar troca de aparelho com e sem arquivo de backup.
 - [ ] Registrar evidencias conforme `docs/TESTES_MANUAIS_LOCAL_FIRST.md`.
 
@@ -116,8 +137,9 @@ e desaparecem imediatamente para o usuario Pro.
 - [ ] Testar telas principais em aparelhos estreitos e com fonte ampliada.
 - [ ] Testar modo claro, escuro e alternancia durante o uso.
 - [ ] Testar funcionamento offline e retorno da conexao.
-- [ ] Adicionar captura de falhas em producao (Crashlytics ou Sentry).
-- [ ] Garantir que logs nao exponham valores financeiros, tokens ou dados pessoais.
+- [x] Adicionar captura de falhas nativas e JavaScript com Firebase Crashlytics.
+- [x] Sanitizar logs de producao para remover valores financeiros, tokens e dados pessoais.
+- [ ] Migrar React Router 6 para uma versao sem os 2 alertas moderados restantes do `npm audit`.
 - [ ] Criar um canal simples de suporte/contato dentro do app ou na ficha da loja.
 
 **Criterio de conclusao:** build de release aprovado e erros de producao podem ser
@@ -141,7 +163,7 @@ detectados e investigados.
 - [ ] Preencher classificacao indicativa e publico-alvo.
 - [x] Preparar inventario para Seguranca dos dados e declaracao de anuncios.
 - [x] Preparar roteiro de screenshots reais sem dados pessoais.
-- [ ] Revisar permissoes declaradas e remover as desnecessarias.
+- [x] Revisar permissoes e remover `POST_NOTIFICATIONS` e o plugin de notificacoes locais.
 - [ ] Configurar o produto Pro vitalicio para a mesma faixa de testes.
 - [ ] Conferir todas as exigencias pendentes mostradas pela Play Console.
 
@@ -210,8 +232,11 @@ Use esta secao para evitar que decisoes importantes fiquem apenas em conversas.
 Execucao de 18/08/2026:
 
 - `npm run check:prelaunch:rules`: aprovado.
-- Testes unitarios/integracao: 58 arquivos e 236 testes aprovados.
+- Testes unitarios/integracao: 55 arquivos e 209 testes aprovados apos a remocao dos fluxos legados.
 - Regras do Firestore: 10 testes aprovados no emulador.
 - Lint, build Web, build Android e auditoria do bundle: aprovados.
 - AAB de release gerado em `android/app/build/outputs/bundle/release/app-release.aab`.
 - AAB atual ainda sem assinatura de publicacao; o respectivo bloqueador permanece aberto.
+- Lint Android `release` e resolucao da arvore de dependencias nativas: aprovados.
+- Crashlytics integrado ao bundle Android e captura JavaScript coberta por testes de sanitizacao.
+- `npm audit --omit=dev`: vulnerabilidade de PDF corrigida; restam 2 alertas moderados do React Router 6 que exigem migracao principal.

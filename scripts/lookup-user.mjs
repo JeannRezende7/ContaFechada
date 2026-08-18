@@ -7,7 +7,7 @@
  * Uso:
  *   node scripts/lookup-user.mjs <uid-ou-email>
  *
- * Credenciais: mesma coisa que scripts/grant-premium.mjs —
+ * Credenciais: mesma coisa que scripts/grant-premium-lifetime.mjs —
  *   GOOGLE_APPLICATION_CREDENTIALS=./scripts/service-account.json node scripts/lookup-user.mjs ...
  */
 import { initializeApp, cert } from 'firebase-admin/app';
@@ -59,9 +59,7 @@ async function main() {
   console.log(`  subscriptionId: ${sub.subscriptionId ?? '—'}`);
   console.log(`  currentPeriodEnd: ${formatTimestamp(sub.currentPeriodEnd)}`);
   console.log(`  cancelAtPeriodEnd: ${sub.cancelAtPeriodEnd}`);
-  console.log(`  trialStartedAt: ${formatTimestamp(sub.trialStartedAt)}`);
-  console.log(`  trialEndsAt: ${formatTimestamp(sub.trialEndsAt)}`);
-  console.log(`  founder: ${sub.founder}`);
+  console.log(`  proLifetime: ${Boolean(sub.proLifetime)}`);
 
   const logSnap = await db
     .collection(`users/${authUser.uid}/private/subscription/subscription_log`)

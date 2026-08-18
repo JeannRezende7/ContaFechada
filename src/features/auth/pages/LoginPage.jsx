@@ -5,6 +5,7 @@ import GoogleButton from '../components/GoogleButton.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { clearLocalData, exportLocalData, isNativeLocalDatabaseAvailable } from '../../../db/localDatabase.js';
+import { reportError } from '../../../utils/crashReporting.js';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -21,7 +22,7 @@ export default function LoginPage() {
       navigate('/');
     } catch (err) {
       setError(err?.message || 'Não foi possível entrar. Tente novamente.');
-      console.error(err);
+      reportError(err, 'google_sign_in');
     } finally {
       setLoading(false);
     }

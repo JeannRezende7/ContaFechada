@@ -37,16 +37,11 @@ export function PremiumProvider({ children }) {
   const [state, setState] = useState(FREE_STATE);
   const [loading, setLoading] = useState(true);
   const [paywall, setPaywall] = useState(null); // { feature, reason, limit } | null
-  const prevStatusRef = useRef(FREE_STATE.status);
   const automaticRestoreUidRef = useRef(null);
 
   // Único ponto de saída pro estado — assim "trial acabou" é detectado não
   // importa se a mudança veio do cache, da rede ou de um refresh manual.
   const applyState = useCallback((next) => {
-    if (prevStatusRef.current === 'trialing' && next.status === 'expired') {
-      track(EVENTS.TRIAL_FINISHED);
-    }
-    prevStatusRef.current = next.status;
     setState(next);
   }, []);
 

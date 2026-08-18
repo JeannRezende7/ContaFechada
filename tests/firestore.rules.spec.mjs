@@ -20,15 +20,10 @@ let testEnv;
 
 function initialSubscription(overrides = {}) {
   return {
-    plan: 'free',
-    subscriptionStatus: 'none',
-    subscriptionProvider: 'manual',
-    subscriptionId: null,
-    currentPeriodEnd: null,
-    cancelAtPeriodEnd: false,
-    trialStartedAt: null,
-    trialEndsAt: null,
-    founder: false,
+      plan: 'free',
+      proLifetime: false,
+      subscriptionStatus: 'none',
+      subscriptionProvider: null,
     createdAt: serverTimestamp(),
     ...overrides,
   };
@@ -141,7 +136,7 @@ describe('subscription protection', () => {
     const db = testEnv.authenticatedContext('user-a').firestore();
     const ref = doc(db, 'users/user-a/private/subscription');
 
-    await assertFails(setDoc(ref, initialSubscription({ plan: 'premium', founder: true })));
+    await assertFails(setDoc(ref, initialSubscription({ plan: 'pro', proLifetime: true })));
   });
 
   it('denies direct promotion to an active paid plan', async () => {

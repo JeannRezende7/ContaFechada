@@ -80,6 +80,6 @@ describe('Premium value features', () => {
 describe('plan identifiers', () => {
   it('matches the Firestore subscription document', () => {
     expect(PLAN.FREE).toBe('free');
-    expect(PLAN.PREMIUM).toBe('premium');
+    expect(PLAN.PRO).toBe('pro');
   });
 });

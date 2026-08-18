@@ -85,8 +85,8 @@ export default function Paywall({ context, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink-900/50 px-4 py-6" onClick={onClose}>
-      <div className="relative my-auto w-full max-w-md rounded-card bg-white p-5 shadow-pop dark:bg-ink-700" onClick={(event) => event.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink-900/50 px-3 py-[max(0.75rem,env(safe-area-inset-top))]" onClick={onClose}>
+      <div className="relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto overflow-x-hidden rounded-card bg-white p-4 shadow-pop sm:p-5 dark:bg-ink-700" onClick={(event) => event.stopPropagation()}>
         <button type="button" onClick={onClose} aria-label="Fechar" className="absolute right-4 top-4 text-ink-300 hover:text-ink-700 dark:hover:text-ink-50"><X size={18} /></button>
         <div className="mb-5 flex items-start gap-3 pr-6">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold-50 text-gold-700"><Sparkles size={19} /></span>
@@ -98,7 +98,7 @@ export default function Paywall({ context, onClose }) {
           <p className="mt-1 font-display text-3xl font-semibold text-ink-900 dark:text-ink-50">{formatBRL(PRICING.proLifetime)}</p>
           <p className="mt-1 text-xs text-ink-300">Acesso permanente às funções Pro neste e nos próximos aparelhos.</p>
         </div>
-        <button type="button" onClick={handlePurchase} disabled={Boolean(loading)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-ledger-500 py-2.5 text-sm font-semibold text-white hover:bg-ledger-600 disabled:opacity-60">
+        <button type="button" onClick={handlePurchase} disabled={Boolean(loading)} className="flex min-h-11 w-full flex-wrap items-center justify-center gap-2 rounded-xl bg-ledger-500 px-3 py-2.5 text-center text-sm font-semibold leading-snug text-white hover:bg-ledger-600 disabled:opacity-60">
           {loading === 'purchase' ? <Loader2 size={16} className="animate-spin" /> : <Crown size={16} />} Comprar Pro
         </button>
         <button type="button" onClick={handleRestore} disabled={Boolean(loading)} className="mt-2 flex w-full items-center justify-center gap-2 py-2 text-sm font-medium text-ink-500 disabled:opacity-60">

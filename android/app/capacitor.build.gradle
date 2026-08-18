@@ -12,7 +12,7 @@ dependencies {
     implementation project(':capacitor-community-admob')
     implementation project(':capacitor-community-sqlite')
     implementation project(':capacitor-firebase-authentication')
-    implementation project(':capacitor-local-notifications')
+    implementation project(':capacitor-firebase-crashlytics')
 
 }
 

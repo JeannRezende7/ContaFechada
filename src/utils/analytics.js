@@ -12,14 +12,12 @@ export const EVENTS = {
   PAYWALL_OPENED: 'paywall_opened',
   PAYWALL_CLOSED: 'paywall_closed',
   FREE_LIMIT_REACHED: 'free_limit_reached',
-  TRIAL_STARTED: 'trial_started',
-  TRIAL_FINISHED: 'trial_finished',
   CHECKOUT_STARTED: 'checkout_started',
   PURCHASE_COMPLETED: 'purchase_completed',
   PURCHASE_FAILED: 'purchase_failed',
   PURCHASE_CANCELED: 'purchase_canceled',
   SUBSCRIPTION_RESTORED: 'subscription_restored',
-  SUBSCRIPTION_CANCELED: 'subscription_canceled',
+  PURCHASE_RESTORED: 'purchase_restored',
 };
 
 /**

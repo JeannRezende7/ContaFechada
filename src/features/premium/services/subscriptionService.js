@@ -6,28 +6,17 @@ const DOC_ID = 'subscription';
 
 /**
  * @typedef {Object} SubscriptionDoc
- * @property {'free'|'premium'} plan
- * @property {'none'|'trialing'|'active'|'past_due'|'canceled'|'expired'} subscriptionStatus
- * @property {'google_play'|'web'|'manual'} subscriptionProvider
- * @property {string|null} subscriptionId
- * @property {import('firebase/firestore').Timestamp|null} currentPeriodEnd
- * @property {boolean} cancelAtPeriodEnd
- * @property {import('firebase/firestore').Timestamp|null} trialStartedAt
- * @property {import('firebase/firestore').Timestamp|null} trialEndsAt
- * @property {boolean} founder
+ * @property {'free'|'pro'} plan
+ * @property {boolean} proLifetime
+ * @property {'google_play'|'manual'|null} subscriptionProvider
  */
 
 /** The all-free, never-subscribed starting state — the only shape the client is allowed to `create`. */
 const INITIAL_SUBSCRIPTION = {
   plan: PLAN.FREE,
+  proLifetime: false,
   subscriptionStatus: 'none',
-  subscriptionProvider: 'manual',
-  subscriptionId: null,
-  currentPeriodEnd: null,
-  cancelAtPeriodEnd: false,
-  trialStartedAt: null,
-  trialEndsAt: null,
-  founder: false,
+  subscriptionProvider: null,
 };
 
 export function getSubscriptionDoc(uid) {
@@ -40,7 +29,7 @@ export function getSubscriptionDoc(uid) {
  * (see firestore.rules), so this must never attempt to overwrite an
  * existing doc: that would be evaluated as an `update` and rejected.
  * Every field beyond plan/subscriptionStatus must upgrade later, and only
- * an Admin SDK caller (Cloud Functions or scripts/grant-premium.mjs) can do
+ * an Admin SDK caller (Cloud Functions or scripts/grant-premium-lifetime.mjs) can do
  * that — the client never gets another write to this path.
  * @returns {Promise<SubscriptionDoc>} the doc that now exists, new or pre-existing.
  */

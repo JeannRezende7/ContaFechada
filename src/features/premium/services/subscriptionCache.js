@@ -9,12 +9,8 @@ function cacheKey(uid) {
 function toCacheable(doc) {
   return {
     plan: doc.plan,
-    subscriptionStatus: doc.subscriptionStatus,
+    proLifetime: Boolean(doc.proLifetime),
     subscriptionProvider: doc.subscriptionProvider,
-    currentPeriodEnd: doc.currentPeriodEnd?.toMillis?.() ?? null,
-    trialEndsAt: doc.trialEndsAt?.toMillis?.() ?? null,
-    cancelAtPeriodEnd: doc.cancelAtPeriodEnd,
-    founder: doc.founder,
   };
 }
 

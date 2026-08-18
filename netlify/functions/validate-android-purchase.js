@@ -12,7 +12,7 @@ export default async (req) => {
   try {
     user = await verifyIdToken(req.headers.get('authorization'));
   } catch (error) {
-    console.error('validate-android-purchase: token invalido', error);
+    console.error('validate-android-purchase: token invalido', error?.name ?? 'Error');
     return json({ error: 'unauthorized' }, 401);
   }
 
@@ -49,7 +49,7 @@ export default async (req) => {
     }
     return json({ ok: true, subscription });
   } catch (error) {
-    console.error('validate-android-purchase: falha ao validar', error);
+    console.error('validate-android-purchase: falha ao validar', error?.name ?? 'Error');
     return json({ error: 'falha ao validar compra' }, 502);
   }
 };

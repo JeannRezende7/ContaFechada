@@ -63,28 +63,23 @@ service cloud.firestore {
       allow read: if isOwner(uid);
 
       allow create: if isOwner(uid)
-        && request.resource.data.keys().hasOnly([
-          'plan',
-          'subscriptionStatus',
-          'subscriptionProvider',
-          'subscriptionId',
-          'currentPeriodEnd',
-          'cancelAtPeriodEnd',
-          'trialStartedAt',
-          'trialEndsAt',
-          'founder',
-          'createdAt'
-        ])
-        && request.resource.data.plan == 'free'
-        && request.resource.data.subscriptionStatus == 'none'
-        && request.resource.data.subscriptionProvider == 'manual'
-        && request.resource.data.subscriptionId == null
-        && request.resource.data.currentPeriodEnd == null
-        && request.resource.data.cancelAtPeriodEnd == false
-        && request.resource.data.trialStartedAt == null
-        && request.resource.data.trialEndsAt == null
-        && request.resource.data.founder == false
-        && request.resource.data.createdAt == request.time;
+          && request.resource.data.keys().hasOnly([
+            'plan',
+            'proLifetime',
+            'subscriptionStatus',
+            'subscriptionProvider',
+            'createdAt',
+            'updatedAt',
+            'deletedAt',
+            'deviceId',
+            'syncStatus',
+            'localVersion'
+          ])
+          && request.resource.data.plan == 'free'
+          && request.resource.data.proLifetime == false
+          && request.resource.data.subscriptionStatus == 'none'
+          && request.resource.data.subscriptionProvider == null
+          && request.resource.data.createdAt == request.time;
 
       allow update: if false;
 
