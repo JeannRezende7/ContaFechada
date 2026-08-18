@@ -25,8 +25,8 @@ export default function MeuPlanoPage() {
         </div>
 
         <div className="rounded-card bg-white p-5 shadow-card dark:bg-ink-700">
-          <div className="mb-3 flex items-center gap-2"><ShieldCheck size={16} className="text-ledger-500" /><p className="text-sm font-medium">Gratuito vs. Pro</p></div>
-          <PlanComparisonTable currentPlan={hasProAccess ? 'premium' : 'free'} />
+          <div className="mb-4 flex items-center gap-2"><ShieldCheck size={16} className="text-ledger-500" /><p className="text-sm font-medium">O que o Pro desbloqueia</p></div>
+          <PlanComparisonTable />
           {!hasProAccess && <button type="button" onClick={() => openPaywall()} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-ledger-500 py-2.5 text-sm font-medium text-white hover:bg-ledger-600"><Crown size={16} /> Comprar Pro</button>}
         </div>
 

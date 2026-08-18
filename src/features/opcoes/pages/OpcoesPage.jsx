@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogIn, LogOut, MonitorDown, Cloud, RotateCcw, TriangleAlert } from 'lucide-react';
+import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, HardDrive, LogIn, LogOut, MonitorDown, Cloud, RotateCcw, TriangleAlert } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -292,29 +292,25 @@ export default function OpcoesPage() {
           <ChevronRight size={16} className="text-ink-300 shrink-0" strokeWidth={2} />
         </Link>}
 
-        {activeTab === 'geral' && isNativeLocalDatabaseAvailable() && <div className="flex items-start gap-3 rounded-card border border-gold-200 bg-gold-50 p-4 text-gold-900 dark:border-gold-700 dark:bg-ink-700 dark:text-gold-100">
-          <TriangleAlert size={18} className="mt-0.5 shrink-0" />
-          <div>
-            <p className="text-sm font-medium">Vai trocar de aparelho?</p>
-            <p className="mt-0.5 text-xs leading-relaxed">Faça um backup antes da troca. Sem o arquivo de backup, os dados que existem somente neste aparelho não poderão ser recuperados.</p>
+        {activeTab === 'geral' && isNativeLocalDatabaseAvailable() && <section className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
+          <div className="flex items-start gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ledger-50 text-ledger-600"><HardDrive size={15} /></span>
+            <div><h2 className="text-sm font-medium">Backup local</h2><p className="mt-0.5 text-xs text-ink-300">Proteja seus dados antes de trocar ou limpar o aparelho.</p></div>
           </div>
-        </div>}
-
-        {activeTab === 'geral' && isNativeLocalDatabaseAvailable() && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
-          <div><p className="text-sm font-medium">Fazer backup local</p><p className="mt-0.5 text-xs text-ink-300">Salva todos os dados em um arquivo JSON neste aparelho.</p></div>
-          <button type="button" onClick={handleExportarDados} disabled={loading === 'exportar'} className="shrink-0 rounded-pill bg-ink-50 px-3.5 py-2 text-sm font-medium dark:bg-ink-900"><Download size={15} className="inline mr-1" />{loading === 'exportar' ? 'Salvando…' : 'Fazer backup'}</button>
-        </div>}
-
-        {activeTab === 'geral' && isNativeLocalDatabaseAvailable() && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Restaurar backup local</p>
-            <p className="text-xs text-ink-300 mt-0.5">Substitui os dados deste aparelho por um JSON exportado pelo Conta Fechada.</p>
+          <div className="mt-3 flex items-start gap-2 rounded-card bg-ink-50 p-3 text-ink-500 dark:bg-ink-900 dark:text-ink-100">
+            <TriangleAlert size={15} className="mt-0.5 shrink-0 text-gold-700" />
+            <p className="text-xs leading-relaxed">Sem o arquivo de backup, dados mantidos somente neste aparelho não podem ser recuperados.</p>
           </div>
-          <input ref={importInputRef} type="file" accept="application/json,.json" onChange={handleImportarDados} className="sr-only" />
-          <button type="button" onClick={() => importInputRef.current?.click()} disabled={loading === 'importar'} className="shrink-0 rounded-pill bg-ink-50 px-3.5 py-2 text-sm font-medium dark:bg-ink-900">
-            {loading === 'importar' ? 'Restaurando…' : 'Restaurar'}
-          </button>
-        </div>}
+          <div className="mt-3 flex items-center justify-between gap-3 border-b border-ink-100 pb-3 dark:border-ink-900">
+            <div><p className="text-sm font-medium">Salvar uma cópia</p><p className="mt-0.5 text-xs text-ink-300">Gera um arquivo JSON com todos os dados.</p></div>
+            <button type="button" onClick={handleExportarDados} disabled={loading === 'exportar'} className="shrink-0 rounded-pill bg-ledger-500 px-3.5 py-2 text-sm font-medium text-white disabled:opacity-50"><Download size={15} className="mr-1 inline" />{loading === 'exportar' ? 'Salvando…' : 'Salvar'}</button>
+          </div>
+          <div className="flex items-center justify-between gap-3 pt-3">
+            <div><p className="text-sm font-medium">Restaurar uma cópia</p><p className="mt-0.5 text-xs text-ink-300">Substitui os dados atuais por um backup.</p></div>
+            <input ref={importInputRef} type="file" accept="application/json,.json" onChange={handleImportarDados} className="sr-only" />
+            <button type="button" onClick={() => importInputRef.current?.click()} disabled={loading === 'importar'} className="shrink-0 rounded-pill bg-ink-50 px-3.5 py-2 text-sm font-medium dark:bg-ink-900 disabled:opacity-50">{loading === 'importar' ? 'Restaurando…' : 'Restaurar'}</button>
+          </div>
+        </section>}
 
         {activeTab === 'geral' && CLOUD_UI_ENABLED && hasCloudAccess && !isLocalSession && isNativeLocalDatabaseAvailable() && <div className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
           <div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ledger-50 text-ledger-600"><Cloud size={16} /></span><div><p className="text-sm font-medium">Backup em nuvem Premium</p><p className="mt-0.5 text-xs text-ink-300">Automático a cada 24 horas quando o app estiver aberto e conectado.</p><p className="mt-1 text-xs text-ink-300">{lastCloudBackupAt ? `Último backup: ${new Date(lastCloudBackupAt).toLocaleString('pt-BR')}` : 'Nenhum backup concluído neste aparelho.'}</p></div></div>
@@ -323,17 +319,7 @@ export default function OpcoesPage() {
 
         {activeTab === 'geral' && CLOUD_UI_ENABLED && !hasCloudAccess && <Link to="/opcoes/meu-plano" className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700"><p className="text-sm font-medium">Backup em nuvem</p><p className="mt-1 text-xs text-ink-300">Backup automático diário e restauração pela nuvem.</p></Link>}
 
-        {activeTab === 'avancado' && recoverySnapshot && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
-          <p className="text-sm font-medium">Snapshot de recuperação</p>
-          <p className="mt-0.5 text-xs text-ink-300">Cópia interna mais recente: {recoverySnapshot.key}</p>
-          <div className="mt-3 flex gap-2">
-            <button type="button" onClick={handleExportarSnapshot} className="rounded-pill bg-ink-50 px-3 py-2 text-xs font-medium dark:bg-ink-900">Exportar snapshot</button>
-            <button type="button" onClick={handleRestaurarSnapshot} disabled={loading === 'restaurar'} className="rounded-pill bg-signal-50 px-3 py-2 text-xs font-medium text-signal-500 disabled:opacity-50">
-              {loading === 'restaurar' ? 'Restaurando…' : 'Restaurar'}
-            </button>
-          </div>
-        </div>}
-
+        {activeTab === 'avancado' && <p className="px-1 text-xs font-semibold uppercase text-ink-300">Configuração</p>}
         {activeTab === 'avancado' && <button onClick={() => window.dispatchEvent(new Event('contafechada:open-onboarding'))} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 text-left hover:shadow-card-hover">
           <div className="flex items-start gap-3"><span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><ListRestart size={15} /></span><div><p className="text-sm font-medium">Retomar configuração inicial</p><p className="text-xs text-ink-300">Revise sua receita principal, contas fixas e categorias.</p></div></div>
           <ChevronRight size={16} className="text-ink-300" />
@@ -387,6 +373,19 @@ export default function OpcoesPage() {
           </button>
         </div>
 
+        {activeTab === 'avancado' && <p className="px-1 pt-2 text-xs font-semibold uppercase text-ink-300">Recuperação</p>}
+
+        {activeTab === 'avancado' && recoverySnapshot && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
+          <p className="text-sm font-medium">Cópia interna de segurança</p>
+          <p className="mt-0.5 break-all text-xs text-ink-300">Criada automaticamente antes de operações de recuperação.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" onClick={handleExportarSnapshot} className="rounded-pill bg-ink-50 px-3 py-2 text-xs font-medium dark:bg-ink-900">Exportar cópia</button>
+            <button type="button" onClick={handleRestaurarSnapshot} disabled={loading === 'restaurar'} className="rounded-pill bg-signal-50 px-3 py-2 text-xs font-medium text-signal-500 disabled:opacity-50">
+              {loading === 'restaurar' ? 'Restaurando…' : 'Restaurar cópia'}
+            </button>
+          </div>
+        </div>}
+
         <div className={`${activeTab !== 'avancado' ? 'hidden' : 'flex'} bg-white dark:bg-ink-700 rounded-card shadow-card p-4 items-center justify-between gap-3`}>
           <div className="min-w-0 flex items-start gap-3">
             <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
@@ -409,12 +408,13 @@ export default function OpcoesPage() {
           </button>
         </div>
 
-        <p className={`${activeTab !== 'avancado' ? 'hidden' : ''} text-sm text-ink-300`}>
-          Ações abaixo afetam todos os seus dados e não podem ser desfeitas.
-        </p>
+        <div className={`${activeTab !== 'avancado' ? 'hidden' : 'block'} px-1 pt-2`}>
+          <p className="text-xs font-semibold uppercase text-signal-500">Zona de perigo</p>
+          <p className="mt-1 text-xs text-ink-300">Estas ações alteram ou apagam dados permanentemente.</p>
+        </div>
 
-        <div className={`${activeTab !== 'avancado' ? 'hidden' : 'flex'} flex-col gap-4`}>
-        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        <div className={`${activeTab !== 'avancado' ? 'hidden' : 'flex'} flex-col divide-y divide-ink-100 overflow-hidden rounded-card bg-white shadow-card dark:divide-ink-900 dark:bg-ink-700`}>
+        <div className="p-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Zerar lançamentos</p>
             <p className="text-xs text-ink-300 mt-0.5">
@@ -431,7 +431,7 @@ export default function OpcoesPage() {
           </button>
         </div>
 
-        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        <div className="p-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Zerar categorias</p>
             <p className="text-xs text-ink-300 mt-0.5">
@@ -448,7 +448,7 @@ export default function OpcoesPage() {
           </button>
         </div>
 
-        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        <div className="p-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Zerar Gestor Financeiro</p>
             <p className="text-xs text-ink-300 mt-0.5">
@@ -465,27 +465,7 @@ export default function OpcoesPage() {
           </button>
         </div>
 
-        <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
-          <div className="min-w-0 flex items-start gap-3">
-            <span className="w-8 h-8 rounded-full bg-ledger-50 text-ledger-600 flex items-center justify-center shrink-0 mt-0.5">
-              <ShieldCheck size={15} strokeWidth={1.75} />
-            </span>
-            <div>
-              <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Exportar meus dados</p>
-              <p className="text-xs text-ink-300 mt-0.5">Baixa uma cópia de todos os seus dados em um arquivo JSON.</p>
-            </div>
-          </div>
-          <button
-            onClick={handleExportarDados}
-            disabled={loading === 'exportar'}
-            className="shrink-0 flex items-center gap-1.5 rounded-pill bg-ink-50 dark:bg-ink-900 text-ink-500 px-3.5 py-2 text-sm font-medium hover:bg-ink-100 transition-colors disabled:opacity-50"
-          >
-            <Download size={15} strokeWidth={2} />
-            {loading === 'exportar' ? 'Exportando...' : 'Exportar'}
-          </button>
-        </div>
-
-        {!isLocalSession && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        {!isLocalSession && <div className="p-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Excluir minha conta</p>
             <p className="text-xs text-ink-300 mt-0.5">Apaga permanentemente sua conta e todos os seus dados.</p>

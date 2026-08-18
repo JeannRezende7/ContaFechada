@@ -97,24 +97,15 @@ export const PLAN_DETAILS = {
   },
 };
 
-/**
- * Linha a linha, Gratuito vs Premium — usado pela tabela comparativa em
- * "Meu Plano" e no paywall. Esta é a fonte única da comunicação comercial.
- */
+/** Diferenciais exibidos em "Meu Plano" e no paywall. */
 export const PLAN_COMPARISON = [
-  { label: 'Lançamentos manuais', free: 'Ilimitados', premium: 'Ilimitados' },
-  { label: 'Categorias e recorrências', free: 'Ilimitadas', premium: 'Ilimitadas' },
-  { label: 'Histórico no dispositivo', free: 'Completo', premium: 'Completo' },
-  { label: 'Backup manual por arquivo', free: 'Incluído', premium: 'Incluído' },
-  { label: 'Relatórios', free: 'Mensais', premium: 'Comparações e evolução' },
-  { label: 'Gestor Financeiro', free: 'Indicadores completos', premium: 'Com insights e projeções' },
-  { label: 'Insights e sugestões', free: 'Não incluído', premium: 'Avançados' },
-  { label: 'Exportação CSV', free: 'Completa', premium: 'Completa' },
-  { label: 'Planejamento do valor livre', free: 'Incluído', premium: 'Incluído' },
-  { label: 'Importação assistida', free: 'Não incluída', premium: 'Print, CSV e OFX' },
-  { label: 'Ações em massa', free: 'Não incluídas', premium: 'Incluídas' },
-  { label: 'Automação', free: 'Recorrências', premium: 'Regras de categoria' },
-  { label: 'Busca', free: 'No Movimento', premium: 'Global com filtros avançados' },
+  { label: 'Sem anúncios', premium: 'Use o aplicativo sem interrupções.' },
+  { label: 'Importação assistida', premium: 'Importe por print, CSV e OFX.' },
+  { label: 'Relatórios avançados', premium: 'Compare meses e acompanhe sua evolução.' },
+  { label: 'Insights e projeções', premium: 'Receba análises financeiras mais completas.' },
+  { label: 'Ações em massa', premium: 'Edite ou exclua vários lançamentos de uma vez.' },
+  { label: 'Categorização automática', premium: 'Crie regras para organizar lançamentos.' },
+  { label: 'Busca global', premium: 'Pesquise em todo o histórico com filtros.' },
 ];
 
 /** Preços propostos — validar antes do lançamento (docs/ROADMAP_MONETIZACAO.txt, secao 1). */

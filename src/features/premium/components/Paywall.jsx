@@ -35,7 +35,7 @@ export default function Paywall({ context, onClose }) {
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold-50 text-gold-700"><Sparkles size={19} /></span>
           <div><p className="font-semibold text-ink-900 dark:text-ink-50">{title}</p><p className="mt-1 text-sm text-ink-500">{description}</p></div>
         </div>
-        <div className="mb-4 rounded-card bg-ink-50/60 p-3 dark:bg-ink-900/60"><PlanComparisonTable currentPlan="free" /></div>
+        <div className="mb-4 rounded-card bg-ink-50/60 p-3 dark:bg-ink-900/60"><PlanComparisonTable /></div>
         <div className="mb-4 text-center">
           <p className="text-xs text-ink-300">Pagamento único</p>
           <p className="mt-1 font-display text-3xl font-semibold text-ink-900 dark:text-ink-50">{formatBRL(PRICING.proLifetime)}</p>
