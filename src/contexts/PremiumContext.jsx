@@ -4,7 +4,6 @@ import { checkGate, getLimit } from '../config/premium.js';
 import {
   ensureSubscriptionDoc,
   getSubscriptionDoc,
-  startTrial as startTrialDoc,
 } from '../features/premium/services/subscriptionService.js';
 import { toSubscriptionState } from '../features/premium/utils/subscriptionState.js';
 import {
@@ -13,6 +12,9 @@ import {
 } from '../features/premium/services/subscriptionCache.js';
 import { track, EVENTS } from '../utils/analytics.js';
 import { lazyWithRetry } from '../utils/lazyWithRetry.js';
+import { GOOGLE_PLAY_PRODUCTS } from '../config/premium.js';
+import { createPlayBillingService } from '../features/premium/services/playBilling.js';
+import { createNativePlayBillingAdapter } from '../features/premium/services/nativePlayBilling.js';
 
 const PremiumContext = createContext(null);
 const Paywall = lazyWithRetry(() => import('../features/premium/components/Paywall.jsx'));
@@ -29,13 +31,14 @@ const FREE_STATE = toSubscriptionState(null);
  * pop a paywall on their own.
  */
 export function PremiumProvider({ children }) {
-  const { user, isLocalSession } = useAuth();
+  const { user, firebaseUser, isLocalSession } = useAuth();
   const uid = user?.uid;
 
   const [state, setState] = useState(FREE_STATE);
   const [loading, setLoading] = useState(true);
   const [paywall, setPaywall] = useState(null); // { feature, reason, limit } | null
   const prevStatusRef = useRef(FREE_STATE.status);
+  const automaticRestoreUidRef = useRef(null);
 
   // Único ponto de saída pro estado — assim "trial acabou" é detectado não
   // importa se a mudança veio do cache, da rede ou de um refresh manual.
@@ -94,17 +97,22 @@ export function PremiumProvider({ children }) {
     return next;
   }, [uid, isLocalSession, applyState]);
 
-  // Teste Premium (Fase 7): 14 dias, uma única vez por uid — a regra em
-  // firestore.rules garante o "uma vez" no servidor (o client não consegue
-  // repetir a transição), então basta pedir consentimento explícito aqui e
-  // deixar a escrita seguir o caminho normal do Firestore.
-  const startTrial = useCallback(async () => {
-    if (!uid || isLocalSession) return;
-    const doc = await startTrialDoc(uid);
-    applyState(toSubscriptionState(doc));
-    writeSubscriptionCache(uid, doc);
-    track(EVENTS.TRIAL_STARTED);
-  }, [uid, isLocalSession, applyState]);
+  useEffect(() => {
+    if (!firebaseUser?.uid || isLocalSession || loading || state.hasProAccess) return;
+    if (automaticRestoreUidRef.current === firebaseUser.uid) return;
+    automaticRestoreUidRef.current = firebaseUser.uid;
+    const billing = createPlayBillingService({
+      adapter: createNativePlayBillingAdapter(),
+      getIdToken: () => firebaseUser.getIdToken(true),
+    });
+    billing.restore()
+      .then((results) => {
+        const restored = results.some((item) => item.ok && !item.pending && item.purchase.productId === GOOGLE_PLAY_PRODUCTS.PRO_LIFETIME);
+        if (restored) return refreshSubscription();
+        return null;
+      })
+      .catch(() => {});
+  }, [firebaseUser, isLocalSession, loading, refreshSubscription, state.hasProAccess]);
 
   const canUse = useCallback(
     (feature, ctx = {}) => checkGate(feature, { ...ctx, isPremium: state.isPremium }).allowed,
@@ -156,9 +164,8 @@ export function PremiumProvider({ children }) {
       guardFeature,
       openPaywall,
       refreshSubscription,
-      startTrial,
     }),
-    [state, loading, canUse, guardFeature, openPaywall, refreshSubscription, startTrial]
+    [state, loading, canUse, guardFeature, openPaywall, refreshSubscription]
   );
 
   return (

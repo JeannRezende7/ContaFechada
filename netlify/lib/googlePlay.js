@@ -22,6 +22,25 @@ export class GooglePlayApiError extends Error {
   }
 }
 
+/** Consulta uma compra unica (produto INAPP nao consumivel). */
+export async function getOneTimeProductPurchase({ packageName, productId, purchaseToken, accessToken, fetchImpl = fetch }) {
+  const url = `${BASE_URL}/${packageName}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
+  const res = await fetchImpl(url, { headers: { authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new GooglePlayApiError(res.status, await res.text());
+  return res.json();
+}
+
+/** Reconhece uma compra unica sem consumi-la, preservando o acesso vitalicio. */
+export async function acknowledgeOneTimeProductPurchase({ packageName, productId, purchaseToken, accessToken, fetchImpl = fetch }) {
+  const url = `${BASE_URL}/${packageName}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}:acknowledge`;
+  const res = await fetchImpl(url, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) throw new GooglePlayApiError(res.status, await res.text());
+}
+
 /** GET .../purchases/subscriptionsv2/tokens/{token} — o estado atual da assinatura. */
 export async function getSubscriptionPurchaseV2({ packageName, purchaseToken, accessToken, fetchImpl = fetch }) {
   const url = `${BASE_URL}/${packageName}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`;

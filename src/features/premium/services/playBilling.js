@@ -1,6 +1,6 @@
 export class PlayBillingUnavailableError extends Error {
   constructor() {
-    super('Google Play Billing não está disponível neste aparelho.');
+    super('Google Play Billing nao esta disponivel neste aparelho.');
     this.name = 'PlayBillingUnavailableError';
   }
 }
@@ -16,9 +16,10 @@ export function createPlayBillingService({ adapter, getIdToken, fetchImpl = fetc
   assertPlayBillingAdapter(adapter);
 
   async function validatePurchase(purchase) {
-    if (!purchase?.purchaseToken || !purchase?.productId) {
-      throw new TypeError('Compra sem purchaseToken ou productId.');
-    }
+    if (!purchase?.purchaseToken || !purchase?.productId) throw new TypeError('Compra sem purchaseToken ou productId.');
+    if (purchase.purchaseState === 'pending') return { pending: true };
+    if (purchase.purchaseState && purchase.purchaseState !== 'purchased') throw new Error('A compra nao foi concluida.');
+
     const token = await getIdToken();
     const response = await fetchImpl('/api/validate-android-purchase', {
       method: 'POST',
@@ -26,15 +27,16 @@ export function createPlayBillingService({ adapter, getIdToken, fetchImpl = fetc
       body: JSON.stringify({ purchaseToken: purchase.purchaseToken, productId: purchase.productId }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || 'Não foi possível validar a compra.');
-    return data.subscription;
+    if (response.status === 202 || data.pending) return { pending: true };
+    if (!response.ok) throw new Error(data.error || 'Nao foi possivel validar a compra.');
+    return data;
   }
 
   async function purchase(productId, { obfuscatedAccountId } = {}) {
     if (!(await adapter.isAvailable())) throw new PlayBillingUnavailableError();
     const purchaseResult = await adapter.purchase({ productId, obfuscatedAccountId });
-    const subscription = await validatePurchase(purchaseResult);
-    return { purchase: purchaseResult, subscription };
+    const validation = await validatePurchase(purchaseResult);
+    return { purchase: purchaseResult, validation, pending: Boolean(validation.pending) };
   }
 
   async function restore() {
@@ -43,7 +45,8 @@ export function createPlayBillingService({ adapter, getIdToken, fetchImpl = fetc
     const results = [];
     for (const item of purchases) {
       try {
-        results.push({ purchase: item, subscription: await validatePurchase(item), ok: true });
+        const validation = await validatePurchase(item);
+        results.push({ purchase: item, validation, pending: Boolean(validation.pending), ok: true });
       } catch (error) {
         results.push({ purchase: item, error: error.message, ok: false });
       }
@@ -54,20 +57,15 @@ export function createPlayBillingService({ adapter, getIdToken, fetchImpl = fetc
   return { purchase, restore, validatePurchase };
 }
 
-/** Adapter determinístico para testes e desenvolvimento sem Play Store. */
 export function createFakePlayBillingAdapter({ available = true, purchases = [] } = {}) {
   const stored = [...purchases];
   return {
-    async isAvailable() {
-      return available;
-    },
+    async isAvailable() { return available; },
     async purchase({ productId }) {
-      const item = { productId, purchaseToken: `fake-${productId}-${stored.length + 1}` };
+      const item = { productId, purchaseToken: `fake-${productId}-${stored.length + 1}`, purchaseState: 'purchased' };
       stored.push(item);
       return item;
     },
-    async restorePurchases() {
-      return [...stored];
-    },
+    async restorePurchases() { return [...stored]; },
   };
 }

@@ -34,9 +34,9 @@ export default function PrivacidadePage() {
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">1. Quais dados coletamos</h2>
             <p>
               Nome, e-mail e foto de perfil (via login com Google), e os dados financeiros que você cadastra:
-              lançamentos, categorias, recorrências, metas e as configurações do app. Se você assinar o Premium,
-              também guardamos o status da sua assinatura (plano, período pago, se veio da Google Play ou da Web) —
-              nunca dados de cartão, que ficam só com o processador de pagamento (MercadoPago) ou a Google Play.
+              lançamentos, categorias, recorrências, metas e as configurações do app. Ao usar uma conta ou comprar o
+              Pro, guardamos os dados necessários para identificar e restaurar esse direito. Nunca recebemos dados de
+              cartão, que são processados pela Google Play.
               Cada registro também pode carregar um identificador técnico do aparelho que o criou, usado para
               manter a integridade do banco local e das cópias de segurança.
             </p>
@@ -46,8 +46,8 @@ export default function PrivacidadePage() {
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">2. Onde os dados ficam</h2>
             <p>
               No aplicativo Android, os dados financeiros ficam principalmente no banco local do aparelho.
-              A autenticação usa Firebase Authentication (Google). Para assinantes Premium, uma cópia periódica
-              de segurança é armazenada no Cloud Firestore e vinculada exclusivamente à conta do titular.
+              A autenticação opcional usa Firebase Authentication (Google). O backup em nuvem não faz parte da
+              versão atual. O usuário pode exportar manualmente um arquivo de backup pelo próprio aplicativo.
             </p>
           </section>
 
@@ -55,9 +55,8 @@ export default function PrivacidadePage() {
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">3. Funcionamento offline</h2>
             <p>
               O aplicativo Android funciona localmente e não depende de conexão para consultar ou editar os dados.
-              O backup Premium não é sincronização entre dispositivos: a restauração só ocorre quando você
-              solicita essa ação em Opções. Antes de limpar o aparelho, recomendamos criar um backup local ou
-              confirmar que existe uma cópia Premium recente.
+              Antes de limpar, desinstalar ou trocar o aparelho, recomendamos exportar e guardar um backup local.
+              Sem esse arquivo, dados mantidos somente no aparelho podem não ser recuperados.
             </p>
           </section>
 
@@ -89,8 +88,8 @@ export default function PrivacidadePage() {
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">6. Retenção de dados</h2>
             <p>
               Mantemos seus dados enquanto sua conta existir. Ao excluir a conta, os dados são apagados
-              permanentemente do Firestore e sua conta de autenticação é removida. Se você cancelar o Premium sem
-              excluir a conta, mantemos a cópia na nuvem por até 90 dias antes de removê-la.
+              permanentemente dos serviços vinculados e sua conta de autenticação é removida. Dados mantidos somente
+              no aparelho também podem ser apagados pelas ações locais ou pela desinstalação do aplicativo.
             </p>
           </section>
 
@@ -98,7 +97,7 @@ export default function PrivacidadePage() {
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">7. Analytics</h2>
             <p>
               Podemos usar o Firebase Analytics para entender uso agregado do app (ex: quais telas são mais
-              visitadas, taxa de conversão do plano Premium) — não usamos isso para identificar você individualmente
+              visitadas, taxa de conversão do Pro) — não usamos isso para identificar você individualmente
               fora do produto.
             </p>
           </section>

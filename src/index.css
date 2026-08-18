@@ -10,7 +10,10 @@
     font-family: 'Inter', sans-serif;
   }
   body.admob-banner-visible {
-    padding-bottom: 60px;
+    padding-bottom: var(--admob-banner-height, 0px);
+  }
+  body.admob-banner-visible nav[data-bottom-navigation] {
+    bottom: var(--admob-banner-height, 0px);
   }
   h1, h2, h3, h4 {
     font-family: 'Space Grotesk', sans-serif;

@@ -179,7 +179,8 @@ export default function OpcoesPage() {
     setLoading('importar');
     try {
       const result = await importLocalData(JSON.parse(await file.text()));
-      await confirm(`${result.imported} registro(s) importado(s). O aplicativo será recarregado.`);
+      const total = result.summary.financialTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      await confirm(`${result.imported} registro(s) importado(s) e verificados. Total financeiro conferido: ${total}. O aplicativo será recarregado.`);
       window.location.reload();
     } catch (error) {
       await confirm(`Não foi possível importar o backup: ${error.message}`);

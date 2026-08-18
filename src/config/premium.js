@@ -11,6 +11,11 @@ export const PREMIUM_ENFORCED = true;
 export const WEB_ACCESS_ENABLED = false;
 export const CLOUD_UI_ENABLED = false;
 
+/** Produto nao consumivel cadastrado na Google Play Console. */
+export const GOOGLE_PLAY_PRODUCTS = {
+  PRO_LIFETIME: 'conta_fechada_pro_lifetime',
+};
+
 export const PLAN = {
   FREE: 'free',
   PRO: 'pro',

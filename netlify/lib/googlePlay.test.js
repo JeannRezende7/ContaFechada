@@ -1,5 +1,35 @@
 import { describe, expect, it, vi } from 'vitest';
-import { GooglePlayApiError, acknowledgeSubscriptionPurchase, getSubscriptionPurchaseV2 } from './googlePlay.js';
+import {
+  GooglePlayApiError,
+  acknowledgeOneTimeProductPurchase,
+  acknowledgeSubscriptionPurchase,
+  getOneTimeProductPurchase,
+  getSubscriptionPurchaseV2,
+} from './googlePlay.js';
+
+describe('one-time product purchase', () => {
+  it('queries an INAPP purchase by product and token', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ purchaseState: 0 }) });
+    await expect(getOneTimeProductPurchase({
+      packageName: 'com.app', productId: 'pro_lifetime', purchaseToken: 'tok 1', accessToken: 'access', fetchImpl,
+    })).resolves.toEqual({ purchaseState: 0 });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/com.app/purchases/products/pro_lifetime/tokens/tok%201',
+      { headers: { authorization: 'Bearer access' } },
+    );
+  });
+
+  it('acknowledges without consuming the lifetime product', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: true });
+    await acknowledgeOneTimeProductPurchase({
+      packageName: 'com.app', productId: 'pro_lifetime', purchaseToken: 'tok', accessToken: 'access', fetchImpl,
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/com.app/purchases/products/pro_lifetime/tokens/tok:acknowledge',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+});
 
 describe('getSubscriptionPurchaseV2', () => {
   it('GETs the subscriptionsv2 endpoint with a bearer token and returns the parsed body', async () => {

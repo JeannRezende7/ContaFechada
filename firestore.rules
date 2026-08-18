@@ -57,10 +57,8 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
-    // The client may create only the complete initial free subscription and
-    // perform the exact one-time none -> trialing transition. Paid status,
-    // renewals and cancellations are written by Admin SDK code, which bypasses
-    // these rules.
+    // The client may create only the initial free state. Pro is granted only
+    // by trusted backend code after validating the Google Play purchase.
     match /users/{uid}/private/subscription {
       allow read: if isOwner(uid);
 
@@ -88,29 +86,7 @@ service cloud.firestore {
         && request.resource.data.founder == false
         && request.resource.data.createdAt == request.time;
 
-      allow update: if isOwner(uid)
-        && resource.data.subscriptionStatus == 'none'
-        && resource.data.trialStartedAt == null
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'plan',
-          'subscriptionStatus',
-          'subscriptionProvider',
-          'subscriptionId',
-          'cancelAtPeriodEnd',
-          'trialStartedAt',
-          'trialEndsAt'
-        ])
-        && request.resource.data.plan == 'premium'
-        && request.resource.data.subscriptionStatus == 'trialing'
-        && request.resource.data.subscriptionProvider == 'web'
-        && request.resource.data.subscriptionId == null
-        && request.resource.data.cancelAtPeriodEnd == false
-        && request.resource.data.currentPeriodEnd == resource.data.currentPeriodEnd
-        && request.resource.data.founder == resource.data.founder
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.trialStartedAt == request.time
-        && request.resource.data.trialEndsAt > request.time + duration.value(13, 'd')
-        && request.resource.data.trialEndsAt < request.time + duration.value(15, 'd');
+      allow update: if false;
 
       // Private deletion is performed by the authenticated backend endpoint
       // during account deletion. Allowing direct deletion would let a client

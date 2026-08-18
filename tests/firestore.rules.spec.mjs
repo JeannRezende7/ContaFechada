@@ -161,7 +161,7 @@ describe('subscription protection', () => {
     }));
   });
 
-  it('denies adding backend-only fields to the trial transition', async () => {
+  it('denies every client-side trial or Pro transition', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(
         doc(context.firestore(), 'users/user-a/private/subscription'),
@@ -177,53 +177,10 @@ describe('subscription protection', () => {
       cancelAtPeriodEnd: false,
       trialStartedAt: serverTimestamp(),
       trialEndsAt: Timestamp.fromMillis(Date.now() + 14 * 86_400_000),
-      cloudCopyDeletedAt: serverTimestamp(),
     }));
   });
 
-  it('denies a second trial transition', async () => {
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(
-        doc(context.firestore(), 'users/user-a/private/subscription'),
-        initialSubscription({
-          plan: 'premium',
-          subscriptionStatus: 'trialing',
-          subscriptionProvider: 'web',
-          trialStartedAt: Timestamp.now(),
-          trialEndsAt: Timestamp.fromMillis(Date.now() + 14 * 86_400_000),
-          createdAt: Timestamp.now(),
-        })
-      );
-    });
-    const db = testEnv.authenticatedContext('user-a').firestore();
-    await assertFails(updateDoc(doc(db, 'users/user-a/private/subscription'), {
-      trialStartedAt: serverTimestamp(),
-      trialEndsAt: Timestamp.fromMillis(Date.now() + 14 * 86_400_000),
-    }));
-  });
-
-  it('allows the exact one-time trial transition', async () => {
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(
-        doc(context.firestore(), 'users/user-a/private/subscription'),
-        initialSubscription({ createdAt: Timestamp.now() })
-      );
-    });
-
-    const db = testEnv.authenticatedContext('user-a').firestore();
-    const ref = doc(db, 'users/user-a/private/subscription');
-    await assertSucceeds(updateDoc(ref, {
-      plan: 'premium',
-      subscriptionStatus: 'trialing',
-      subscriptionProvider: 'web',
-      subscriptionId: null,
-      cancelAtPeriodEnd: false,
-      trialStartedAt: serverTimestamp(),
-      trialEndsAt: Timestamp.fromMillis(Date.now() + 14 * 86_400_000),
-    }));
-  });
-
-  it('denies deleting the subscription to repeat a trial', async () => {
+  it('denies deleting the subscription document', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(
         doc(context.firestore(), 'users/user-a/private/subscription'),

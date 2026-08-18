@@ -1,4 +1,5 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { createHash } from 'node:crypto';
 import { getAdminDb } from './firebaseAdmin.js';
 
 /**
@@ -110,6 +111,51 @@ export async function applyGooglePlaySubscription(uid, subscriptionPurchase, { a
     patch: { ...patch, updatedAt: undefined },
   });
 
+  return patch;
+}
+
+/** Concede Pro vitalicio e impede que um token seja associado a dois usuarios. */
+export async function applyGooglePlayLifetimePurchase(uid, purchase, { purchaseToken, productId, actor = 'google_play_validation' } = {}) {
+  if (purchase.purchaseState !== 0) throw new Error('Compra ainda nao esta concluida.');
+  if (!purchaseToken || !productId) throw new TypeError('purchaseToken e productId sao obrigatorios.');
+
+  const db = getAdminDb();
+  const tokenHash = createHash('sha256').update(purchaseToken).digest('hex');
+  const ownershipRef = db.doc(`google_play_purchases/${tokenHash}`);
+  const subscriptionRef = db.doc(`users/${uid}/private/subscription`);
+  const patch = {
+    plan: 'pro',
+    proLifetime: true,
+    subscriptionStatus: 'none',
+    subscriptionProvider: 'google_play',
+    subscriptionId: null,
+    googlePlayPurchaseTokenHash: tokenHash,
+    googlePlayProductId: productId,
+    googlePlayOrderId: purchase.orderId ?? null,
+    currentPeriodEnd: null,
+    cancelAtPeriodEnd: false,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  await db.runTransaction(async (transaction) => {
+    const owner = await transaction.get(ownershipRef);
+    if (owner.exists && owner.data().uid !== uid) throw new Error('Compra ja vinculada a outra conta.');
+    transaction.set(ownershipRef, {
+      uid,
+      productId,
+      orderId: purchase.orderId ?? null,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    transaction.set(subscriptionRef, patch, { merge: true });
+  });
+
+  await logSubscriptionChange(uid, {
+    actor,
+    source: 'google_play_one_time',
+    productId,
+    orderId: purchase.orderId ?? null,
+    patch: { ...patch, updatedAt: undefined },
+  });
   return patch;
 }
 

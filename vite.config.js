@@ -12,11 +12,12 @@ const { version } = JSON.parse(readFileSync(new URL('./package.json', import.met
 export default defineConfig(({ mode }) => ({
   define: {
     __APP_VERSION__: JSON.stringify(version),
-    __NATIVE_ANDROID_BUILD__: JSON.stringify(mode === 'android'),
+    __NATIVE_ANDROID_BUILD__: JSON.stringify(mode.startsWith('android')),
+    __ADMOB_TESTING__: JSON.stringify(mode === 'android-test'),
   },
   plugins: [
     react(),
-    mode !== 'android' && {
+    !mode.startsWith('android') && {
       name: 'publish-android-download',
       closeBundle() {
         const apk = new URL('./downloads/conta-fechada.apk', import.meta.url);
@@ -35,7 +36,7 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true,
       },
       manifest: {
-        name: 'Conta Fechada',
+        name: 'Conta Fechada: Gestor Pessoal',
         short_name: 'Conta Fechada',
         description: 'Sua planilha financeira mensal, mês a mês',
         lang: 'pt-BR',

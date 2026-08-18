@@ -4,6 +4,7 @@ import { createCapacitorSqliteDriver } from './drivers/capacitorSqliteDriver.js'
 import { migrations } from './migrations/index.js';
 import { runMigrations } from './migrationRunner.js';
 import { getDeviceId } from '../utils/deviceId.js';
+import { assertBackupEquivalent, summarizeBackup } from './backup/backupIntegrity.js';
 
 let driverPromise;
 let sqliteConnection;
@@ -71,8 +72,7 @@ export async function recreateLocalDatabase() {
   return getLocalDatabase();
 }
 
-export async function exportLocalData() {
-  const driver = await getLocalDatabase();
+async function readLocalSnapshot(driver) {
   const rows = await driver.all(
     'SELECT dominio,id,dados,created_at,updated_at,deleted_at,device_id,local_version FROM local_documents ORDER BY dominio,id'
   );
@@ -89,6 +89,10 @@ export async function exportLocalData() {
     });
     return result;
   }, {});
+}
+
+export async function exportLocalData() {
+  return readLocalSnapshot(await getLocalDatabase());
 }
 
 export async function clearLocalData() {
@@ -118,6 +122,7 @@ export async function importLocalData(snapshot) {
     }
   }
   if (entries.length > 100_000) throw new TypeError('Backup excede o limite de 100.000 registros.');
+  const expectedSummary = summarizeBackup(snapshot);
 
   const driver = await getLocalDatabase();
   const previous = await exportLocalData();
@@ -155,8 +160,9 @@ export async function importLocalData(snapshot) {
         ]
       );
     }
+    assertBackupEquivalent(snapshot, await readLocalSnapshot(tx));
   });
-  return { imported: entries.length, recoveryKey };
+  return { imported: entries.length, recoveryKey, summary: expectedSummary };
 }
 
 export async function getLatestRecoverySnapshot() {

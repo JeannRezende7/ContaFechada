@@ -1,6 +1,6 @@
 {
   "appId": "com.contafechada.app",
-  "appName": "Conta Fechada",
+  "appName": "Conta Fechada: Gestor Pessoal",
   "webDir": "dist",
   "plugins": {
     "LocalNotifications": {

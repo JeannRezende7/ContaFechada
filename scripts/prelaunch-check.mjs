@@ -19,17 +19,20 @@ const commands = [
   ['npm', ['run', 'build']],
   ['npm', ['run', 'build:android']],
   ['npm', ['run', 'audit:android-bundle']],
-  ['npx', ['cap', 'sync', 'android']],
+  ['npm', ['exec', '--', 'cap', 'sync', 'android']],
   ['npm', ['run', 'build']],
 ];
 
 for (const [command, args, extraEnv] of commands) {
   console.log(`\n> ${command} ${args.join(' ')}`);
-  const executable = process.platform === 'win32' ? `${command}.cmd` : command;
-  const result = spawnSync(executable, args, {
+  const npmCli = process.env.npm_execpath;
+  const executable = command === 'npm' && npmCli ? process.execPath : command;
+  const executableArgs = command === 'npm' && npmCli ? [npmCli, ...args] : args;
+  const result = spawnSync(executable, executableArgs, {
     stdio: 'inherit',
     env: { ...process.env, ...extraEnv },
   });
+  if (result.error) console.error(`Falha ao iniciar ${command}:`, result.error);
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 

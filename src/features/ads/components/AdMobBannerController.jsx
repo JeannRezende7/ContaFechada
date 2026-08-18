@@ -1,34 +1,47 @@
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
-import {
-  AdMob,
-  BannerAdPosition,
-  BannerAdSize,
-} from '@capacitor-community/admob';
+import { AdMob, BannerAdPosition, BannerAdSize, BannerAdPluginEvents } from '@capacitor-community/admob';
 import { useLocation } from 'react-router-dom';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
+import { getAdMobRuntimeConfig } from '../../../config/ads.js';
+import { applyBannerLayout } from '../utils/adLayout.js';
 
-const BANNER_ID = 'ca-app-pub-2348078870364679/7287883480';
 const AD_ROUTES = new Set(['/', '/resumo']);
 let initialized = false;
+let sizeListener;
+let consentPromise;
+
+function clearBannerSpace() {
+  applyBannerLayout(0);
+}
+
+async function ensureInitialized() {
+  if (initialized) return;
+  await AdMob.initialize();
+  sizeListener = await AdMob.addListener(BannerAdPluginEvents.SizeChanged, ({ height }) => {
+    applyBannerLayout(height);
+  });
+  initialized = true;
+}
 
 async function showBanner() {
-  if (!initialized) {
-    await AdMob.initialize();
-    initialized = true;
-  }
-  let consent = await AdMob.requestConsentInfo();
-  if (!consent.canRequestAds && consent.isConsentFormAvailable) {
-    consent = await AdMob.showConsentForm();
-  }
-  if (!consent.canRequestAds) return;
+  await ensureInitialized();
+  consentPromise ??= (async () => {
+    let current = await AdMob.requestConsentInfo();
+    if (!current.canRequestAds && current.isConsentFormAvailable) current = await AdMob.showConsentForm();
+    return current;
+  })();
+  const consent = await consentPromise;
+  if (!consent.canRequestAds) return false;
+  const config = getAdMobRuntimeConfig();
   await AdMob.showBanner({
-    adId: BANNER_ID,
+    adId: config.bannerId,
     adSize: BannerAdSize.ADAPTIVE_BANNER,
     position: BannerAdPosition.BOTTOM_CENTER,
     margin: 0,
-    isTesting: false,
+    isTesting: config.isTesting,
   });
+  return true;
 }
 
 export default function AdMobBannerController() {
@@ -37,21 +50,32 @@ export default function AdMobBannerController() {
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return undefined;
+    let active = true;
     const shouldShow = !loading && !hasProAccess && AD_ROUTES.has(pathname);
 
     if (shouldShow) {
-      document.body.classList.add('admob-banner-visible');
-      showBanner().catch((error) => console.error('Falha ao mostrar anúncio de teste.', error));
+      showBanner().then((shown) => {
+        if (!active && shown) AdMob.removeBanner().catch(() => {});
+      }).catch((error) => console.error('Falha ao mostrar anuncio.', error));
     } else {
-      document.body.classList.remove('admob-banner-visible');
+      clearBannerSpace();
       AdMob.removeBanner().catch(() => {});
     }
 
     return () => {
-      document.body.classList.remove('admob-banner-visible');
+      active = false;
+      clearBannerSpace();
       AdMob.removeBanner().catch(() => {});
     };
   }, [hasProAccess, loading, pathname]);
 
   return null;
+}
+
+export async function disposeAdMobForTests() {
+  await sizeListener?.remove();
+  sizeListener = undefined;
+  initialized = false;
+  consentPromise = undefined;
+  clearBannerSpace();
 }

@@ -1,39 +1,18 @@
 import { GoogleAuth } from 'google-auth-library';
+import { GOOGLE_PLAY_PRODUCTS } from '../../src/config/premium.js';
 import { verifyIdToken } from '../lib/firebaseAdmin.js';
-import { applyGooglePlaySubscription } from '../lib/subscriptionWriter.js';
-import { acknowledgeSubscriptionPurchase, getSubscriptionPurchaseV2 } from '../lib/googlePlay.js';
+import { applyGooglePlayLifetimePurchase } from '../lib/subscriptionWriter.js';
+import { acknowledgeOneTimeProductPurchase, getOneTimeProductPurchase } from '../lib/googlePlay.js';
 
-/**
- * Valida uma compra do Google Play Billing direto na Google Play Developer
- * API antes de conceder Premium (docs/ROADMAP_MONETIZACAO.txt, Fase 9: "Validar
- * compra no backend" — nunca confiar só no que o SDK do cliente reporta,
- * que pode ser adulterado num APK modificado).
- *
- * Chamada pelo app depois que o Google Play Billing (client-side, ainda não
- * integrado — ver o item "PENDENTE" na Fase 9 do roadmap) devolve um
- * purchaseToken.
- *
- * Env vars necessárias:
- *   GOOGLE_PLAY_SERVICE_ACCOUNT — JSON de uma service account do Google
- *     Cloud com acesso concedido no Play Console (Configurações > Acesso à
- *     API). Pode ser uma conta dedicada ou a mesma do Firebase, desde que
- *     also esteja vinculada no Play Console.
- *   ANDROID_PACKAGE_NAME — ex: com.contafechada.app (mesmo appId do
- *     capacitor.config.json).
- *
- * NÃO TESTADO — exige uma compra real de teste na Play Console (faixa
- * interna) pra confirmar o formato da resposta. O *acknowledgement* da
- * compra (`../lib/googlePlay.js`) já está implementado e é chamado logo
- * abaixo, usando `productId` como o `subscriptionId` que a API pede.
- */
+/** Valida no servidor uma compra unica antes de conceder o Pro vitalicio. */
 export default async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
   let user;
   try {
     user = await verifyIdToken(req.headers.get('authorization'));
-  } catch (err) {
-    console.error('validate-android-purchase: token inválido', err);
+  } catch (error) {
+    console.error('validate-android-purchase: token invalido', error);
     return json({ error: 'unauthorized' }, 401);
   }
 
@@ -45,13 +24,12 @@ export default async (req) => {
   }
 
   const { purchaseToken, productId } = body;
-  if (!purchaseToken || !productId) return json({ error: 'purchaseToken e productId são obrigatórios' }, 400);
+  if (!purchaseToken || !productId) return json({ error: 'purchaseToken e productId sao obrigatorios' }, 400);
+  if (productId !== GOOGLE_PLAY_PRODUCTS.PRO_LIFETIME) return json({ error: 'produto invalido' }, 400);
 
   const packageName = process.env.ANDROID_PACKAGE_NAME;
   const serviceAccountRaw = process.env.GOOGLE_PLAY_SERVICE_ACCOUNT;
-  if (!packageName || !serviceAccountRaw) {
-    return json({ error: 'GOOGLE_PLAY_SERVICE_ACCOUNT/ANDROID_PACKAGE_NAME não configuradas no servidor' }, 500);
-  }
+  if (!packageName || !serviceAccountRaw) return json({ error: 'Google Play nao configurado no servidor' }, 500);
 
   try {
     const auth = new GoogleAuth({
@@ -60,23 +38,18 @@ export default async (req) => {
     });
     const client = await auth.getClient();
     const { token: accessToken } = await client.getAccessToken();
+    const purchase = await getOneTimeProductPurchase({ packageName, productId, purchaseToken, accessToken });
 
-    const subscriptionPurchase = await getSubscriptionPurchaseV2({ packageName, purchaseToken, accessToken });
-    const patch = await applyGooglePlaySubscription(user.uid, { ...subscriptionPurchase, purchaseToken });
+    if (purchase.purchaseState === 2) return json({ ok: false, pending: true }, 202);
+    if (purchase.purchaseState !== 0) return json({ error: 'compra nao concluida' }, 409);
 
-    // Obrigatório em até 3 dias pela Play Billing Library, senão o Google
-    // reembolsa a compra sozinho — best-effort: se falhar, a assinatura já
-    // foi concedida (patch acima), então não derruba a resposta pro
-    // cliente; só fica registrado pra investigação manual.
-    try {
-      await acknowledgeSubscriptionPurchase({ packageName, subscriptionId: productId, purchaseToken, accessToken });
-    } catch (ackErr) {
-      console.error('validate-android-purchase: falha ao confirmar (acknowledge) a compra', ackErr);
+    const subscription = await applyGooglePlayLifetimePurchase(user.uid, purchase, { purchaseToken, productId });
+    if (purchase.acknowledgementState !== 1) {
+      await acknowledgeOneTimeProductPurchase({ packageName, productId, purchaseToken, accessToken });
     }
-
-    return json({ ok: true, subscription: patch });
-  } catch (err) {
-    console.error('validate-android-purchase: falha ao validar', err);
+    return json({ ok: true, subscription });
+  } catch (error) {
+    console.error('validate-android-purchase: falha ao validar', error);
     return json({ error: 'falha ao validar compra' }, 502);
   }
 };

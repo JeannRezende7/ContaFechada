@@ -5,8 +5,8 @@ import BrandIcon from '../../../components/ui/BrandIcon.jsx';
 /**
  * RASCUNHO (docs/ROADMAP_MONETIZACAO.txt, Fase 11: "Publicar Termos de Uso e
  * Politica de Privacidade") — escrito a partir do que o app efetivamente faz
- * hoje (login Google, dados financeiros no Firestore, plano Gratuito/Premium
- * com MercadoPago). NÃO é aconselhamento jurídico: precisa de revisão de um
+ * hoje (uso local, login Google opcional, anúncios e Pro vitalício). NÃO é
+ * aconselhamento jurídico: precisa de revisão de um
  * advogado antes do lançamento público, especialmente as cláusulas de
  * cobrança e cancelamento assim que o checkout real (Fase 8/9) entrar no ar.
  */
@@ -42,29 +42,26 @@ export default function TermosPage() {
           <section>
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">2. Conta e acesso</h2>
             <p>
-              O acesso é feito por login com sua conta Google. Você é responsável por manter o acesso à sua conta
-              Google seguro — é por ela que autenticamos você.
+              O Android pode ser usado localmente sem conta. O login Google é necessário para comprar ou restaurar
+              o Pro e para recursos que dependam de identificação. Você é responsável por proteger essa conta.
             </p>
           </section>
 
           <section>
-            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">3. Plano Gratuito e Plano Premium</h2>
+            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">3. Gratuito e Pro vitalício</h2>
             <p>
-              O Conta Fechada oferece um plano Gratuito, com limites descritos dentro do app (em Meu Plano), e um
-              plano Premium pago, mensal ou anual, que remove esses limites. Perder o Premium — por cancelamento ou
-              fim do período pago — nunca apaga seus dados: você continua podendo consultar e editar tudo que estiver
-              dentro dos limites do plano Gratuito, e os dados acima do limite ficam preservados, só bloqueados para
-              novas criações.
+              O modo Gratuito mantém os recursos locais essenciais e pode exibir anúncios. O Pro é uma compra única
+              que remove anúncios e libera os diferenciais indicados em Meu Plano. A compra não inclui serviços
+              futuros vendidos separadamente, como eventual backup em nuvem.
             </p>
           </section>
 
           <section>
-            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">4. Cobrança e cancelamento</h2>
+            <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">4. Compra e restauração</h2>
             <p>
-              A assinatura Premium renova automaticamente até ser cancelada. Você pode cancelar a qualquer momento em
-              Meu Plano (Web) ou pela Google Play (Android) — o acesso Premium continua até o fim do período já
-              pago, sem reembolso proporcional do período em curso, salvo quando exigido por lei. Um teste grátis de
-              14 dias pode ser oferecido uma única vez por conta, sem necessidade de cartão de crédito.
+              O Pro não possui renovação automática. A compra é processada pela Google Play e pode ser restaurada
+              usando a conta Google Play que a realizou, junto da conta usada no Conta Fechada. Reembolsos seguem as
+              regras da Google Play e a legislação aplicável.
             </p>
           </section>
 

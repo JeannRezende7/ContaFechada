@@ -6,7 +6,7 @@ import {
 } from './playBilling.js';
 
 function response(ok, data) {
-  return { ok, json: () => Promise.resolve(data) };
+  return { ok, status: ok ? 200 : 400, json: () => Promise.resolve(data) };
 }
 
 describe('Play Billing abstraction', () => {
@@ -17,8 +17,8 @@ describe('Play Billing abstraction', () => {
       getIdToken: vi.fn().mockResolvedValue('firebase-token'),
       fetchImpl,
     });
-    const result = await service.purchase('premium_anual', { obfuscatedAccountId: 'account-hash' });
-    expect(result.subscription.status).toBe('active');
+    const result = await service.purchase('conta_fechada_pro_lifetime', { obfuscatedAccountId: 'account-hash' });
+    expect(result.validation.subscription.status).toBe('active');
     expect(fetchImpl).toHaveBeenCalledWith('/api/validate-android-purchase', expect.objectContaining({
       method: 'POST',
       headers: expect.objectContaining({ authorization: 'Bearer firebase-token' }),
