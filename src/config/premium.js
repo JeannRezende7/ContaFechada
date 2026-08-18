@@ -102,12 +102,12 @@ export const PLAN_DETAILS = {
 /** Diferenciais exibidos em "Meu Plano" e no paywall. */
 export const PLAN_COMPARISON = [
   { label: 'Sem anúncios', premium: 'Use o aplicativo sem interrupções.' },
-  { label: 'Importação assistida', premium: 'Importe por print, CSV e OFX.' },
-  { label: 'Relatórios avançados', premium: 'Compare meses e acompanhe sua evolução.' },
-  { label: 'Insights e projeções', premium: 'Receba análises financeiras mais completas.' },
-  { label: 'Ações em massa', premium: 'Edite ou exclua vários lançamentos de uma vez.' },
-  { label: 'Categorização automática', premium: 'Crie regras para organizar lançamentos.' },
-  { label: 'Busca global', premium: 'Pesquise em todo o histórico com filtros.' },
+  { feature: FEATURES.IMPORTACAO_EXTRATO, label: 'Importação assistida', premium: 'Importe por print, CSV e OFX.' },
+  { feature: FEATURES.RELATORIOS_AVANCADOS, label: 'Relatórios avançados', premium: 'Compare meses e acompanhe sua evolução.' },
+  { feature: FEATURES.INSIGHTS_AVANCADOS, label: 'Insights e projeções', premium: 'Receba análises financeiras mais completas.' },
+  { feature: FEATURES.ACOES_EM_MASSA, label: 'Ações em massa', premium: 'Edite ou exclua vários lançamentos de uma vez.' },
+  { feature: FEATURES.REGRAS_CATEGORIZACAO, label: 'Categorização automática', premium: 'Crie regras para organizar lançamentos.' },
+  { feature: FEATURES.BUSCA_GLOBAL, label: 'Busca global', premium: 'Pesquise em todo o histórico com filtros.' },
 ];
 
 /** Preços propostos — validar antes do lançamento (docs/ROADMAP_MONETIZACAO.txt, secao 1). */
