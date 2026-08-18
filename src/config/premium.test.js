@@ -31,13 +31,19 @@ const PREMIUM_FEATURES = [
 ];
 
 describe('PREMIUM_ENFORCED default', () => {
-  it('stays off until billing is ready', () => {
-    expect(PREMIUM_ENFORCED).toBe(false);
+  it('enforces the Pro catalog', () => {
+    expect(PREMIUM_ENFORCED).toBe(true);
   });
 
-  it('allows every feature while enforcement is off', () => {
-    for (const feature of Object.values(FEATURES)) {
+  it('keeps the free core available and blocks Pro features by default', () => {
+    for (const feature of CORE_FREE_FEATURES) {
       expect(checkGate(feature, { isPremium: false, count: 999 })).toEqual({ allowed: true });
+    }
+    for (const feature of PREMIUM_FEATURES) {
+      expect(checkGate(feature, { isPremium: false })).toEqual({
+        allowed: false,
+        reason: 'premium_required',
+      });
     }
   });
 });

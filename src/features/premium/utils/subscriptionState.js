@@ -51,6 +51,8 @@ export function toSubscriptionState(doc, nowMs = Date.now()) {
       plan: PLAN.FREE,
       status: 'none',
       isPremium: false,
+      hasProAccess: false,
+      hasCloudAccess: false,
       isTrialing: false,
       trialDaysLeft: null,
       currentPeriodEnd: null,
@@ -61,7 +63,12 @@ export function toSubscriptionState(doc, nowMs = Date.now()) {
   }
 
   const effectiveStatus = deriveEffectiveStatus(doc, nowMs);
-  const isPremium = doc.plan === PLAN.PREMIUM && GRANTS_ACCESS.has(effectiveStatus);
+  const legacyPremium = doc.plan === PLAN.PREMIUM && GRANTS_ACCESS.has(effectiveStatus);
+  const hasCloudAccess = legacyPremium || (
+    doc.plan === PLAN.CLOUD && GRANTS_ACCESS.has(effectiveStatus)
+  );
+  const hasProAccess = Boolean(doc.proLifetime) || doc.plan === PLAN.PRO || hasCloudAccess;
+  const isPremium = hasProAccess;
   const isTrialing = effectiveStatus === 'trialing';
 
   let trialDaysLeft = null;
@@ -74,6 +81,8 @@ export function toSubscriptionState(doc, nowMs = Date.now()) {
     plan: doc.plan ?? PLAN.FREE,
     status: effectiveStatus,
     isPremium,
+    hasProAccess,
+    hasCloudAccess,
     isTrialing,
     trialDaysLeft,
     currentPeriodEnd: toMillis(doc.currentPeriodEnd),

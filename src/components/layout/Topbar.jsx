@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Menu, Search, Settings, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext.jsx';
 import { usePrivacy } from '../../contexts/PrivacyContext.jsx';
-import ConnectionStatus from '../ui/ConnectionStatus.jsx';
 import { useMobileMenu } from '../../contexts/MobileMenuContext.jsx';
 
 export default function Topbar({ title, icon: Icon }) {
@@ -27,7 +26,6 @@ export default function Topbar({ title, icon: Icon }) {
         </h1>
       </div>
       <div className="flex items-center gap-3 md:gap-4">
-        <ConnectionStatus />
         <Link to="/buscar" aria-label="Busca global" className="flex items-center text-ink-300 hover:text-ledger-600">
           <Search size={18} />
         </Link>

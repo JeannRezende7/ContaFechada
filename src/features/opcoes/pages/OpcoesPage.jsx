@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogIn, LogOut, MonitorDown, Cloud, RotateCcw } from 'lucide-react';
+import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, ShieldCheck, HardDrive, LogIn, LogOut, MonitorDown, Cloud, RotateCcw, TriangleAlert } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -20,11 +20,12 @@ import {
   restoreLatestRecoverySnapshot,
 } from '../../../db/localDatabase.js';
 import { createCloudBackup, getLastCloudBackupAt, restoreCloudBackup } from '../../../db/backup/cloudBackup.js';
+import { CLOUD_UI_ENABLED } from '../../../config/premium.js';
 
 export default function OpcoesPage() {
   const { user, isLocalSession, endLocalMode } = useAuth();
   const confirm = useConfirm();
-  const { isPremium } = usePremium();
+  const { isPremium, hasCloudAccess } = usePremium();
   const [loading, setLoading] = useState(null);
   const [activeTab, setActiveTab] = useState('geral');
   const [gestorUsaMovimento, setGestorUsaMovimentoState] = useState(true);
@@ -58,9 +59,9 @@ export default function OpcoesPage() {
   useEffect(() => subscribeToPwaInstall(setInstallState), []);
 
   useEffect(() => {
-    if (!isPremium || !user?.uid || !isNativeLocalDatabaseAvailable()) return;
+    if (!CLOUD_UI_ENABLED || !hasCloudAccess || !user?.uid || !isNativeLocalDatabaseAvailable()) return;
     getLastCloudBackupAt(user.uid).then(setLastCloudBackupAt).catch(() => {});
-  }, [isPremium, user?.uid]);
+  }, [hasCloudAccess, user?.uid]);
 
   async function handleInstallApp() {
     const result = await requestPwaInstall();
@@ -152,7 +153,7 @@ export default function OpcoesPage() {
     }
     const confirmado = await confirm(
       'Apagar os dados financeiros deste dispositivo? Eles não serão restaurados automaticamente. ' +
-        'Faça um backup local ou Premium antes de continuar. O app será desconectado e recarregado.'
+        'Faça um backup local antes de continuar. O app será desconectado e recarregado.'
     );
     if (!confirmado) return;
 
@@ -267,18 +268,44 @@ export default function OpcoesPage() {
           </button>
         </section>
 
-        <div className="grid grid-cols-3 gap-1 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
+        <div className="grid grid-cols-2 gap-1 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
           <button type="button" onClick={() => setActiveTab('geral')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'geral' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Geral</button>
           <button type="button" onClick={() => setActiveTab('avancado')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'avancado' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Avançado</button>
-          <button type="button" onClick={() => setActiveTab('backup')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'backup' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Backup</button>
         </div>
 
-        {activeTab === 'backup' && isNativeLocalDatabaseAvailable() && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        {activeTab === 'geral' && <Link
+          to="/opcoes/meu-plano"
+          onClick={() => !isPremium && track(EVENTS.PREMIUM_CARD_CLICKED, { placement: 'opcoes' })}
+          className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 hover:shadow-card-hover hover:-translate-y-px transition-all"
+        >
+          <div className="min-w-0 flex items-center gap-3">
+            <span className="w-8 h-8 rounded-full bg-gold-50 text-gold-700 flex items-center justify-center shrink-0">
+              <Crown size={15} strokeWidth={1.75} />
+            </span>
+            <div>
+              <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Meu Plano</p>
+              <p className="text-xs text-ink-300 mt-0.5">
+                {isPremium ? 'Pro ativo · acesso permanente' : 'Remova anúncios e desbloqueie todas as funções'}
+              </p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-ink-300 shrink-0" strokeWidth={2} />
+        </Link>}
+
+        {activeTab === 'geral' && isNativeLocalDatabaseAvailable() && <div className="flex items-start gap-3 rounded-card border border-gold-200 bg-gold-50 p-4 text-gold-900 dark:border-gold-700 dark:bg-ink-700 dark:text-gold-100">
+          <TriangleAlert size={18} className="mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-medium">Vai trocar de aparelho?</p>
+            <p className="mt-0.5 text-xs leading-relaxed">Faça um backup antes da troca. Sem o arquivo de backup, os dados que existem somente neste aparelho não poderão ser recuperados.</p>
+          </div>
+        </div>}
+
+        {activeTab === 'geral' && isNativeLocalDatabaseAvailable() && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div><p className="text-sm font-medium">Fazer backup local</p><p className="mt-0.5 text-xs text-ink-300">Salva todos os dados em um arquivo JSON neste aparelho.</p></div>
           <button type="button" onClick={handleExportarDados} disabled={loading === 'exportar'} className="shrink-0 rounded-pill bg-ink-50 px-3.5 py-2 text-sm font-medium dark:bg-ink-900"><Download size={15} className="inline mr-1" />{loading === 'exportar' ? 'Salvando…' : 'Fazer backup'}</button>
         </div>}
 
-        {activeTab === 'backup' && isNativeLocalDatabaseAvailable() && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
+        {activeTab === 'geral' && isNativeLocalDatabaseAvailable() && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Restaurar backup local</p>
             <p className="text-xs text-ink-300 mt-0.5">Substitui os dados deste aparelho por um JSON exportado pelo Conta Fechada.</p>
@@ -289,12 +316,12 @@ export default function OpcoesPage() {
           </button>
         </div>}
 
-        {activeTab === 'backup' && isPremium && !isLocalSession && isNativeLocalDatabaseAvailable() && <div className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
+        {activeTab === 'geral' && CLOUD_UI_ENABLED && hasCloudAccess && !isLocalSession && isNativeLocalDatabaseAvailable() && <div className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
           <div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ledger-50 text-ledger-600"><Cloud size={16} /></span><div><p className="text-sm font-medium">Backup em nuvem Premium</p><p className="mt-0.5 text-xs text-ink-300">Automático a cada 24 horas quando o app estiver aberto e conectado.</p><p className="mt-1 text-xs text-ink-300">{lastCloudBackupAt ? `Último backup: ${new Date(lastCloudBackupAt).toLocaleString('pt-BR')}` : 'Nenhum backup concluído neste aparelho.'}</p></div></div>
           <div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={handleCloudBackup} disabled={loading === 'cloud-backup'} className="rounded-pill bg-ledger-500 px-3 py-2 text-sm font-medium text-white disabled:opacity-50">{loading === 'cloud-backup' ? 'Salvando…' : 'Fazer agora'}</button><button type="button" onClick={handleCloudRestore} disabled={loading === 'cloud-restore'} className="rounded-pill bg-ink-50 px-3 py-2 text-sm font-medium dark:bg-ink-900 disabled:opacity-50"><RotateCcw size={14} className="inline mr-1" />{loading === 'cloud-restore' ? 'Restaurando…' : 'Restaurar nuvem'}</button></div>
         </div>}
 
-        {activeTab === 'backup' && !isPremium && <Link to="/opcoes/meu-plano" className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700"><p className="text-sm font-medium">Backup em nuvem</p><p className="mt-1 text-xs text-ink-300">Assinantes Premium recebem backup automático diário e restauração pela nuvem.</p></Link>}
+        {activeTab === 'geral' && CLOUD_UI_ENABLED && !hasCloudAccess && <Link to="/opcoes/meu-plano" className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700"><p className="text-sm font-medium">Backup em nuvem</p><p className="mt-1 text-xs text-ink-300">Backup automático diário e restauração pela nuvem.</p></Link>}
 
         {activeTab === 'avancado' && recoverySnapshot && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
           <p className="text-sm font-medium">Snapshot de recuperação</p>
@@ -307,7 +334,7 @@ export default function OpcoesPage() {
           </div>
         </div>}
 
-        {activeTab === 'geral' && <button onClick={() => window.dispatchEvent(new Event('contafechada:open-onboarding'))} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 text-left hover:shadow-card-hover">
+        {activeTab === 'avancado' && <button onClick={() => window.dispatchEvent(new Event('contafechada:open-onboarding'))} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 text-left hover:shadow-card-hover">
           <div className="flex items-start gap-3"><span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><ListRestart size={15} /></span><div><p className="text-sm font-medium">Retomar configuração inicial</p><p className="text-xs text-ink-300">Revise sua receita principal, contas fixas e categorias.</p></div></div>
           <ChevronRight size={16} className="text-ink-300" />
         </button>}
@@ -329,25 +356,6 @@ export default function OpcoesPage() {
             Instalar
           </button>
         </div>}
-        {activeTab === 'geral' && <Link
-          to="/opcoes/meu-plano"
-          onClick={() => !isPremium && track(EVENTS.PREMIUM_CARD_CLICKED, { placement: 'opcoes' })}
-          className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 hover:shadow-card-hover hover:-translate-y-px transition-all"
-        >
-          <div className="min-w-0 flex items-center gap-3">
-            <span className="w-8 h-8 rounded-full bg-gold-50 text-gold-700 flex items-center justify-center shrink-0">
-              <Crown size={15} strokeWidth={1.75} />
-            </span>
-            <div>
-              <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Meu Plano</p>
-              <p className="text-xs text-ink-300 mt-0.5">
-                {isPremium ? 'Premium ativo · gerenciar assinatura' : 'Backup em nuvem e automações com o Premium'}
-              </p>
-            </div>
-          </div>
-          <ChevronRight size={16} className="text-ink-300 shrink-0" strokeWidth={2} />
-        </Link>}
-
         <div className={`${activeTab !== 'avancado' ? 'hidden' : 'flex'} bg-white dark:bg-ink-700 rounded-card shadow-card p-4 items-center justify-between gap-3`}>
           <div className="min-w-0 flex items-start gap-3">
             <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">

@@ -14,6 +14,8 @@ describe('toSubscriptionState — no doc / fresh account', () => {
       plan: 'free',
       status: 'none',
       isPremium: false,
+      hasProAccess: false,
+      hasCloudAccess: false,
       isTrialing: false,
       trialDaysLeft: null,
       currentPeriodEnd: null,
@@ -25,12 +27,31 @@ describe('toSubscriptionState — no doc / fresh account', () => {
 });
 
 describe('toSubscriptionState — active subscription', () => {
+  it('gives a lifetime Pro purchase local access without cloud access', () => {
+    const state = toSubscriptionState(
+      { plan: 'pro', proLifetime: true, subscriptionStatus: 'none' },
+      NOW
+    );
+    expect(state.hasProAccess).toBe(true);
+    expect(state.hasCloudAccess).toBe(false);
+  });
+
+  it('gives an active cloud subscription both cloud and Pro access', () => {
+    const state = toSubscriptionState(
+      { plan: 'cloud', subscriptionStatus: 'active', currentPeriodEnd: ts(NOW + 10 * DAY) },
+      NOW
+    );
+    expect(state.hasProAccess).toBe(true);
+    expect(state.hasCloudAccess).toBe(true);
+  });
+
   it('is premium while currentPeriodEnd is in the future', () => {
     const state = toSubscriptionState(
       { plan: 'premium', subscriptionStatus: 'active', currentPeriodEnd: ts(NOW + 10 * DAY) },
       NOW
     );
     expect(state.isPremium).toBe(true);
+    expect(state.hasCloudAccess).toBe(true);
     expect(state.status).toBe('active');
   });
 

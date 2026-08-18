@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { signInWithGoogle } from '../../../firebase/auth.js';
 import GoogleButton from '../components/GoogleButton.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
-import { isNativeLocalDatabaseAvailable } from '../../../db/localDatabase.js';
+import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
+import { clearLocalData, exportLocalData, isNativeLocalDatabaseAvailable } from '../../../db/localDatabase.js';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const { startLocalMode, isLocalSession } = useAuth();
 
   async function handleSignIn() {
@@ -25,12 +27,34 @@ export default function LoginPage() {
     }
   }
 
+  async function handleStartWithoutAccount() {
+    setError(null);
+    setLoading(true);
+    try {
+      const snapshot = await exportLocalData();
+      const hasLocalData = Object.values(snapshot).some((items) => items.length > 0);
+      if (hasLocalData) {
+        const accepted = await confirm(
+          'Iniciar sem conta criará um perfil local vazio e apagará os dados desta conta neste aparelho. Faça um backup antes se quiser conservá-los. Continuar?'
+        );
+        if (!accepted) return;
+      }
+      await clearLocalData();
+      startLocalMode();
+      navigate('/');
+    } catch (err) {
+      setError(err?.message || 'Não foi possível iniciar sem conta.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div>
       <h2 className="font-display text-xl font-semibold mb-1">Vamos organizar as contas?</h2>
       <p className="text-ink-300 text-sm mb-6">
         {isLocalSession
-          ? 'Entre com sua conta Google sem perder os dados deste aparelho. Assinantes Premium também podem ativar o backup em nuvem.'
+          ? 'Entre com sua conta Google sem perder os dados deste aparelho.'
           : 'Sem senha, sem complicação — entre com sua conta Google.'}
       </p>
       <GoogleButton onClick={handleSignIn} loading={loading} />
@@ -39,10 +63,7 @@ export default function LoginPage() {
           <button
             type="button"
             disabled={loading}
-            onClick={() => {
-              startLocalMode();
-              navigate('/');
-            }}
+            onClick={handleStartWithoutAccount}
             className="mt-3 w-full rounded-xl border border-ink-100 px-4 py-3 text-sm font-medium dark:border-ink-700"
           >
             Continuar gratuitamente sem conta

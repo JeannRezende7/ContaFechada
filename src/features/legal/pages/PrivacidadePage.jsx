@@ -64,10 +64,11 @@ export default function PrivacidadePage() {
           <section>
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">4. Com quem compartilhamos</h2>
             <p>
-              Não vendemos nem compartilhamos seus dados financeiros com terceiros para fins de publicidade. Dados
-              são compartilhados apenas com os provedores necessários para o funcionamento do serviço: Google
-              Firebase (infraestrutura), e — apenas para quem assina o Premium — o processador de pagamento
-              (MercadoPago) ou a Google Play, só com o necessário para processar a cobrança.
+              Não vendemos nem compartilhamos seus dados financeiros com terceiros para fins de publicidade. O plano
+              Gratuito utiliza o Google AdMob para exibir anúncios. O SDK de anúncios pode tratar identificadores do
+              dispositivo, endereço IP, dados de diagnóstico e interações com anúncios conforme as escolhas de
+              privacidade disponíveis. Os lançamentos e demais dados financeiros cadastrados no Conta Fechada não são
+              enviados ao AdMob. Também usamos o Google Firebase para autenticação e infraestrutura.
             </p>
           </section>
 

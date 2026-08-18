@@ -3,7 +3,6 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import Sidebar from '../components/layout/Sidebar.jsx';
 import MobileDrawer from '../components/layout/MobileDrawer.jsx';
-import TrialBanner from '../features/premium/components/TrialBanner.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import OnboardingWizard from '../features/onboarding/components/OnboardingWizard.jsx';
 import { repositories } from '../repositories/index.js';
@@ -11,6 +10,7 @@ import SyncManager from '../features/sync/components/SyncManager.jsx';
 import { MobileMenuProvider } from '../contexts/MobileMenuContext.jsx';
 import { WEB_ACCESS_ENABLED } from '../config/premium.js';
 import InitialCloudRestoreGate from '../features/backup/components/InitialCloudRestoreGate.jsx';
+import AdMobBannerController from '../features/ads/components/AdMobBannerController.jsx';
 
 /** Mobile-first: bottom nav + stacked content. From md breakpoint up: sidebar layout. */
 export default function AppLayout() {
@@ -35,6 +35,7 @@ export default function AppLayout() {
     <MobileMenuProvider openMenu={() => setMobileMenuOpen(true)}>
     <div className="flex min-h-screen bg-paper text-ink-900 dark:bg-ink-900 dark:text-ink-50">
       <SyncManager />
+      <AdMobBannerController />
       <Sidebar />
       <div
         aria-hidden="true"
@@ -45,7 +46,6 @@ export default function AppLayout() {
         </span>
       </div>
       <div className="flex-1 min-w-0">
-        <TrialBanner />
         <InitialCloudRestoreGate>
           <Outlet />
           <OnboardingWizard uid={user?.uid} open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />

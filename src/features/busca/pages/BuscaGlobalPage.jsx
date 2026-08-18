@@ -58,7 +58,7 @@ export default function BuscaGlobalPage() {
         <Topbar title="Busca global" icon={Search} />
         <div className="mx-auto max-w-lg p-8 text-center">
           <p className="text-sm text-ink-500">A busca em todo o histórico e os filtros avançados fazem parte do Premium.</p>
-          <button onClick={() => openPaywall({ feature: FEATURES.BUSCA_GLOBAL })} className="mt-3 rounded-pill bg-ledger-500 px-4 py-2.5 text-sm font-medium text-white">Conhecer o Premium</button>
+          <button onClick={() => openPaywall({ feature: FEATURES.BUSCA_GLOBAL })} className="mt-3 rounded-pill bg-ledger-500 px-4 py-2.5 text-sm font-medium text-white">Conhecer o Pro</button>
         </div>
       </>
     );

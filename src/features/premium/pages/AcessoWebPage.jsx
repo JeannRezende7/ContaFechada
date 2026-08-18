@@ -20,7 +20,7 @@ export default function AcessoWebPage() {
           O acesso web não está disponível nesta versão
         </p>
         <p className="mt-2 text-sm text-ink-500">
-          Para manter seus dados seguros no lançamento inicial, o aplicativo funciona somente no celular. O Premium oferece backup diário na nuvem, sem sincronização entre dispositivos.
+          O Conta Fechada funciona diretamente no celular. Instale o aplicativo para acessar seus dados e fazer seus lançamentos.
         </p>
         <Link
           to="/opcoes/meu-plano"

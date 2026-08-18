@@ -193,7 +193,7 @@ export default function GestorFinanceiroPage() {
               </ul>
             ) : (
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm text-ink-300">Insights financeiros avançados são um recurso Premium.</p>
+                <p className="text-sm text-ink-300">Insights financeiros avançados são um recurso Pro.</p>
                 <button
                   onClick={() => openPaywall({ feature: FEATURES.INSIGHTS_AVANCADOS })}
                   className="text-sm font-medium text-ledger-600 hover:underline shrink-0"

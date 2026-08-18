@@ -4,4 +4,5 @@
     <string name="title_activity_main">Conta Fechada</string>
     <string name="package_name">com.contafechada.app</string>
     <string name="custom_url_scheme">com.contafechada.app</string>
+    <string name="admob_app_id">ca-app-pub-2348078870364679~6300592106</string>
 </resources>

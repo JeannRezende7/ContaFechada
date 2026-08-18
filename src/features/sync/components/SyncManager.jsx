@@ -10,10 +10,10 @@ const BACKUP_CHECK_INTERVAL_MS = 60 * 60 * 1000;
 /** Checks hourly, but writes a complete cloud backup at most once every 24 hours. */
 export default function SyncManager() {
   const { firebaseUser } = useAuth();
-  const { isPremium } = usePremium();
+  const { hasCloudAccess } = usePremium();
 
   useEffect(() => {
-    if (!isNativeLocalDatabaseAvailable() || !firebaseUser?.uid || !isPremium) return undefined;
+    if (!isNativeLocalDatabaseAvailable() || !firebaseUser?.uid || !hasCloudAccess) return undefined;
     let timer;
     let disposed = false;
     const checkBackup = async () => {
@@ -42,7 +42,7 @@ export default function SyncManager() {
       window.removeEventListener('online', checkBackup);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [firebaseUser?.uid, isPremium]);
+  }, [firebaseUser?.uid, hasCloudAccess]);
 
   return null;
 }

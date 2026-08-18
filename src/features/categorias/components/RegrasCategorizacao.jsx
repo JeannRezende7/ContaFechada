@@ -28,7 +28,7 @@ export default function RegrasCategorizacao({ uid, categorias }) {
     return (
       <section className="mt-10 rounded-card bg-white p-5 text-center shadow-card dark:bg-ink-700">
         <p className="text-sm font-medium">Regras automáticas fazem parte do Premium.</p>
-        <button onClick={() => openPaywall({ feature: FEATURES.REGRAS_CATEGORIZACAO })} className="mt-2 text-sm font-medium text-ledger-600 hover:underline">Conhecer o Premium</button>
+        <button onClick={() => openPaywall({ feature: FEATURES.REGRAS_CATEGORIZACAO })} className="mt-2 text-sm font-medium text-ledger-600 hover:underline">Conhecer o Pro</button>
       </section>
     );
   }

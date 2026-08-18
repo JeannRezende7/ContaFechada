@@ -9,6 +9,9 @@
   body {
     font-family: 'Inter', sans-serif;
   }
+  body.admob-banner-visible {
+    padding-bottom: 60px;
+  }
   h1, h2, h3, h4 {
     font-family: 'Space Grotesk', sans-serif;
   }

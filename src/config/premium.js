@@ -7,11 +7,15 @@
  * Only flip this once billing, restauração de compra and subscription admin
  * are tested end to end (docs/ROADMAP_MONETIZACAO.txt, objetivo).
  */
-export const PREMIUM_ENFORCED = false;
+export const PREMIUM_ENFORCED = true;
 export const WEB_ACCESS_ENABLED = false;
+export const CLOUD_UI_ENABLED = false;
 
 export const PLAN = {
   FREE: 'free',
+  PRO: 'pro',
+  CLOUD: 'cloud',
+  // Compatibilidade com assinaturas criadas antes da separação Pro/Nuvem.
   PREMIUM: 'premium',
 };
 
@@ -77,16 +81,16 @@ export const PLAN_DETAILS = {
       'Dashboard e relatórios mensais',
       'Gestor Financeiro e planejamento do valor livre',
       'Exportação CSV completa',
+      'Backup e restauração manual por arquivo',
     ],
   },
   [PLAN.PREMIUM]: {
-    label: 'Premium',
+    label: 'Pro',
     beneficios: [
-      'Backup automático diário na nuvem',
-      'Restauração segura em caso de troca ou perda do aparelho',
       'Relatórios de múltiplos períodos e comparação entre meses',
       'Projeções e insights financeiros avançados',
-      'Importação CSV/OFX e ações em massa',
+      'Importação assistida por print, CSV e OFX',
+      'Ações em massa nos lançamentos',
       'Busca global e regras automáticas de categorização',
       'Acesso antecipado a novos recursos',
     ],
@@ -101,24 +105,23 @@ export const PLAN_COMPARISON = [
   { label: 'Lançamentos manuais', free: 'Ilimitados', premium: 'Ilimitados' },
   { label: 'Categorias e recorrências', free: 'Ilimitadas', premium: 'Ilimitadas' },
   { label: 'Histórico no dispositivo', free: 'Completo', premium: 'Completo' },
-  { label: 'Backup automático na nuvem', free: 'Não incluído', premium: 'Diário' },
-  { label: 'Restauração pela nuvem', free: 'Não incluído', premium: 'Incluído' },
+  { label: 'Backup manual por arquivo', free: 'Incluído', premium: 'Incluído' },
   { label: 'Relatórios', free: 'Mensais', premium: 'Comparações e evolução' },
   { label: 'Gestor Financeiro', free: 'Indicadores completos', premium: 'Com insights e projeções' },
   { label: 'Insights e sugestões', free: 'Não incluído', premium: 'Avançados' },
   { label: 'Exportação CSV', free: 'Completa', premium: 'Completa' },
   { label: 'Planejamento do valor livre', free: 'Incluído', premium: 'Incluído' },
-  { label: 'Importação bancária', free: 'Não incluída', premium: 'CSV e OFX' },
+  { label: 'Importação assistida', free: 'Não incluída', premium: 'Print, CSV e OFX' },
+  { label: 'Ações em massa', free: 'Não incluídas', premium: 'Incluídas' },
   { label: 'Automação', free: 'Recorrências', premium: 'Regras de categoria' },
   { label: 'Busca', free: 'No Movimento', premium: 'Global com filtros avançados' },
 ];
 
 /** Preços propostos — validar antes do lançamento (docs/ROADMAP_MONETIZACAO.txt, secao 1). */
 export const PRICING = {
-  mensal: 12.9,
-  anual: 99.9,
-  fundadorAnualPrimeiroAno: 69.9,
-  trialDias: 14,
+  proLifetime: 39.9,
+  proLaunch: 29.9,
+  cloudMonthly: 9.9,
 };
 
 /**

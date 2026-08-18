@@ -148,6 +148,8 @@ export function PremiumProvider({ children }) {
       plan: state.plan,
       subscription: state,
       isPremium: state.isPremium,
+      hasProAccess: state.hasProAccess,
+      hasCloudAccess: state.hasCloudAccess,
       loading,
       canUse,
       getLimit,

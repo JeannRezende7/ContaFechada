@@ -58,7 +58,7 @@ export default function Sidebar() {
           className="mt-auto flex items-center gap-2.5 rounded-pill bg-ink-700 px-3.5 py-2.5 text-sm font-medium text-gold-50 hover:bg-ink-700/70 transition-colors"
         >
           <Crown size={16} strokeWidth={1.75} />
-          Conhecer o Premium
+          Conhecer o Pro
         </NavLink>
       )}
     </aside>

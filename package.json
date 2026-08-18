@@ -1,7 +1,7 @@
 {
   "name": "contafechada",
   "private": true,
-  "version": "5.3.4",
+  "version": "5.3.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
     "test:rules:emulator": "npx --yes firebase-tools@14.22.0 emulators:exec --only firestore \"npm run test:rules\""
   },
   "dependencies": {
+    "@capacitor-community/admob": "^8.1.0",
     "@capacitor-community/sqlite": "^8.1.0",
     "@capacitor-firebase/authentication": "^8.4.0",
     "@capacitor/android": "^8.4.2",

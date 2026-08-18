@@ -183,13 +183,13 @@ export default function RelatoriosPage() {
           {!podeVerEvolucao ? (
             <div className="flex flex-col items-center gap-2 text-center py-10 px-4">
               <p className="text-sm text-ink-300 max-w-[280px]">
-                Compare a evolução dos últimos meses com o Premium.
+                Compare a evolução dos últimos meses com o Pro.
               </p>
               <button
                 onClick={() => openPaywall({ feature: FEATURES.RELATORIOS_AVANCADOS })}
                 className="text-sm font-medium text-ledger-600 hover:underline"
               >
-                Conhecer o Premium
+                Conhecer o Pro
               </button>
             </div>
           ) : !temMovimentacaoEvolucao ? (

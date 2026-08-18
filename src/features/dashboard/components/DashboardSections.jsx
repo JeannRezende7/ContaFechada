@@ -318,8 +318,8 @@ export function InsightsCard({ insights, locked = false, onUnlock }) {
       <ul className="flex flex-col gap-1.5">
         {locked && (
           <li className="rounded-xl bg-ink-50 p-3 text-sm text-ink-500 dark:bg-ink-900">
-            Insights explicados, gastos incomuns e detecção de assinaturas fazem parte do Premium.
-            <button onClick={onUnlock} className="mt-1.5 block text-xs font-medium text-ledger-600 hover:underline">Conhecer o Premium</button>
+            Insights explicados, gastos incomuns e detecção de assinaturas fazem parte do Pro.
+            <button onClick={onUnlock} className="mt-1.5 block text-xs font-medium text-ledger-600 hover:underline">Conhecer o Pro</button>
           </li>
         )}
         {insights.map((insight, index) => (
