@@ -17,9 +17,39 @@ function timestampMs(value) {
 
 export function createFirestoreTransferAdapter(uid) {
   return {
-    list: (domain) => listUserDocs(uid, REMOTE_COLLECTION[domain] ?? domain),
+    // Transferências completas precisam vir do servidor. Usar o cache aqui
+    // pode produzir um snapshot parcial e omitir documentos antigos.
+    list: (domain) => listUserDocs(uid, REMOTE_COLLECTION[domain] ?? domain, { source: 'server' }),
     upsert: (domain, id, payload) => setUserDoc(uid, REMOTE_COLLECTION[domain] ?? domain, id, payload),
     remove: (domain, id) => deleteUserDoc(uid, REMOTE_COLLECTION[domain] ?? domain, id),
+  };
+}
+
+/** Adds remote-only records without replacing, deleting or uploading local data. */
+export async function recoverMissingRemoteRecords({ driver, remote, domains = LOCAL_FIRST_DOMAINS }) {
+  const store = createLocalDocumentStore(driver);
+  const local = await readLocalSnapshot(driver);
+  const fetched = {};
+  const missing = [];
+
+  for (const domain of domains) {
+    const localIds = new Set((local[domain] ?? []).map((item) => item.id));
+    fetched[domain] = await remote.list(domain);
+    for (const item of fetched[domain]) {
+      if (!item.deletedAt && !localIds.has(item.id)) missing.push({ domain, item });
+    }
+  }
+
+  const safetyBackup = missing.length ? await persistFirstSyncBackup(driver) : null;
+  for (const { domain, item } of missing) await store.putRemote(domain, item);
+
+  return {
+    recovered: missing.length,
+    safetyBackup,
+    summary: domains.reduce((result, domain) => {
+      result[domain] = { recovered: missing.filter((entry) => entry.domain === domain).length };
+      return result;
+    }, {}),
   };
 }
 

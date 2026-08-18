@@ -8,6 +8,7 @@ import {
   mergeLocalAndRemoteSnapshots,
   persistFirstSyncBackup,
   previewLocalFirstTransfer,
+  recoverMissingRemoteRecords,
   readLocalSnapshot,
   uploadLocalSnapshot,
 } from './localFirstTransfer.js';
@@ -75,6 +76,32 @@ describe('transferência local-first completa', () => {
       expect.objectContaining({ id: 'cloud', nome: 'Nuvem', syncStatus: 'synced' }),
     ]);
     expect((await driver.get("SELECT COUNT(*) AS count FROM sync_queue WHERE entidade='metas'")).count).toBe(0);
+  });
+
+  it('recupera somente registros remotos ausentes sem sobrescrever os locais', async () => {
+    const localId = await repositories.lancamentos.create('local', {
+      tipo: 'despesa', descricao: 'Editado no aparelho', valor: 90,
+      dataVencimento: '2026-08-10', status: 'pendente',
+    });
+    const remote = fakeRemote({
+      lancamentos: {
+        [localId]: {
+          id: localId, tipo: 'despesa', descricao: 'Versão antiga', valor: 80,
+          dataVencimento: '2026-08-10', status: 'pendente',
+        },
+        legado: {
+          id: 'legado', tipo: 'receita', descricao: 'Lançamento antigo', valor: 500,
+          dataVencimento: '2025-01-05', status: 'recebido',
+        },
+      },
+    });
+
+    const result = await recoverMissingRemoteRecords({ driver, remote, domains: ['lancamentos'] });
+    const local = await repositories.lancamentos.listAll('local');
+
+    expect(result.recovered).toBe(1);
+    expect(local.find((item) => item.id === localId).descricao).toBe('Editado no aparelho');
+    expect(local.find((item) => item.id === 'legado').descricao).toBe('Lançamento antigo');
   });
 
   it('mescla por updatedAt e converge após repetição', async () => {

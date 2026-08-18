@@ -1,8 +1,9 @@
 import { getLocalDatabase } from '../localDatabase.js';
-import { createFirestoreTransferAdapter, downloadRemoteSnapshot, LOCAL_FIRST_DOMAINS, persistFirstSyncBackup, uploadLocalSnapshot } from '../sync/localFirstTransfer.js';
+import { createFirestoreTransferAdapter, downloadRemoteSnapshot, LOCAL_FIRST_DOMAINS, persistFirstSyncBackup, recoverMissingRemoteRecords, uploadLocalSnapshot } from '../sync/localFirstTransfer.js';
 
 export const CLOUD_BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const LAST_BACKUP_KEY_PREFIX = 'cloudBackup:lastAt:';
+const LEGACY_RECOVERY_KEY_PREFIX = 'legacyRecovery:completedAt:';
 let initialRestoreRunning;
 
 export async function getLastCloudBackupAt(uid, driver) {
@@ -63,4 +64,20 @@ export async function restoreCloudBackupIfLocalEmpty(uid, { driver, remote } = {
     return { ...result, safetyBackup, remoteCount, restored: true };
   })().finally(() => { initialRestoreRunning = undefined; });
   return initialRestoreRunning;
+}
+
+/** One-time repair for legacy records without updatedAt skipped by incremental sync. */
+export async function recoverLegacyCloudDataOnce(uid, { driver, remote } = {}) {
+  const db = driver ?? await getLocalDatabase();
+  const key = `${LEGACY_RECOVERY_KEY_PREFIX}${uid}`;
+  if (await db.get('SELECT valor FROM sync_state WHERE chave=?', [key])) {
+    return { recovered: 0, reason: 'already_completed' };
+  }
+
+  const result = await recoverMissingRemoteRecords({
+    driver: db,
+    remote: remote ?? createFirestoreTransferAdapter(uid),
+  });
+  await db.run('INSERT OR REPLACE INTO sync_state (chave,valor) VALUES (?,?)', [key, new Date().toISOString()]);
+  return result;
 }

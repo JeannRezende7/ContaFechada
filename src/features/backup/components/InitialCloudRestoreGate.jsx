@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { CloudDownload, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { isNativeLocalDatabaseAvailable } from '../../../db/localDatabase.js';
-import { restoreCloudBackupIfLocalEmpty } from '../../../db/backup/cloudBackup.js';
+import { recoverLegacyCloudDataOnce, restoreCloudBackupIfLocalEmpty } from '../../../db/backup/cloudBackup.js';
 import BrandIcon from '../../../components/ui/BrandIcon.jsx';
 
 export default function InitialCloudRestoreGate({ children }) {
@@ -28,6 +28,14 @@ export default function InitialCloudRestoreGate({ children }) {
         setState('restored');
         window.location.reload();
         return;
+      }
+      if (result.reason === 'local_not_empty') {
+        const recovery = await recoverLegacyCloudDataOnce(firebaseUser.uid);
+        if (recovery.recovered > 0) {
+          setState('restored');
+          window.location.reload();
+          return;
+        }
       }
       setState('ready');
     } catch (restoreError) {
