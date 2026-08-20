@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import Sidebar from '../components/layout/Sidebar.jsx';
-import MobileDrawer from '../components/layout/MobileDrawer.jsx';
+import BottomNav from '../components/layout/BottomNav.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import OnboardingWizard from '../features/onboarding/components/OnboardingWizard.jsx';
 import { repositories } from '../repositories/index.js';
 import SyncManager from '../features/sync/components/SyncManager.jsx';
-import { MobileMenuProvider } from '../contexts/MobileMenuContext.jsx';
 import InitialCloudRestoreGate from '../features/backup/components/InitialCloudRestoreGate.jsx';
 import AdMobBannerController from '../features/ads/components/AdMobBannerController.jsx';
 
@@ -16,7 +15,6 @@ export default function AppLayout() {
   const location = useLocation();
   const { user } = useAuth();
   const [onboardingOpen, setOnboardingOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -31,7 +29,6 @@ export default function AppLayout() {
     return <Navigate to="/baixar-app" replace />;
   }
   return (
-    <MobileMenuProvider openMenu={() => setMobileMenuOpen(true)}>
     <div className="flex min-h-screen bg-paper text-ink-900 dark:bg-ink-900 dark:text-ink-50">
       <SyncManager />
       <AdMobBannerController />
@@ -44,14 +41,13 @@ export default function AppLayout() {
           Conta Fechada
         </span>
       </div>
-      <div className="min-w-0 flex-1 overflow-x-clip">
+      <div className="min-w-0 flex-1 overflow-x-clip pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         <InitialCloudRestoreGate>
           <Outlet />
           <OnboardingWizard uid={user?.uid} open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
         </InitialCloudRestoreGate>
       </div>
-      <MobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      <BottomNav />
     </div>
-    </MobileMenuProvider>
   );
 }

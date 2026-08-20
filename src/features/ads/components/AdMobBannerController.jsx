@@ -27,14 +27,16 @@ async function ensureInitialized() {
 
 async function showBanner() {
   await ensureInitialized();
-  consentPromise ??= (async () => {
-    let current = await AdMob.requestConsentInfo();
-    if (!current.canRequestAds && current.isConsentFormAvailable) current = await AdMob.showConsentForm();
-    return current;
-  })();
-  const consent = await consentPromise;
-  if (!consent.canRequestAds) return false;
   const config = getAdMobRuntimeConfig();
+  if (!config.isTesting) {
+    consentPromise ??= (async () => {
+      let current = await AdMob.requestConsentInfo();
+      if (!current.canRequestAds && current.isConsentFormAvailable) current = await AdMob.showConsentForm();
+      return current;
+    })();
+    const consent = await consentPromise;
+    if (!consent.canRequestAds) return false;
+  }
   await AdMob.showBanner({
     adId: config.bannerId,
     adSize: BannerAdSize.ADAPTIVE_BANNER,

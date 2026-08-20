@@ -1,3 +1,7 @@
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
+const FileExporter = registerPlugin('FileExporter');
+
 /** Escapes a value for a CSV cell (wraps in quotes if it contains a comma, quote or newline). */
 function escapeCell(value) {
   const text = value == null ? '' : String(value);
@@ -15,8 +19,14 @@ export function buildCsv(rows, columns) {
 }
 
 /** Triggers a browser download of a CSV string — no server round-trip needed. */
-export function downloadCsv(filename, csvContent) {
-  const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+export async function downloadCsv(filename, csvContent) {
+  const content = '\uFEFF' + csvContent;
+  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+    await FileExporter.export({ filename, content, mimeType: 'text/csv' });
+    return;
+  }
+
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -24,5 +34,5 @@ export function downloadCsv(filename, csvContent) {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }

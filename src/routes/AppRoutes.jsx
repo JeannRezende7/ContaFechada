@@ -62,8 +62,10 @@ export default function AppRoutes() {
           <Route path="/resumo" element={<DashboardPage />} />
           <Route path="/lancamentos" element={<Navigate to="/" replace />} />
           <Route path="/categorias" element={<CategoriasPage />} />
-          <Route path="/relatorios" element={<RelatoriosPage />} />
-          <Route path="/gestor" element={<GestorFinanceiroPage />} />
+          <Route path="/resumo/relatorios" element={<RelatoriosPage />} />
+          <Route path="/relatorios" element={<Navigate to="/resumo/relatorios" replace />} />
+          <Route path="/planejamento/gestor" element={<GestorFinanceiroPage />} />
+          <Route path="/gestor" element={<Navigate to="/planejamento/gestor" replace />} />
           <Route path="/planejamento" element={<ValorLivrePage />} />
           <Route path="/buscar" element={<BuscaGlobalPage />} />
           <Route path="/valor-livre" element={<Navigate to="/planejamento" replace />} />

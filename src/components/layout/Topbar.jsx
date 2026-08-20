@@ -1,25 +1,15 @@
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Menu, Search, Settings, Sun, Moon } from 'lucide-react';
+import { Eye, EyeOff, Search, Settings, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext.jsx';
 import { usePrivacy } from '../../contexts/PrivacyContext.jsx';
-import { useMobileMenu } from '../../contexts/MobileMenuContext.jsx';
 
 export default function Topbar({ title, icon: Icon }) {
   const { theme, toggleTheme } = useTheme();
   const privacy = usePrivacy();
-  const { openMenu } = useMobileMenu();
 
   return (
     <header className="sticky top-0 z-10 flex items-center justify-between border-b border-ink-100 bg-paper/95 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur dark:border-ink-700 dark:bg-ink-900/95 md:px-8 md:py-5">
       <div className="flex min-w-0 items-center gap-2">
-        <button
-          type="button"
-          onClick={openMenu}
-          aria-label="Abrir menu principal"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-500 hover:bg-ink-50 hover:text-ledger-600 dark:text-ink-100 dark:hover:bg-ink-700 md:hidden"
-        >
-          <Menu size={21} />
-        </button>
         <h1 className="flex min-w-0 items-center gap-2 truncate font-display text-lg font-semibold text-ink-900 dark:text-ink-50 md:text-2xl">
           {Icon && <Icon size={20} strokeWidth={1.75} className="hidden shrink-0 text-ledger-500 sm:block md:h-6 md:w-6" />}
           <span className="truncate">{title}</span>

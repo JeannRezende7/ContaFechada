@@ -10,6 +10,7 @@ import { analisarFinancas } from '../utils/analiseFinanceira.js';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
+import SectionTabs from '../../../components/ui/SectionTabs.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import { getCurrentMonthKey } from '../../../utils/monthKey.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
@@ -124,7 +125,7 @@ export default function GestorFinanceiroPage() {
   if (!lancamentos || !analise) {
     return (
       <>
-        <Topbar title="Gestor Financeiro" icon={Landmark} />
+        <Topbar title="Planejamento" icon={Landmark} />
         <LoadingScreen />
       </>
     );
@@ -143,7 +144,8 @@ export default function GestorFinanceiroPage() {
 
   return (
     <>
-      <Topbar title="Gestor Financeiro" icon={Landmark} />
+      <Topbar title="Planejamento" icon={Landmark} />
+      <SectionTabs area="planejamento" />
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
         <MonthNav monthKey={monthKey} onChange={tryChangeMonth} />
 

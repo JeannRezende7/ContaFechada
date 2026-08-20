@@ -13,7 +13,6 @@ const FEATURE_COPY = {
   [FEATURES.INSIGHTS_AVANCADOS]: ['Insights financeiros', 'Receba projeções e sugestões mais completas.'],
   [FEATURES.IMPORTACAO_EXTRATO]: ['Importação assistida', 'Importe por print, CSV ou OFX e revise antes de salvar.'],
   [FEATURES.REGRAS_CATEGORIZACAO]: ['Categorização automática', 'Crie regras para organizar seus lançamentos.'],
-  [FEATURES.ACOES_EM_MASSA]: ['Ações em massa', 'Edite ou exclua vários lançamentos de uma vez.'],
   [FEATURES.BUSCA_GLOBAL]: ['Busca global', 'Pesquise em todo o histórico com filtros avançados.'],
 };
 

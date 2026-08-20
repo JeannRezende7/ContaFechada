@@ -6,6 +6,7 @@ export default [
   {
     ignores: [
       'dist/**',
+      'dist-android/**',
       'node_modules/**',
       'android/**',
       'coverage/**',

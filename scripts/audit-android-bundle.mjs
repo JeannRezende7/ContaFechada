@@ -2,7 +2,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
+const DIST = fileURLToPath(new URL('../dist-android/', import.meta.url));
 const FORBIDDEN = [
   'create-checkout',
   'MERCADOPAGO_ACCESS_TOKEN',

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowUpCircle, ArrowDownCircle, Wallet, Receipt } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Wallet, Receipt, CheckSquare, Pencil, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
@@ -294,12 +294,12 @@ export default function LancamentosPage() {
     }
   }
 
-  function handleExportCsv() {
+  async function handleExportCsv() {
     const label = formatPeriodLabel(periodType, anchor, customRange);
-    exportItems(lancamentosFiltrados, label);
+    await exportItems(lancamentosFiltrados, label);
   }
 
-  function exportItems(items, label) {
+  async function exportItems(items, label) {
     const csv = buildCsv(items, [
       { label: 'Data', value: (l) => l.dataVencimento },
       { label: 'Descrição', value: (l) => l.descricao },
@@ -308,11 +308,12 @@ export default function LancamentosPage() {
       { label: 'Status', value: (l) => l.status },
       { label: 'Observações', value: (l) => l.observacoes ?? '' },
     ]);
-    downloadCsv(`lancamentos-${tab}-${label.replace(/\s+/g, '-')}.csv`, csv);
-  }
-
-  function exportSelected() {
-    exportItems(lancamentosFiltrados.filter((item) => selectedIds.has(item.id)), 'selecionados');
+    try {
+      await downloadCsv(`lancamentos-${tab}-${label.replace(/\s+/g, '-')}.csv`, csv);
+      setFeedback('Arquivo de lançamentos preparado para exportação.');
+    } catch {
+      setFeedback('Não foi possível exportar os lançamentos. Tente novamente.');
+    }
   }
 
   function toggleSelected(id) {
@@ -324,16 +325,16 @@ export default function LancamentosPage() {
     });
   }
 
-  async function applyBulk(action, value) {
+  async function applyBulk(changes) {
     const count = selectedIds.size;
     setSaving(true);
     setFeedback('');
-    const byId = Object.fromEntries(lancamentos.map((item) => [item.id, item]));
     const updates = Object.fromEntries([...selectedIds].map((id) => {
-      const nextValue = action === 'observacoes'
-        ? [byId[id]?.observacoes, value].filter(Boolean).join('\n')
-        : value || null;
-      return [id, { [action]: nextValue }];
+      const next = Object.fromEntries(Object.entries(changes).map(([field, nextValue]) => [
+        field,
+        nextValue === '' ? null : nextValue,
+      ]));
+      return [id, next];
     }));
     try {
       await repositories.lancamentos.updateEmMassa(uid, updates);
@@ -364,11 +365,6 @@ export default function LancamentosPage() {
     } finally {
       setSaving(false);
     }
-  }
-
-  async function setSelectedStatus(status) {
-    if (!status) return;
-    await applyBulk('status', status);
   }
 
   async function handleStatusChange(id, status) {
@@ -427,7 +423,7 @@ export default function LancamentosPage() {
   return (
     <>
       <Topbar title="Lançamentos" icon={Receipt} />
-      <div className="p-4 md:p-8 max-w-4xl mx-auto">
+      <div className="mx-auto max-w-4xl p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:p-8">
         <LancamentoTabs tab={tab} onChange={setTab} />
 
         <PeriodNav
@@ -493,7 +489,6 @@ export default function LancamentosPage() {
           }}
           selecting={selecting}
           onToggleSelecting={() => {
-            if (!selecting && !guardFeature(FEATURES.ACOES_EM_MASSA)) return;
             setSelecting((current) => !current);
             setSelectedIds(new Set());
           }}
@@ -504,28 +499,33 @@ export default function LancamentosPage() {
           }}
         />
         {selecting && (
-          <div className="mb-3 rounded-card bg-white p-3 shadow-card dark:bg-ink-700">
-            <div className="flex items-center justify-between gap-3">
-              <button type="button" onClick={() => setSelectedIds(new Set(lancamentosFiltrados.map((item) => item.id)))} className="text-xs font-medium text-ledger-600">Marcar todos</button>
-              <span className="text-xs text-ink-300">{selectedIds.size} selecionado(s)</span>
+          <div className="mb-3 overflow-hidden rounded-2xl border border-ledger-500/25 bg-gradient-to-br from-white to-ledger-50/50 shadow-card dark:border-ledger-500/20 dark:from-ink-700 dark:to-ink-900/70">
+            <div className="flex items-center justify-between gap-3 px-3.5 py-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ledger-50 text-ledger-600 dark:bg-ledger-500/15 dark:text-ledger-500">
+                  <CheckSquare size={16} strokeWidth={2.2} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-ink-700 dark:text-ink-50">Seleção em massa</p>
+                  <p className="truncate text-[11px] text-ink-300">{selectedIds.size ? 'Escolha uma ação' : 'Toque nos itens abaixo para selecionar'}</p>
+                </div>
+              </div>
+              <span className={`shrink-0 rounded-pill px-2.5 py-1 text-[11px] font-semibold ${selectedIds.size ? 'bg-ledger-500 text-white' : 'bg-ink-50 text-ink-300 dark:bg-ink-700'}`}>
+                {selectedIds.size} {selectedIds.size === 1 ? 'selecionado' : 'selecionados'}
+              </span>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink-100 pt-3 dark:border-ink-700">
-              <button type="button" disabled={!selectedIds.size} onClick={exportSelected} className="rounded-pill px-2.5 py-1.5 text-xs text-ink-500 hover:bg-ink-50 disabled:opacity-40 dark:hover:bg-ink-900">Exportar</button>
-              <select
-                value=""
-                disabled={saving || !selectedIds.size}
-                onChange={(event) => setSelectedStatus(event.target.value)}
-                aria-label="Alterar status dos selecionados"
-                className="min-w-36 flex-1 rounded-pill border border-ink-100 bg-white px-3 py-1.5 text-xs text-ink-500 disabled:opacity-40 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-100"
+            <div className="flex items-center justify-between gap-2 border-t border-ink-100/80 px-3.5 py-2.5 dark:border-ink-700">
+              <button
+                type="button"
+                onClick={() => setSelectedIds(selectedIds.size > 0 && selectedIds.size === lancamentosFiltrados.length ? new Set() : new Set(lancamentosFiltrados.map((item) => item.id)))}
+                className="rounded-pill px-2 py-1.5 text-xs font-medium text-ledger-600 transition-colors hover:bg-ledger-50 dark:hover:bg-ledger-500/10"
               >
-                <option value="">Alterar status...</option>
-                <option value="pendente">Pendente</option>
-                <option value="agendado">Agendado</option>
-                <option value="atrasado">Atrasado</option>
-                <option value={tab === 'receita' ? 'recebido' : 'pago'}>{tab === 'receita' ? 'Recebido' : 'Pago'}</option>
-              </select>
-              <button type="button" disabled={saving || !selectedIds.size} onClick={() => setBulkModalOpen(true)} className="rounded-pill bg-ledger-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40">Editar</button>
-              <button type="button" disabled={saving || !selectedIds.size} onClick={deleteSelected} className="rounded-pill px-2.5 py-1.5 text-xs text-signal-500 hover:bg-signal-50 disabled:opacity-40">Excluir</button>
+                {selectedIds.size > 0 && selectedIds.size === lancamentosFiltrados.length ? 'Desmarcar todos' : 'Marcar todos'}
+              </button>
+              <div className="flex items-center gap-1.5">
+                <button type="button" disabled={saving || !selectedIds.size} onClick={() => setBulkModalOpen(true)} className="flex items-center gap-1.5 rounded-pill bg-ledger-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-ledger-600 disabled:shadow-none disabled:opacity-35"><Pencil size={12} />Editar</button>
+                <button type="button" disabled={saving || !selectedIds.size} onClick={deleteSelected} aria-label="Excluir selecionados" className="flex h-7 w-7 items-center justify-center rounded-full text-signal-500 transition-colors hover:bg-signal-50 disabled:opacity-30"><Trash2 size={14} /></button>
+              </div>
             </div>
           </div>
         )}

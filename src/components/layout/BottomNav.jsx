@@ -1,13 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Receipt, Tag, PieChart, Landmark, CalendarRange } from 'lucide-react';
+import { LayoutDashboard, Receipt, Tag, CalendarRange } from 'lucide-react';
 
 const ITEMS = [
   { to: '/', label: 'Lançamentos', icon: Receipt },
   { to: '/resumo', label: 'Resumo', icon: LayoutDashboard },
   { to: '/planejamento', label: 'Planejar', icon: CalendarRange },
   { to: '/categorias', label: 'Categorias', icon: Tag },
-  { to: '/relatorios', label: 'Relatórios', icon: PieChart },
-  { to: '/gestor', label: 'Gestor', icon: Landmark },
 ];
 
 /** Visible on mobile only (< md). Desktop uses <Sidebar /> instead. */

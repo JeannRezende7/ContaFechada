@@ -348,14 +348,14 @@ export function DashboardLinks() {
         text="Distribua seu valor livre e acompanhe quanto ainda pode gastar"
       />
       <DashboardLink
-        to="/relatorios"
+        to="/resumo/relatorios"
         icon={PieChart}
         tone="bg-clay-50 text-clay-500"
         text="Veja a distribuição de gastos por categoria e a evolução mês a mês"
         className="mt-3"
       />
       <DashboardLink
-        to="/gestor"
+        to="/planejamento/gestor"
         icon={Landmark}
         tone="bg-indigo-50 text-indigo-600"
         text="Veja quanto da sua renda está comprometida e o que está parcelado"

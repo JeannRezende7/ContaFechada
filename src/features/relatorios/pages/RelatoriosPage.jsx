@@ -23,6 +23,7 @@ import { getColor } from '../../categorias/colorMap.js';
 import { getCurrentMonthKey } from '../../../utils/monthKey.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
+import SectionTabs from '../../../components/ui/SectionTabs.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 
 function CategoriaTooltip({ active, payload }) {
@@ -91,7 +92,8 @@ export default function RelatoriosPage() {
 
   return (
     <>
-      <Topbar title="Relatórios" icon={PieChartIcon} />
+      <Topbar title="Resumo" icon={PieChartIcon} />
+      <SectionTabs area="resumo" />
       <div className="p-4 md:p-8 max-w-4xl mx-auto flex flex-col gap-8">
         <MonthNav monthKey={monthKey} onChange={tryChangeMonth} />
 

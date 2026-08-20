@@ -1,7 +1,7 @@
 {
   "appId": "com.contafechada.app",
   "appName": "Conta Fechada: Gestor Pessoal",
-  "webDir": "dist",
+  "webDir": "dist-android",
   "plugins": {
     "LocalNotifications": {
       "iconColor": "#19c99a"

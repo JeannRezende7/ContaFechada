@@ -14,6 +14,7 @@ import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
+import SectionTabs from '../../../components/ui/SectionTabs.jsx';
 import { getCurrentMonthKey, daysRemainingInMonth, daysInMonth } from '../../../utils/monthKey.js';
 import {
   DailyBudgetCard,
@@ -229,7 +230,7 @@ export default function DashboardPage() {
   if (loadError && !indicators) {
     return (
       <>
-        <Topbar title="Início" icon={Home} />
+        <Topbar title="Resumo" icon={Home} />
         <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3 px-6 text-center">
           <p className="text-sm text-ink-500 dark:text-ink-100">{loadError}</p>
           <button
@@ -248,7 +249,7 @@ export default function DashboardPage() {
   if (!indicators) {
     return (
       <>
-        <Topbar title="Início" icon={Home} />
+        <Topbar title="Resumo" icon={Home} />
         <LoadingScreen />
       </>
     );
@@ -256,7 +257,8 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Topbar title="Início" icon={Home} />
+      <Topbar title="Resumo" icon={Home} />
+      <SectionTabs area="resumo" />
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
         <MonthNav monthKey={monthKey} onChange={setMonthKey} />
         <div className="h-5 -mt-2 mb-1 text-right" aria-live="polite">

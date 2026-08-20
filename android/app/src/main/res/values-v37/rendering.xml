@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API 37's current WebView exhausts the software tile cache when the
+         whole Activity is rendered in software, leaving the window black. -->
+    <bool name="webview_hardware_acceleration">true</bool>
+</resources>

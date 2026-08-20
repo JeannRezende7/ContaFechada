@@ -17,7 +17,10 @@ export function sanitizeCrashText(value) {
 async function crashlytics() {
   if (!Capacitor.isNativePlatform()) return null;
   const { FirebaseCrashlytics } = await import('@capacitor-firebase/crashlytics');
-  return FirebaseCrashlytics;
+  // Capacitor plugin proxies expose every property dynamically, including
+  // `then`. Returning one directly from an async function makes JavaScript
+  // treat it as a Promise and call a non-existent native `then` method.
+  return { recordException: (options) => FirebaseCrashlytics.recordException(options) };
 }
 
 export async function reportError(error, area = 'app') {

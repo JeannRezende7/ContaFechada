@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Receipt, Tag, PieChart, Landmark, Crown, CalendarRange } from 'lucide-react';
+import { LayoutDashboard, Receipt, Tag, Crown, CalendarRange } from 'lucide-react';
 import BrandIcon from '../ui/BrandIcon.jsx';
 import { usePremium } from '../../contexts/PremiumContext.jsx';
 import { PREMIUM_ENFORCED } from '../../config/premium.js';
@@ -11,8 +11,6 @@ const ITEMS = [
   { to: '/resumo', label: 'Resumo', icon: LayoutDashboard },
   { to: '/planejamento', label: 'Planejamento', icon: CalendarRange },
   { to: '/categorias', label: 'Categorias', icon: Tag },
-  { to: '/relatorios', label: 'Relatórios', icon: PieChart },
-  { to: '/gestor', label: 'Gestor Financeiro', icon: Landmark },
 ];
 
 /** Visible on desktop only (>= md). Mobile uses <BottomNav /> instead. */

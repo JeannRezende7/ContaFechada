@@ -5,6 +5,7 @@ import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
+import SectionTabs from '../../../components/ui/SectionTabs.jsx';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import LancamentoModal from '../../lancamentos/components/LancamentoModal.jsx';
 import { repositories } from '../../../repositories/index.js';
@@ -209,6 +210,7 @@ export default function ValorLivrePage() {
   return (
     <>
       <Topbar title="Planejamento" icon={CalendarRange} />
+      <SectionTabs area="planejamento" />
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
         <MonthNav monthKey={monthKey} onChange={setMonthKey} />
 

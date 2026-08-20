@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => ({
         }
       },
     },
-    VitePWA({
+    !mode.startsWith('android') && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png'],
       workbox: {
@@ -58,6 +58,9 @@ export default defineConfig(({ mode }) => ({
     port: 5173,
   },
   build: {
+    // Never let the deployable web bundle overwrite the bundle packaged by
+    // Capacitor. Both variants define different routes and capabilities.
+    outDir: mode.startsWith('android') ? 'dist-android' : 'dist',
     rollupOptions: {
       output: {
         manualChunks(id) {

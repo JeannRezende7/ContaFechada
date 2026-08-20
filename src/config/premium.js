@@ -60,7 +60,7 @@ const FEATURE_KIND = {
   [FEATURES.PLANEJAMENTO_AVANCADO]: 'free',
   [FEATURES.IMPORTACAO_EXTRATO]: 'boolean',
   [FEATURES.REGRAS_CATEGORIZACAO]: 'boolean',
-  [FEATURES.ACOES_EM_MASSA]: 'boolean',
+  [FEATURES.ACOES_EM_MASSA]: 'free',
   [FEATURES.BUSCA_GLOBAL]: 'boolean',
   [FEATURES.METAS_AUTOMATICAS]: 'free',
 };
@@ -83,6 +83,7 @@ export const PLAN_DETAILS = {
       'Dashboard e relatórios mensais',
       'Gestor Financeiro e planejamento do valor livre',
       'Exportação CSV completa',
+      'Edição e exclusão de vários lançamentos',
       'Backup e restauração manual por arquivo',
     ],
   },
@@ -92,7 +93,6 @@ export const PLAN_DETAILS = {
       'Relatórios de múltiplos períodos e comparação entre meses',
       'Projeções e insights financeiros avançados',
       'Importação assistida por print, CSV e OFX',
-      'Ações em massa nos lançamentos',
       'Busca global e regras automáticas de categorização',
       'Acesso antecipado a novos recursos',
     ],
@@ -105,7 +105,6 @@ export const PLAN_COMPARISON = [
   { feature: FEATURES.IMPORTACAO_EXTRATO, label: 'Importação assistida', premium: 'Importe por print, CSV e OFX.' },
   { feature: FEATURES.RELATORIOS_AVANCADOS, label: 'Relatórios avançados', premium: 'Compare meses e acompanhe sua evolução.' },
   { feature: FEATURES.INSIGHTS_AVANCADOS, label: 'Insights e projeções', premium: 'Receba análises financeiras mais completas.' },
-  { feature: FEATURES.ACOES_EM_MASSA, label: 'Ações em massa', premium: 'Edite ou exclua vários lançamentos de uma vez.' },
   { feature: FEATURES.REGRAS_CATEGORIZACAO, label: 'Categorização automática', premium: 'Crie regras para organizar lançamentos.' },
   { feature: FEATURES.BUSCA_GLOBAL, label: 'Busca global', premium: 'Pesquise em todo o histórico com filtros.' },
 ];
