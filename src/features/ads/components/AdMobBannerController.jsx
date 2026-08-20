@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { AdMob, BannerAdPosition, BannerAdSize, BannerAdPluginEvents } from '@capacitor-community/admob';
 import { useLocation } from 'react-router-dom';
@@ -14,6 +14,13 @@ let consentPromise;
 
 function clearBannerSpace() {
   applyBannerLayout(0);
+}
+
+export function hasBlockingOverlay(documentRef = document) {
+  return [...documentRef.querySelectorAll('.fixed.inset-0')].some((element) => (
+    element.getAttribute('aria-hidden') !== 'true'
+    && !element.classList.contains('pointer-events-none')
+  ));
 }
 
 async function ensureInitialized() {
@@ -50,11 +57,26 @@ async function showBanner() {
 export default function AdMobBannerController() {
   const { pathname } = useLocation();
   const { hasProAccess, loading } = usePremium();
+  const [overlayOpen, setOverlayOpen] = useState(false);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return undefined;
+    const update = () => setOverlayOpen(hasBlockingOverlay());
+    const observer = new MutationObserver(update);
+    update();
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['aria-hidden', 'class'],
+      childList: true,
+      subtree: true,
+    });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return undefined;
     let active = true;
-    const shouldShow = !loading && !hasProAccess && AD_ROUTES.has(pathname);
+    const shouldShow = !loading && !hasProAccess && !overlayOpen && AD_ROUTES.has(pathname);
 
     if (shouldShow) {
       showBanner().then((shown) => {
@@ -70,7 +92,7 @@ export default function AdMobBannerController() {
       clearBannerSpace();
       AdMob.removeBanner().catch(() => {});
     };
-  }, [hasProAccess, loading, pathname]);
+  }, [hasProAccess, loading, overlayOpen, pathname]);
 
   return null;
 }
