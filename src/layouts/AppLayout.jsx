@@ -41,7 +41,7 @@ export default function AppLayout() {
           Conta Fechada
         </span>
       </div>
-      <div className="min-w-0 flex-1 overflow-x-clip pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+      <div data-app-content className="min-w-0 flex-1 overflow-x-clip">
         <InitialCloudRestoreGate>
           <Outlet />
           <OnboardingWizard uid={user?.uid} open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />

@@ -12,11 +12,16 @@
     min-width: 0;
     overflow-x: hidden;
   }
-  body.admob-banner-visible {
-    padding-bottom: calc(var(--admob-banner-height, 0px) + env(safe-area-inset-bottom, 0px));
+  [data-app-content] {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + var(--admob-banner-height, 0px));
   }
   body.admob-banner-visible nav[data-bottom-navigation] {
     bottom: calc(var(--admob-banner-height, 0px) + env(safe-area-inset-bottom, 0px));
+  }
+  @media (min-width: 768px) {
+    [data-app-content] {
+      padding-bottom: 0;
+    }
   }
   h1, h2, h3, h4 {
     font-family: 'Space Grotesk', sans-serif;
