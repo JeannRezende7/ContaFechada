@@ -7,7 +7,7 @@
  * Only flip this once billing, restauração de compra and subscription admin
  * are tested end to end (docs/ROADMAP_MONETIZACAO.txt, objetivo).
  */
-export const PREMIUM_ENFORCED = true;
+export const PREMIUM_ENFORCED = false;
 export const CLOUD_UI_ENABLED = false;
 
 /** Produto nao consumivel cadastrado na Google Play Console. */
@@ -77,42 +77,31 @@ export const PLAN_DETAILS = {
   [PLAN.FREE]: {
     label: 'Gratuito',
     beneficios: [
-      'Lançamentos manuais ilimitados',
-      'Parcelamentos, categorias e recorrências ilimitados',
-      'Histórico completo no dispositivo',
-      'Dashboard e relatórios mensais',
-      'Gestor Financeiro e planejamento do valor livre',
-      'Exportação CSV completa',
-      'Edição e exclusão de vários lançamentos',
+      'Todas as funções locais liberadas',
+      'Dados armazenados somente no dispositivo',
       'Backup e restauração manual por arquivo',
     ],
   },
   [PLAN.PRO]: {
-    label: 'Pro',
+    label: 'Sem anúncios',
     beneficios: [
-      'Relatórios de múltiplos períodos e comparação entre meses',
-      'Projeções e insights financeiros avançados',
-      'Importação assistida por print, CSV e OFX',
-      'Busca global e regras automáticas de categorização',
-      'Acesso antecipado a novos recursos',
+      'Remove todos os anúncios permanentemente',
+      'Mantém todas as funções locais liberadas',
     ],
   },
 };
 
 /** Diferenciais exibidos em "Meu Plano" e no paywall. */
 export const PLAN_COMPARISON = [
-  { label: 'Sem anúncios', premium: 'Use o aplicativo sem interrupções.' },
-  { feature: FEATURES.IMPORTACAO_EXTRATO, label: 'Importação assistida', premium: 'Importe por print, CSV e OFX.' },
-  { feature: FEATURES.RELATORIOS_AVANCADOS, label: 'Relatórios avançados', premium: 'Compare meses e acompanhe sua evolução.' },
-  { feature: FEATURES.INSIGHTS_AVANCADOS, label: 'Insights e projeções', premium: 'Receba análises financeiras mais completas.' },
-  { feature: FEATURES.REGRAS_CATEGORIZACAO, label: 'Categorização automática', premium: 'Crie regras para organizar lançamentos.' },
-  { feature: FEATURES.BUSCA_GLOBAL, label: 'Busca global', premium: 'Pesquise em todo o histórico com filtros.' },
+  { label: 'Sem anúncios', premium: 'Use o aplicativo sem interrupções para sempre.' },
+  { label: 'Compra única', premium: 'Sem mensalidade e sem renovação.' },
+  { label: 'Apoie o Conta Fechada', premium: 'Ajude a manter e melhorar o aplicativo.' },
 ];
 
 /** Preços propostos — validar antes do lançamento (docs/ROADMAP_MONETIZACAO.txt, secao 1). */
 export const PRICING = {
-  proLifetime: 39.9,
-  proLaunch: 29.9,
+  proLifetime: 19.9,
+  proLaunch: 19.9,
 };
 
 /**
@@ -149,14 +138,8 @@ export function isBooleanFeature(feature) {
  *   without flipping the module-wide switch.
  */
 export function checkGate(feature, ctx = {}) {
-  const enforced = ctx.enforced ?? PREMIUM_ENFORCED;
-  if (!enforced) return { allowed: true };
-  if (ctx.isPremium) return { allowed: true };
-
-  if (FEATURE_KIND[feature] === 'boolean') {
-    return { allowed: false, reason: 'premium_required' };
-  }
-
+  void feature;
+  void ctx;
   return { allowed: true };
 }
 

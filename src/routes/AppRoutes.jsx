@@ -17,12 +17,12 @@ const OpcoesPage = lazyWithRetry(() => import('../features/opcoes/pages/OpcoesPa
 const MeuPlanoPage = lazyWithRetry(() => import('../features/premium/pages/MeuPlanoPage.jsx'));
 const TermosPage = lazyWithRetry(() => import('../features/legal/pages/TermosPage.jsx'));
 const PrivacidadePage = lazyWithRetry(() => import('../features/legal/pages/PrivacidadePage.jsx'));
+const ExclusaoContaPage = lazyWithRetry(() => import('../features/legal/pages/ExclusaoContaPage.jsx'));
 const BuscaGlobalPage = lazyWithRetry(() => import('../features/busca/pages/BuscaGlobalPage.jsx'));
 const ValorLivrePage = lazyWithRetry(() => import('../features/valor-livre/pages/ValorLivrePage.jsx'));
 const AdminSubscriptionsPage = __NATIVE_ANDROID_BUILD__
   ? null
   : lazyWithRetry(() => import('../features/admin/pages/AdminSubscriptionsPage.jsx'));
-const SyncDiagnosticsRoute = lazyWithRetry(() => import('../features/sync/pages/SyncDiagnosticsRoute.jsx'));
 const DownloadAppPage = __NATIVE_ANDROID_BUILD__
   ? null
   : lazyWithRetry(() => import('../features/download/pages/DownloadAppPage.jsx'));
@@ -39,6 +39,7 @@ export default function AppRoutes() {
         {/* Públicas — precisam ser legíveis por quem ainda nem tem conta. */}
         <Route path="/termos" element={<TermosPage />} />
         <Route path="/privacidade" element={<PrivacidadePage />} />
+        <Route path="/excluir-conta" element={<ExclusaoContaPage />} />
         {!__NATIVE_ANDROID_BUILD__ && <Route path="/" element={<DownloadAppPage />} />}
         {!__NATIVE_ANDROID_BUILD__ && <Route path="/baixar-app" element={<DownloadAppPage />} />}
 
@@ -54,7 +55,6 @@ export default function AppRoutes() {
           <Route path="/opcoes" element={<OpcoesPage />} />
           <Route path="/opcoes/meu-plano" element={<MeuPlanoPage />} />
           {!__NATIVE_ANDROID_BUILD__ && <Route path="/controle-assinaturas" element={<AdminSubscriptionsPage />} />}
-          <Route path="/opcoes/diagnostico" element={<SyncDiagnosticsRoute />} />
 
           {/* Módulos financeiros — exclusivos do Premium na Web; o Android
               gratuito continua liberado (RequirePremiumWeb passa direto). */}

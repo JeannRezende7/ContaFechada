@@ -8,8 +8,8 @@ Ultima revisao: 18/08/2026
 - Nome curto no aparelho: **Conta Fechada**
 - Pacote: `com.contafechada.app`
 - Categoria sugerida: Financas
-- Modelo: gratuito com anuncios; Pro vitalicio por compra unica
-- Produto Pro sugerido: `conta_fechada_pro_lifetime`
+- Modelo: todas as funcoes locais gratuitas com anuncios; compra unica para remover anuncios
+- Produto de remocao de anuncios: `conta_fechada_pro_lifetime`
 
 ## Descricao curta
 
@@ -24,7 +24,7 @@ Registre lancamentos, organize categorias e recorrencias, acompanhe o saldo e
 planeje o valor livre sem depender de planilhas. Seus dados ficam disponiveis
 localmente no Android, inclusive sem conexao.
 
-Recursos gratuitos:
+Todas as funcoes locais estao liberadas gratuitamente, incluindo:
 
 - lancamentos, categorias e recorrencias ilimitados;
 - historico completo no aparelho;
@@ -32,9 +32,9 @@ Recursos gratuitos:
 - planejamento do valor livre;
 - exportacao e restauracao manual por arquivo.
 
-Com o Conta Fechada Pro, em uma unica compra, voce remove os anuncios e libera
-importacao assistida, relatorios avancados, insights, busca global, regras de
-categoria e acoes em massa.
+Por R$ 19,90 em uma unica compra, voce remove os anuncios permanentemente e
+apoia a continuidade do Conta Fechada. O preco final valido e sempre o exibido
+pela Google Play antes da confirmacao.
 
 Antes de desinstalar ou trocar de celular, exporte um backup em Opcoes. O backup
 automatico em nuvem nao faz parte desta versao.
@@ -51,7 +51,7 @@ automatico em nuvem nao faz parte desta versao.
 ## Declaracao de anuncios
 
 - [x] O aplicativo contem anuncios no plano Gratuito.
-- [x] O Pro remove os anuncios.
+- [x] A compra unica remove os anuncios.
 - [x] SDK utilizado: Google AdMob.
 - [ ] Confirmar no aparelho que consentimento e opcoes de privacidade aparecem quando aplicavel.
 - [ ] Conferir no formulario da Play Console as declaracoes exigidas na data do envio.
@@ -119,5 +119,4 @@ Para cada captura:
 
 Primeira versao publica do Conta Fechada: Gestor Pessoal. Controle receitas e
 despesas, organize recorrencias, acompanhe o resumo mensal e planeje seu valor
-livre. Use gratuitamente com anuncios ou desbloqueie o Pro em uma unica compra.
-
+livre. Todas as funcoes locais sao gratuitas; uma compra unica remove os anuncios.

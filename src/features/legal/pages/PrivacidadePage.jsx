@@ -4,9 +4,8 @@ import BrandIcon from '../../../components/ui/BrandIcon.jsx';
 
 /**
  * RASCUNHO (docs/ROADMAP_MONETIZACAO.txt, Fase 11) — escrito a partir do que o
- * app efetivamente faz hoje: Firebase Authentication (login Google) +
- * Cloud Firestore (dados financeiros), sem Analytics/Functions/Storage
- * ainda em uso além do que está descrito abaixo. NÃO é aconselhamento
+ * app efetivamente faz hoje: dados financeiros locais, login Google opcional,
+ * Google Play Billing, AdMob e serviços de diagnóstico. NÃO é aconselhamento
  * jurídico — precisa de revisão à luz da LGPD antes do lançamento público.
  */
 export default function PrivacidadePage() {
@@ -27,27 +26,26 @@ export default function PrivacidadePage() {
 
         <div className="flex flex-col gap-5 text-sm text-ink-700 dark:text-ink-100 leading-relaxed">
           <p className="text-xs text-ink-300 italic">
-            Rascunho — versão 18/07/2026. Este texto ainda não passou por revisão jurídica à luz da LGPD.
+            Última atualização: 22/08/2026.
           </p>
 
           <section>
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">1. Quais dados coletamos</h2>
             <p>
-              Nome, e-mail e foto de perfil (via login com Google), e os dados financeiros que você cadastra:
-              lançamentos, categorias, recorrências, metas e as configurações do app. Ao usar uma conta ou comprar o
-              Pro, guardamos os dados necessários para identificar e restaurar esse direito. Nunca recebemos dados de
-              cartão, que são processados pela Google Play.
-              Cada registro também pode carregar um identificador técnico do aparelho que o criou, usado para
-              manter a integridade do banco local e das cópias de segurança.
+              Os dados financeiros cadastrados, como lançamentos, categorias, recorrências, metas e configurações,
+              são tratados localmente no aparelho. Se você optar pelo login Google, tratamos nome, e-mail, foto e
+              identificador da conta. Para comprar ou restaurar a remoção de anúncios, tratamos os identificadores e
+              o estado da compra. Não recebemos dados de cartão, que são processados pela Google Play.
             </p>
           </section>
 
           <section>
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">2. Onde os dados ficam</h2>
             <p>
-              No aplicativo Android, os dados financeiros ficam principalmente no banco local do aparelho.
-              A autenticação opcional usa Firebase Authentication (Google). O backup em nuvem não faz parte da
-              versão atual. O usuário pode exportar manualmente um arquivo de backup pelo próprio aplicativo.
+              Os dados financeiros da versão atual ficam no banco local do aparelho e não são sincronizados nem
+              copiados automaticamente para a nuvem. O login opcional utiliza Firebase Authentication. Dados técnicos
+              necessários à compra, restauração, prevenção de fraude e administração do direito sem anúncios podem
+              ser mantidos nos serviços vinculados à conta. O usuário pode exportar manualmente um backup local.
             </p>
           </section>
 
@@ -63,11 +61,11 @@ export default function PrivacidadePage() {
           <section>
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">4. Com quem compartilhamos</h2>
             <p>
-              Não vendemos nem compartilhamos seus dados financeiros com terceiros para fins de publicidade. O plano
-              Gratuito utiliza o Google AdMob para exibir anúncios. O SDK de anúncios pode tratar identificadores do
+              Não vendemos nem enviamos seus dados financeiros ao sistema de publicidade. A versão gratuita utiliza
+              o Google AdMob. O SDK de anúncios pode tratar identificadores do
               dispositivo, endereço IP, dados de diagnóstico e interações com anúncios conforme as escolhas de
               privacidade disponíveis. Os lançamentos e demais dados financeiros cadastrados no Conta Fechada não são
-              enviados ao AdMob. Também usamos o Google Firebase para autenticação e infraestrutura.
+              enviados ao AdMob. Serviços Google também são utilizados para autenticação, compras e diagnóstico.
             </p>
           </section>
 
@@ -76,20 +74,22 @@ export default function PrivacidadePage() {
             <p>Você pode, a qualquer momento, direto no app (em Opções):</p>
             <ul className="list-disc pl-5 mt-1.5 flex flex-col gap-1">
               <li>Exportar uma cópia de todos os seus dados pessoais em formato legível.</li>
-              <li>Excluir permanentemente sua conta e todos os dados associados.</li>
+              <li>Excluir permanentemente sua conta e os dados associados.</li>
             </ul>
             <p className="mt-1.5">
-              Para outras solicitações (correção, portabilidade, informações sobre uso de dados):{' '}
-              <span className="italic">canal de contato a definir</span> (docs/ROADMAP_MONETIZACAO.txt, Fase 11 — pendente).
+              As instruções públicas estão disponíveis na página <Link to="/excluir-conta" className="underline">Exclusão de conta</Link>.
+              O canal oficial para outras solicitações será informado nesta política e na ficha da Google Play antes
+              da publicação.
             </p>
           </section>
 
           <section>
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">6. Retenção de dados</h2>
             <p>
-              Mantemos seus dados enquanto sua conta existir. Ao excluir a conta, os dados são apagados
-              permanentemente dos serviços vinculados e sua conta de autenticação é removida. Dados mantidos somente
-              no aparelho também podem ser apagados pelas ações locais ou pela desinstalação do aplicativo.
+              Dados vinculados à conta são mantidos enquanto ela existir ou pelo período necessário às finalidades
+              informadas. Após a exclusão, podemos conservar somente registros exigidos por lei, necessários para
+              comprovar compras ou prevenir fraude. Dados locais podem ser apagados pelo aplicativo, pela limpeza dos
+              dados ou pela desinstalação.
             </p>
           </section>
 
@@ -97,7 +97,7 @@ export default function PrivacidadePage() {
             <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1.5">7. Analytics</h2>
             <p>
               Podemos usar o Firebase Analytics para entender uso agregado do app (ex: quais telas são mais
-              visitadas, taxa de conversão do Pro) — não usamos isso para identificar você individualmente
+              visitadas e taxa de conversão da remoção de anúncios) — não usamos isso para identificar você individualmente
               fora do produto.
             </p>
           </section>

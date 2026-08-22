@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Receipt, Tag, Crown, CalendarRange } from 'lucide-react';
 import BrandIcon from '../ui/BrandIcon.jsx';
 import { usePremium } from '../../contexts/PremiumContext.jsx';
-import { PREMIUM_ENFORCED } from '../../config/premium.js';
 import { track, EVENTS } from '../../utils/analytics.js';
 
 const ITEMS = [
@@ -16,7 +15,7 @@ const ITEMS = [
 /** Visible on desktop only (>= md). Mobile uses <BottomNav /> instead. */
 export default function Sidebar() {
   const { isPremium } = usePremium();
-  const showPremiumCard = PREMIUM_ENFORCED && !isPremium;
+  const showPremiumCard = !isPremium;
 
   useEffect(() => {
     if (showPremiumCard) track(EVENTS.PREMIUM_CARD_VIEWED, { placement: 'sidebar' });
@@ -56,7 +55,7 @@ export default function Sidebar() {
           className="mt-auto flex items-center gap-2.5 rounded-pill bg-ink-700 px-3.5 py-2.5 text-sm font-medium text-gold-50 hover:bg-ink-700/70 transition-colors"
         >
           <Crown size={16} strokeWidth={1.75} />
-          Conhecer o Pro
+          Remover anÃºncios
         </NavLink>
       )}
     </aside>

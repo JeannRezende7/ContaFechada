@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { AdMob, BannerAdPosition, BannerAdSize, BannerAdPluginEvents } from '@capacitor-community/admob';
-import { useLocation } from 'react-router-dom';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { getAdMobRuntimeConfig } from '../../../config/ads.js';
 import { applyBannerLayout } from '../utils/adLayout.js';
 import { reportError } from '../../../utils/crashReporting.js';
 
-const AD_ROUTES = new Set(['/', '/resumo']);
 let initialized = false;
 let sizeListener;
 let consentPromise;
@@ -55,7 +53,6 @@ async function showBanner() {
 }
 
 export default function AdMobBannerController() {
-  const { pathname } = useLocation();
   const { hasProAccess, loading } = usePremium();
   const [overlayOpen, setOverlayOpen] = useState(false);
 
@@ -76,7 +73,7 @@ export default function AdMobBannerController() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return undefined;
     let active = true;
-    const shouldShow = !loading && !hasProAccess && !overlayOpen && AD_ROUTES.has(pathname);
+    const shouldShow = !loading && !hasProAccess && !overlayOpen;
 
     if (shouldShow) {
       showBanner().then((shown) => {
@@ -92,7 +89,7 @@ export default function AdMobBannerController() {
       clearBannerSpace();
       AdMob.removeBanner().catch(() => {});
     };
-  }, [hasProAccess, loading, overlayOpen, pathname]);
+  }, [hasProAccess, loading, overlayOpen]);
 
   return null;
 }

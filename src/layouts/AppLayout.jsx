@@ -6,8 +6,6 @@ import BottomNav from '../components/layout/BottomNav.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import OnboardingWizard from '../features/onboarding/components/OnboardingWizard.jsx';
 import { repositories } from '../repositories/index.js';
-import SyncManager from '../features/sync/components/SyncManager.jsx';
-import InitialCloudRestoreGate from '../features/backup/components/InitialCloudRestoreGate.jsx';
 import AdMobBannerController from '../features/ads/components/AdMobBannerController.jsx';
 
 /** Mobile-first: bottom nav + stacked content. From md breakpoint up: sidebar layout. */
@@ -30,7 +28,6 @@ export default function AppLayout() {
   }
   return (
     <div className="flex min-h-screen bg-paper text-ink-900 dark:bg-ink-900 dark:text-ink-50">
-      <SyncManager />
       <AdMobBannerController />
       <Sidebar />
       <div
@@ -42,10 +39,8 @@ export default function AppLayout() {
         </span>
       </div>
       <div data-app-content className="min-w-0 flex-1 overflow-x-clip">
-        <InitialCloudRestoreGate>
-          <Outlet />
-          <OnboardingWizard uid={user?.uid} open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
-        </InitialCloudRestoreGate>
+        <Outlet />
+        <OnboardingWizard uid={user?.uid} open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
       </div>
       <BottomNav />
     </div>

@@ -31,19 +31,13 @@ const PREMIUM_FEATURES = [
 ];
 
 describe('PREMIUM_ENFORCED default', () => {
-  it('enforces the Pro catalog', () => {
-    expect(PREMIUM_ENFORCED).toBe(true);
+  it('keeps every local feature unlocked', () => {
+    expect(PREMIUM_ENFORCED).toBe(false);
   });
 
-  it('keeps the free core available and blocks Pro features by default', () => {
-    for (const feature of CORE_FREE_FEATURES) {
+  it('allows the complete catalog without a purchase', () => {
+    for (const feature of [...CORE_FREE_FEATURES, ...PREMIUM_FEATURES]) {
       expect(checkGate(feature, { isPremium: false, count: 999 })).toEqual({ allowed: true });
-    }
-    for (const feature of PREMIUM_FEATURES) {
-      expect(checkGate(feature, { isPremium: false })).toEqual({
-        allowed: false,
-        reason: 'premium_required',
-      });
     }
   });
 });
@@ -66,13 +60,10 @@ describe('free core', () => {
   });
 });
 
-describe('Premium value features', () => {
-  it.each(PREMIUM_FEATURES)('%s is gated only after enforcement is enabled', (feature) => {
+describe('formerly paid features', () => {
+  it.each(PREMIUM_FEATURES)('%s remains available even if a caller requests enforcement', (feature) => {
     expect(isBooleanFeature(feature)).toBe(true);
-    expect(checkGate(feature, { enforced: true, isPremium: false })).toEqual({
-      allowed: false,
-      reason: 'premium_required',
-    });
+    expect(checkGate(feature, { enforced: true, isPremium: false })).toEqual({ allowed: true });
     expect(checkGate(feature, { enforced: true, isPremium: true })).toEqual({ allowed: true });
   });
 });
