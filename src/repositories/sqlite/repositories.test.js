@@ -82,6 +82,18 @@ describe('repositórios SQLite completos', () => {
     expect(await repositories.metas.list('local')).toHaveLength(0);
   });
 
+  it('edita e reorganiza categorias no banco local', async () => {
+    await repositories.categorias.ensureDefaults('local');
+    const [first, second] = await repositories.categorias.list('local');
+
+    await repositories.categorias.update('local', first.id, { nome: 'Prioritária', ordem: second.ordem });
+    await repositories.categorias.update('local', second.id, { ordem: first.ordem });
+
+    const reordered = await repositories.categorias.list('local');
+    expect(reordered.find((item) => item.id === second.id)).toMatchObject({ ordem: first.ordem });
+    expect(reordered.find((item) => item.id === first.id)).toMatchObject({ nome: 'Prioritária', ordem: second.ordem });
+  });
+
   it('mantém configurações mensais e dados do gestor localmente', async () => {
     await repositories.planejamento.setSaldoInicial('local', '2026-07', 250);
     await repositories.planejamento.setOrcamentoCategoria('local', '2026-07', 'moradia', 800);

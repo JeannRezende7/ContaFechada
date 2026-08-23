@@ -48,6 +48,35 @@ export function createCategoriasRepository(driver) {
     return id;
   }
 
+  async function update(_uid, id, data) {
+    const fields = [];
+    const values = [];
+    const columnByKey = {
+      nome: 'nome',
+      tipo: 'tipo',
+      corKey: 'cor_key',
+      icone: 'icone',
+      ordem: 'ordem',
+    };
+    for (const [key, column] of Object.entries(columnByKey)) {
+      if (key in data) {
+        fields.push(`${column} = ?`);
+        values.push(data[key]);
+      }
+    }
+    if (fields.length === 0) return;
+
+    await driver.run(
+      `UPDATE categorias
+       SET ${fields.join(', ')},
+           updated_at = ?,
+           sync_status = CASE WHEN sync_status = 'synced' THEN 'pending' ELSE sync_status END,
+           local_version = local_version + 1
+       WHERE id = ?`,
+      [...values, new Date().toISOString(), id]
+    );
+  }
+
   async function remove(_uid, id) {
     await driver.run('DELETE FROM categorias WHERE id = ?', [id]);
   }
@@ -68,5 +97,5 @@ export function createCategoriasRepository(driver) {
     return list(uid);
   }
 
-  return { list, create, remove, removeAll, ensureDefaults };
+  return { list, create, update, remove, removeAll, ensureDefaults };
 }

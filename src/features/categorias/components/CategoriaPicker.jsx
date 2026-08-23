@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Ban } from 'lucide-react';
+import { Ban, ChevronDown, Plus, X } from 'lucide-react';
 import { getColor } from '../colorMap.js';
 import { getIcon } from '../iconMap.js';
 
@@ -10,10 +10,12 @@ import { getIcon } from '../iconMap.js';
  */
 export default function CategoriaPicker({ categorias, value, onChange, compact = false, emptyLabel = 'Sem categoria', EmptyIcon = Ban }) {
   const [open, setOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const rootRef = useRef(null);
 
   const ordenadas = [...categorias].sort((a, b) => a.ordem - b.ordem);
   const selecionada = categorias.find((c) => c.id === value);
+  const principais = ordenadas.slice(0, 7);
 
   useEffect(() => {
     if (!open) return;
@@ -25,7 +27,10 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
   }, [open]);
 
   function handleKeyDown(e) {
-    if (e.key === 'Escape' && open) {
+    if (e.key === 'Escape' && showAll) {
+      e.stopPropagation();
+      setShowAll(false);
+    } else if (e.key === 'Escape' && open) {
       e.stopPropagation();
       setOpen(false);
     }
@@ -34,6 +39,7 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
   function pick(id) {
     onChange(id);
     setOpen(false);
+    setShowAll(false);
   }
 
   return (
@@ -88,18 +94,7 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
           }`}
         >
           <div className="grid grid-cols-4 gap-x-2 gap-y-3">
-            <button type="button" onClick={() => pick('')} className="flex flex-col items-center gap-1">
-              <span
-                className={`w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed transition-colors ${
-                  !value ? 'border-ink-900 bg-ink-50 dark:bg-ink-900' : 'border-ink-100 text-ink-300 hover:border-ink-300'
-                }`}
-              >
-                <EmptyIcon size={18} strokeWidth={1.75} className={!value ? 'text-ink-900 dark:text-ink-50' : 'text-ink-300'} />
-              </span>
-              <span className="text-[11px] text-ink-500 text-center leading-tight">{emptyLabel}</span>
-            </button>
-
-            {ordenadas.map((c) => {
+            {principais.map((c) => {
               const color = getColor(c.corKey);
               const Icon = getIcon(c.icone);
               const selected = value === c.id;
@@ -123,9 +118,38 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
                 </button>
               );
             })}
+            <button type="button" onClick={() => setShowAll(true)} className="flex flex-col items-center gap-1">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-ink-100 text-ink-500 transition-colors hover:bg-ledger-50 hover:text-ledger-600 dark:bg-ink-900">
+                <Plus size={22} strokeWidth={2} />
+              </span>
+              <span className="text-center text-[11px] leading-tight text-ink-500">Mais</span>
+            </button>
           </div>
         </div>
       )}
+
+      {showAll && <div className="fixed inset-0 z-[60] flex items-end justify-center bg-ink-900/55 px-0 backdrop-blur-[2px] sm:items-center sm:px-4" onClick={() => setShowAll(false)}>
+        <div role="dialog" aria-modal="true" aria-label="Todas as categorias" className="max-h-[85dvh] w-full overflow-y-auto rounded-t-card bg-white p-5 shadow-pop dark:bg-ink-700 sm:max-w-lg sm:rounded-card" onClick={(event) => event.stopPropagation()}>
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div><h2 className="font-display text-lg font-semibold">Todas as categorias</h2><p className="mt-0.5 text-xs text-ink-300">Escolha uma categoria para o lançamento.</p></div>
+            <button type="button" onClick={() => setShowAll(false)} aria-label="Fechar categorias" className="flex h-9 w-9 items-center justify-center rounded-full bg-ink-50 text-ink-500 dark:bg-ink-900"><X size={18} /></button>
+          </div>
+          <div className="grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-5">
+            <button type="button" onClick={() => pick('')} className="flex flex-col items-center gap-1">
+              <span className={`flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed ${!value ? 'border-ink-900 bg-ink-50 dark:bg-ink-900' : 'border-ink-100 text-ink-300'}`}><EmptyIcon size={18} /></span>
+              <span className="text-center text-[11px] leading-tight text-ink-500">{emptyLabel}</span>
+            </button>
+            {ordenadas.map((c) => {
+              const Icon = getIcon(c.icone);
+              const selected = value === c.id;
+              return <button type="button" key={c.id} onClick={() => pick(c.id)} className="flex flex-col items-center gap-1">
+                <span className={`flex h-12 w-12 items-center justify-center rounded-full ${getColor(c.corKey).dot} ${selected ? 'ring-2 ring-ink-900 ring-offset-2 dark:ring-ink-50 dark:ring-offset-ink-700' : ''}`}><Icon size={19} strokeWidth={2} className="text-white" /></span>
+                <span className="line-clamp-2 text-center text-[11px] leading-tight text-ink-500">{c.nome}</span>
+              </button>;
+            })}
+          </div>
+        </div>
+      </div>}
     </div>
   );
 }
