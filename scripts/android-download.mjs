@@ -34,9 +34,18 @@ function trackedFiles() {
 async function sourceFingerprint() {
   const hash = createHash('sha256');
   for (const relativePath of trackedFiles()) {
+    const contents = await readFile(path.join(root, relativePath));
+    const blob = spawnSync('git', ['hash-object', `--path=${relativePath.replaceAll('\\', '/')}`, '--stdin'], {
+      cwd: root,
+      input: contents,
+      encoding: 'utf8',
+    });
+    if (blob.status !== 0) throw new Error(blob.stderr || `Nao foi possivel calcular o hash de ${relativePath}.`);
     hash.update(relativePath.replaceAll('\\', '/'));
     hash.update('\0');
-    hash.update(await readFile(path.join(root, relativePath)));
+    // Git applies the repository's text normalization here, so the same
+    // source produces the same fingerprint on Windows and Netlify/Linux.
+    hash.update(blob.stdout.trim());
     hash.update('\0');
   }
   return hash.digest('hex');
