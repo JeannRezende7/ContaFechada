@@ -153,7 +153,7 @@ export function LancamentosActions({
             className="flex items-center gap-1 text-xs text-ink-300 md:hover:text-ledger-600 transition-colors shrink-0"
           >
             <Download size={14} strokeWidth={2} />
-            Exportar
+            Exportar CSV
           </button>
         )}
         <button
@@ -165,6 +165,11 @@ export function LancamentosActions({
           Importar
         </button>
       </div>
+      {filteredCount > 0 && (
+        <p className="mt-2 text-[11px] text-ink-300">
+          CSV é uma planilha compatível com Excel, Google Planilhas e outros aplicativos.
+        </p>
+      )}
     </div>
   );
 }

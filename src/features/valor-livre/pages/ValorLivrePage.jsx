@@ -282,9 +282,9 @@ export default function ValorLivrePage() {
         <section className="mt-4 rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold text-ink-900 dark:text-ink-50">Distribuição do valor livre</h2>
+              <h2 className="text-base font-semibold text-ink-900 dark:text-ink-50">Divida o que sobrou do mês</h2>
               <p className="mt-1 text-xs text-ink-300">
-                Os percentuais usam o valor livre do mês. Novos gastos reduzem o disponível sem alterar essa fotografia.
+                Crie limites para cada objetivo e acompanhe quanto ainda pode gastar.
               </p>
             </div>
             <button
@@ -292,8 +292,23 @@ export default function ValorLivrePage() {
               onClick={gerarSugestao}
               className="inline-flex items-center gap-2 rounded-pill bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-600"
             >
-              <Sparkles size={14} /> Gerar sugestão
+              <Sparkles size={14} /> Sugerir divisão
             </button>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 overflow-hidden rounded-xl bg-ink-50 dark:bg-ink-900">
+            <div className="p-3">
+              <p className="text-[10px] text-ink-300">Valor para dividir</p>
+              <p className="money mt-1 text-sm font-semibold text-ink-700 dark:text-ink-100">{formatCurrency(resumo.valorLivre)}</p>
+            </div>
+            <div className="border-x border-ink-100 p-3 dark:border-ink-700">
+              <p className="text-[10px] text-ink-300">Já reservado</p>
+              <p className="money mt-1 text-sm font-semibold text-indigo-600">{formatCurrency(resumo.valorLivre - resumo.naoDistribuido)}</p>
+            </div>
+            <div className="p-3">
+              <p className="text-[10px] text-ink-300">Ainda disponível</p>
+              <p className={`money mt-1 text-sm font-semibold ${resumo.naoDistribuido < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>{formatCurrency(resumo.naoDistribuido)}</p>
+            </div>
           </div>
 
           <div className="mt-4 flex flex-col gap-3">
@@ -301,19 +316,19 @@ export default function ValorLivrePage() {
               <div key={item.id} className="rounded-xl border border-ink-100 p-3 dark:border-ink-900">
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(160px,1fr)_90px_minmax(190px,1fr)_140px_auto] lg:items-end">
                   <label className="text-xs text-ink-300">
-                    Finalidade
-                    <input value={item.nome} onChange={(e) => atualizar(item.id, 'nome', e.target.value)} placeholder="Ex.: Comida" className="mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
+                    Nome do objetivo
+                    <input value={item.nome} onChange={(e) => atualizar(item.id, 'nome', e.target.value)} placeholder="Ex.: Alimentação" className="mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
                   </label>
                   <label className="text-xs text-ink-300">
-                    % do valor livre
+                    Quanto reservar (%)
                     <input type="number" min="0" step="1" value={item.percentual ?? 0} onChange={(e) => atualizar(item.id, 'percentual', e.target.value)} className="money mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
                   </label>
                   <label className="text-xs text-ink-300">
-                    Categoria para acompanhar
+                    Acompanhar gastos de
                     <div className="mt-1"><CategoriaPicker categorias={categoriasDespesa} value={item.categoriaId} onChange={(value) => atualizar(item.id, 'categoriaId', value)} /></div>
                   </label>
                   <label className="text-xs text-ink-300">
-                    Limite
+                    Valor reservado
                     <input type="number" min="0" step="0.01" value={item.planejado} onChange={(e) => atualizar(item.id, 'valor', e.target.value)} className="money mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
                   </label>
                   <button type="button" aria-label={`Remover ${item.nome || 'item'}`} onClick={() => setDistribuicoes((atual) => atual.filter((row) => row.id !== item.id))} className="mb-1 text-ink-300 hover:text-signal-500">
@@ -336,7 +351,7 @@ export default function ValorLivrePage() {
             <button type="button" onClick={adicionar} className="inline-flex items-center gap-2 text-sm font-medium text-ledger-600"><Plus size={16} /> Adicionar finalidade</button>
             <div className="text-right">
               <p className={`money text-sm font-semibold ${resumo.naoDistribuido < 0 ? 'text-signal-500' : 'text-ink-700 dark:text-ink-100'}`}>
-                Não distribuído: {formatCurrency(resumo.naoDistribuido)}
+                Ainda disponível: {formatCurrency(resumo.naoDistribuido)}
               </p>
               {resumo.naoDistribuido < 0 && <p className="text-xs text-signal-500">A distribuição ultrapassa o valor livre.</p>}
             </div>
@@ -347,11 +362,12 @@ export default function ValorLivrePage() {
               checked={personalizada}
               onChange={(event) => { setPersonalizada(event.target.checked); setFeedback(''); }}
             />
-            Usar uma distribuição diferente somente em {monthKey.split('-').reverse().join('/')}
+            Aplicar esta divisão somente em {monthKey.split('-').reverse().join('/')}
           </label>
-          <p className="mt-3 rounded-xl bg-indigo-50 p-3 text-xs text-indigo-700 dark:bg-ink-900 dark:text-indigo-200">
-            O valor livre do mês é registrado a partir das receitas menos despesas existentes na fotografia mensal. Você pode corrigi-lo acima; depois disso, novos lançamentos apenas atualizam o gasto e o disponível de cada finalidade.
-          </p>
+          <details className="mt-3 rounded-xl bg-indigo-50 p-3 text-xs text-indigo-700 dark:bg-ink-900 dark:text-indigo-200">
+            <summary className="cursor-pointer font-medium">Como essa divisão funciona?</summary>
+            <p className="mt-2 leading-relaxed">O valor para dividir parte das receitas menos as contas fixas do mês. Cada objetivo reserva uma parte desse valor. Os novos gastos da categoria escolhida diminuem apenas o saldo disponível daquele objetivo.</p>
+          </details>
           <button type="button" disabled={saving} onClick={salvar} className="mt-4 w-full rounded-pill bg-ledger-500 py-2.5 text-sm font-medium text-white disabled:opacity-50">
             {saving ? 'Salvando…' : personalizada ? 'Salvar somente para este mês' : 'Salvar regra para todos os meses'}
           </button>

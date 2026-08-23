@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowDownRight, ArrowUpRight, FileUp, ImageUp, Loader2 } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, FileUp, ImageUp, Loader2, TriangleAlert } from 'lucide-react';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { parseExtrato } from '../utils/parseExtrato.js';
@@ -131,6 +131,10 @@ export default function ImportarExtratoModal({ open, uid, categorias, onClose, o
 
         {status === 'idle' && (
           <div className="space-y-3">
+            <div className="flex items-start gap-2 rounded-xl bg-gold-50 p-3 text-xs leading-relaxed text-gold-900 dark:bg-ink-900 dark:text-gold-100">
+              <TriangleAlert size={16} className="mt-0.5 shrink-0 text-gold-700" />
+              <p><strong>A importação pode não reconhecer tudo corretamente.</strong> O resultado varia conforme o banco, o formato e a qualidade do arquivo ou imagem. Revise datas, valores e descrições antes de importar.</p>
+            </div>
             <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-ink-100 px-4 py-5 hover:border-ledger-500 dark:border-ink-700">
               <FileUp className="text-ink-300" />
               <span className="text-sm text-ink-500">Escolher extrato CSV, OFX ou PDF</span>

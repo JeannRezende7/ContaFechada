@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
@@ -19,6 +19,7 @@ export default function BuscaGlobalPage() {
   const allowed = canUse(FEATURES.BUSCA_GLOBAL);
   const [data, setData] = useState({ lancamentos: [], categorias: [], recorrencias: [] });
   const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,6 +52,8 @@ export default function BuscaGlobalPage() {
     setFilters((current) => ({ ...current, [field]: value }));
   }
 
+  const advancedActive = Object.entries(filters).some(([key, value]) => key !== 'query' && value && value !== 'todos');
+
   if (loading) return <><Topbar title="Busca global" icon={Search} /><LoadingScreen /></>;
   if (!allowed) {
     return (
@@ -68,8 +71,20 @@ export default function BuscaGlobalPage() {
     <>
       <Topbar title="Busca global" icon={Search} />
       <div className="mx-auto max-w-4xl p-4 md:p-8">
-        <input autoFocus value={filters.query} onChange={(e) => update('query', e.target.value)} placeholder="Buscar lançamentos, categorias…" className="w-full rounded-pill border border-ink-100 bg-white px-4 py-3 text-sm shadow-card dark:border-ink-700 dark:bg-ink-900" />
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="relative">
+          <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-300" />
+          <input autoFocus value={filters.query} onChange={(e) => update('query', e.target.value)} placeholder="Busca rápida por nome ou categoria" className="w-full rounded-pill border border-ink-100 bg-white py-3 pl-11 pr-10 text-sm shadow-card dark:border-ink-700 dark:bg-ink-900" />
+          {filters.query && <button type="button" onClick={() => update('query', '')} aria-label="Limpar busca" className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-300"><X size={16} /></button>}
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="text-xs text-ink-300">Digite uma palavra para encontrar rapidamente.</p>
+          <button type="button" onClick={() => setAdvancedOpen((open) => !open)} className={`inline-flex shrink-0 items-center gap-1.5 rounded-pill px-3 py-2 text-xs font-medium ${advancedOpen || advancedActive ? 'bg-ledger-50 text-ledger-600' : 'bg-white text-ink-500 dark:bg-ink-700 dark:text-ink-100'}`}>
+            <SlidersHorizontal size={14} /> Filtros avançados {advancedOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+        </div>
+        {advancedOpen && <div className="mt-3 rounded-card bg-white p-3 shadow-card dark:bg-ink-700">
+        <div className="mb-3 flex items-center justify-between"><p className="text-sm font-medium">Refinar resultados</p><button type="button" onClick={() => setFilters((current) => ({ ...EMPTY_FILTERS, query: current.query }))} className="text-xs text-ledger-600">Limpar filtros</button></div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <select value={filters.recurso} onChange={(e) => update('recurso', e.target.value)} className="rounded-xl border border-ink-100 p-2 text-xs dark:border-ink-700 dark:bg-ink-900">
             <option value="todos">Todos os recursos</option><option value="lancamentos">Lançamentos</option><option value="parcelamentos">Parcelamentos</option><option value="recorrencias">Recorrências</option><option value="categorias">Categorias</option>
           </select>
@@ -86,7 +101,7 @@ export default function BuscaGlobalPage() {
           <input type="date" value={filters.ate} onChange={(e) => update('ate', e.target.value)} className="rounded-xl border border-ink-100 p-2 text-xs dark:border-ink-700 dark:bg-ink-900" />
           <input type="number" placeholder="Valor mínimo" value={filters.valorMin} onChange={(e) => update('valorMin', e.target.value)} className="money rounded-xl border border-ink-100 p-2 text-xs dark:border-ink-700 dark:bg-ink-900" />
           <input type="number" placeholder="Valor máximo" value={filters.valorMax} onChange={(e) => update('valorMax', e.target.value)} className="money rounded-xl border border-ink-100 p-2 text-xs dark:border-ink-700 dark:bg-ink-900" />
-        </div>
+        </div></div>}
         <p className="my-4 text-xs text-ink-300">{results.length} resultado(s)</p>
         <div className="space-y-2">
           {results.map((item) => (
