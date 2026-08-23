@@ -16,7 +16,7 @@
     padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + var(--admob-banner-height, 0px));
   }
   body.admob-banner-visible nav[data-bottom-navigation] {
-    bottom: calc(var(--admob-banner-height, 0px) + env(safe-area-inset-bottom, 0px));
+    bottom: var(--admob-banner-height, 0px);
   }
   @media (min-width: 768px) {
     [data-app-content] {

@@ -1,6 +1,7 @@
 import { listUserDocs, getUserDoc, deleteAllUserDocs, deleteUserDoc } from '../../../firebase/firestore.js';
 import { auth } from '../../../firebase/config.js';
 import { USER_FINANCIAL_COLLECTIONS } from '../../../../shared/userDataCollections.js';
+import { Capacitor } from '@capacitor/core';
 
 /**
  * Every top-level collection a user's data lives in, kept in one place so
@@ -85,4 +86,45 @@ export function downloadJson(filename, data) {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+/**
+ * On Android the backup must leave the app, otherwise uninstalling or losing
+ * the phone also loses the only copy. The native share sheet lets the user
+ * choose Drive, e-mail, another device or any installed file provider.
+ */
+export async function saveAndShareBackup(filename, data) {
+  const contents = JSON.stringify(data, null, 2);
+
+  if (Capacitor.isNativePlatform()) {
+    const [{ Filesystem, Directory, Encoding }, { Share }] = await Promise.all([
+      import('@capacitor/filesystem'),
+      import('@capacitor/share'),
+    ]);
+    const saved = await Filesystem.writeFile({
+      path: filename,
+      data: contents,
+      directory: Directory.Cache,
+      encoding: Encoding.UTF8,
+      recursive: true,
+    });
+    await Share.share({
+      title: 'Salvar backup do Conta Fechada',
+      text: 'Guarde este arquivo fora do aplicativo para poder restaurar seus dados no futuro.',
+      files: [saved.uri],
+      dialogTitle: 'Salvar backup em outro local',
+    });
+    return;
+  }
+
+  const file = new File([contents], filename, { type: 'application/json' });
+  if (navigator.canShare?.({ files: [file] })) {
+    await navigator.share({
+      title: 'Salvar backup do Conta Fechada',
+      text: 'Guarde este arquivo em um local seguro.',
+      files: [file],
+    });
+    return;
+  }
+  downloadJson(filename, data);
 }

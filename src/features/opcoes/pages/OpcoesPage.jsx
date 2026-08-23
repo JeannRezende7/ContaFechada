@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ListRestart, Trash2, Tag, Settings, Landmark, Crown, ChevronRight, Download, UserX, HardDrive, LogIn, LogOut, MonitorDown, TriangleAlert } from 'lucide-react';
+import { ListRestart, Settings, Landmark, Crown, ChevronRight, Download, Upload, UserX, HardDrive, LogIn, LogOut, MonitorDown, TriangleAlert } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { repositories } from '../../../repositories/index.js';
-import { exportUserData, deleteAllUserData, downloadJson } from '../services/dataPortabilityService.js';
+import { exportUserData, deleteAllUserData, downloadJson, saveAndShareBackup } from '../services/dataPortabilityService.js';
 import { deleteAccount, signOutUser } from '../../../firebase/auth.js';
 import { clearDeviceData } from '../../../utils/deviceCache.js';
 import { track, EVENTS } from '../../../utils/analytics.js';
@@ -21,7 +21,7 @@ import {
 } from '../../../db/localDatabase.js';
 
 export default function OpcoesPage() {
-  const { user, isLocalSession, endLocalMode } = useAuth();
+  const { user, isLocalSession } = useAuth();
   const confirm = useConfirm();
   const { isPremium } = usePremium();
   const [loading, setLoading] = useState(null);
@@ -77,64 +77,33 @@ export default function OpcoesPage() {
     setGestorUsaMovimentoState(novoValor);
   }
 
-  async function handleZerarLancamentos() {
-    if (!(await confirm('Excluir TODOS os lançamentos? Essa ação não pode ser desfeita.'))) return;
-    setLoading('lancamentos');
-    await repositories.lancamentos.removeAll(user.uid);
-    window.location.reload();
-  }
-
-  async function handleZerarCategorias() {
-    if (!(await confirm('Excluir TODAS as categorias? As categorias padrão voltam na próxima visita. Essa ação não pode ser desfeita.'))) return;
-    setLoading('categorias');
-    await repositories.categorias.removeAll(user.uid);
-    window.location.reload();
-  }
-
-  async function handleZerarGestor() {
-    if (!(await confirm('Excluir todos os lançamentos do Gestor Financeiro? Essa ação não pode ser desfeita.'))) return;
-    setLoading('gestor');
-    await repositories.gestor.removeAll(user.uid);
-    window.location.reload();
-  }
-
   // Fase 11: "Criar exportacao dos dados pessoais" (LGPD).
   async function handleExportarDados() {
     setLoading('exportar');
     try {
       const data = isNativeLocalDatabaseAvailable() ? await exportLocalData() : await exportUserData(user.uid);
-      downloadJson(`conta-fechada-meus-dados-${user.uid}.json`, data);
+      const date = new Date().toISOString().slice(0, 10);
+      await saveAndShareBackup(`backup-conta-fechada-${date}.json`, data);
+    } catch (error) {
+      await confirm(`Não foi possível salvar o backup: ${error.message}`);
     } finally {
       setLoading(null);
     }
   }
 
-  async function handleLimparDispositivo() {
-    if (isLocalSession) {
-      if (!(await confirm('Apagar permanentemente todos os dados locais deste aparelho? Faça uma exportação antes se quiser conservar uma cópia.'))) return;
-      setLoading('dispositivo');
-      await clearLocalData();
-      endLocalMode();
-      window.location.replace('/entrar');
-      return;
-    }
+  async function handleRestaurarConfiguracaoInicial() {
     const confirmado = await confirm(
-      'Apagar os dados financeiros deste dispositivo? Eles não serão restaurados automaticamente. ' +
-        'Faça um backup local antes de continuar. O app será desconectado e recarregado.'
+      'Restaurar a configuração inicial e apagar todos os dados deste aparelho? ' +
+      'Antes de continuar, salve um backup em outro local. Esta ação não pode ser desfeita.'
     );
     if (!confirmado) return;
-
-    setLoading('dispositivo');
+    setLoading('reiniciar');
     try {
-      await clearDeviceData(user.uid);
-      await signOutUser();
+      await clearLocalData();
       window.location.reload();
     } catch (error) {
       setLoading(null);
-      await confirm(`Não foi possível limpar este dispositivo: ${error.message}`);
-      // clearDeviceData terminates Firestore before attempting the cleanup.
-      // Reload even on failure so the app receives a fresh instance.
-      window.location.reload();
+      await confirm(`Não foi possível restaurar a configuração inicial: ${error.message}`);
     }
   }
 
@@ -260,30 +229,36 @@ export default function OpcoesPage() {
           <ChevronRight size={16} className="text-ink-300 shrink-0" strokeWidth={2} />
         </Link>}
 
-        {activeTab === 'geral' && isNativeLocalDatabaseAvailable() && <section className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
+        {activeTab === 'geral' && isNativeLocalDatabaseAvailable() && <section className="overflow-hidden rounded-card bg-white shadow-card dark:bg-ink-700">
+          <div className="p-4 pb-0">
           <div className="flex items-start gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ledger-50 text-ledger-600"><HardDrive size={15} /></span>
-            <div><h2 className="text-sm font-medium">Backup local</h2><p className="mt-0.5 text-xs text-ink-300">Proteja seus dados antes de trocar ou limpar o aparelho.</p></div>
+            <div><h2 className="text-sm font-medium">Backup dos seus dados</h2><p className="mt-0.5 text-xs text-ink-300">Leve seus dados com você ao trocar ou restaurar o aparelho.</p></div>
           </div>
-          <div className="mt-3 flex items-start gap-2 rounded-card bg-ink-50 p-3 text-ink-500 dark:bg-ink-900 dark:text-ink-100">
+          <div className="mt-3 flex items-start gap-2 rounded-card bg-gold-50 p-3 text-gold-900 dark:bg-ink-900 dark:text-gold-100">
             <TriangleAlert size={15} className="mt-0.5 shrink-0 text-gold-700" />
-            <p className="text-xs leading-relaxed">Sem o arquivo de backup, dados mantidos somente neste aparelho não podem ser recuperados.</p>
+            <p className="text-xs leading-relaxed"><strong>Salve fora deste aparelho.</strong> Escolha Google Drive, e-mail ou outro local seguro na tela de compartilhamento. Sem esse arquivo, os dados não poderão ser recuperados.</p>
           </div>
-          <div className="mt-3 flex items-center justify-between gap-3 border-b border-ink-100 pb-3 dark:border-ink-900">
-            <div><p className="text-sm font-medium">Salvar uma cópia</p><p className="mt-0.5 text-xs text-ink-300">Gera um arquivo JSON com todos os dados.</p></div>
-            <button type="button" onClick={handleExportarDados} disabled={loading === 'exportar'} className="shrink-0 rounded-pill bg-ledger-500 px-3.5 py-2 text-sm font-medium text-white disabled:opacity-50"><Download size={15} className="mr-1 inline" />{loading === 'exportar' ? 'Salvando…' : 'Salvar'}</button>
           </div>
-          <div className="flex items-center justify-between gap-3 pt-3">
-            <div><p className="text-sm font-medium">Restaurar uma cópia</p><p className="mt-0.5 text-xs text-ink-300">Substitui os dados atuais por um backup.</p></div>
+          <div className="mt-4 grid grid-cols-2 divide-x divide-ink-100 border-t border-ink-100 dark:divide-ink-900 dark:border-ink-900">
+            <button type="button" onClick={handleExportarDados} disabled={loading === 'exportar'} className="flex min-h-20 flex-col items-center justify-center gap-1.5 px-3 py-3 text-sm font-medium text-ledger-600 disabled:opacity-50">
+              <Download size={19} />
+              {loading === 'exportar' ? 'Salvando…' : 'Salvar backup'}
+              <span className="text-[10px] font-normal text-ink-300">Abre o compartilhamento</span>
+            </button>
             <input ref={importInputRef} type="file" accept="application/json,.json" onChange={handleImportarDados} className="sr-only" />
-            <button type="button" onClick={() => importInputRef.current?.click()} disabled={loading === 'importar'} className="shrink-0 rounded-pill bg-ink-50 px-3.5 py-2 text-sm font-medium dark:bg-ink-900 disabled:opacity-50">{loading === 'importar' ? 'Restaurando…' : 'Restaurar'}</button>
+            <button type="button" onClick={() => importInputRef.current?.click()} disabled={loading === 'importar'} className="flex min-h-20 flex-col items-center justify-center gap-1.5 px-3 py-3 text-sm font-medium text-ink-500 dark:text-ink-100 disabled:opacity-50">
+              <Upload size={19} />
+              {loading === 'importar' ? 'Restaurando…' : 'Restaurar backup'}
+              <span className="text-[10px] font-normal text-ink-300">Escolha um arquivo salvo</span>
+            </button>
           </div>
         </section>}
 
         {activeTab === 'avancado' && <p className="px-1 text-xs font-semibold uppercase text-ink-300">Configuração</p>}
-        {activeTab === 'avancado' && <button onClick={() => window.dispatchEvent(new Event('contafechada:open-onboarding'))} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 text-left hover:shadow-card-hover">
-          <div className="flex items-start gap-3"><span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><ListRestart size={15} /></span><div><p className="text-sm font-medium">Retomar configuração inicial</p><p className="text-xs text-ink-300">Revise sua receita principal, contas fixas e categorias.</p></div></div>
-          <ChevronRight size={16} className="text-ink-300" />
+        {activeTab === 'avancado' && <button onClick={handleRestaurarConfiguracaoInicial} disabled={loading === 'reiniciar'} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 text-left hover:shadow-card-hover disabled:opacity-50">
+          <div className="flex items-start gap-3"><span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><ListRestart size={15} /></span><div><p className="text-sm font-medium">Restaurar configuração inicial</p><p className="text-xs text-ink-300">Apaga os dados locais e inicia novamente a configuração do aplicativo.</p></div></div>
+          <span className="shrink-0 text-xs font-medium text-indigo-600">{loading === 'reiniciar' ? 'Restaurando…' : 'Restaurar'}</span>
         </button>}
         {activeTab === 'geral' && installState.isBrowser && !installState.isInstalled && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div className="min-w-0 flex items-start gap-3">
@@ -337,96 +312,19 @@ export default function OpcoesPage() {
         {activeTab === 'avancado' && <p className="px-1 pt-2 text-xs font-semibold uppercase text-ink-300">Recuperação</p>}
 
         {activeTab === 'avancado' && recoverySnapshot && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
-          <p className="text-sm font-medium">Cópia interna de segurança</p>
-          <p className="mt-0.5 break-all text-xs text-ink-300">Criada automaticamente antes de operações de recuperação.</p>
+          <p className="text-sm font-medium">Backup automático de segurança</p>
+          <p className="mt-0.5 text-xs text-ink-300">Criado no aparelho antes da última restauração.</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" onClick={handleExportarSnapshot} className="rounded-pill bg-ink-50 px-3 py-2 text-xs font-medium dark:bg-ink-900">Exportar cópia</button>
+            <button type="button" onClick={handleExportarSnapshot} className="rounded-pill bg-ink-50 px-3 py-2 text-xs font-medium dark:bg-ink-900">Salvar este backup</button>
             <button type="button" onClick={handleRestaurarSnapshot} disabled={loading === 'restaurar'} className="rounded-pill bg-signal-50 px-3 py-2 text-xs font-medium text-signal-500 disabled:opacity-50">
-              {loading === 'restaurar' ? 'Restaurando…' : 'Restaurar cópia'}
+              {loading === 'restaurar' ? 'Restaurando…' : 'Restaurar este backup'}
             </button>
           </div>
         </div>}
 
-        <div className={`${activeTab !== 'avancado' ? 'hidden' : 'flex'} bg-white dark:bg-ink-700 rounded-card shadow-card p-4 items-center justify-between gap-3`}>
-          <div className="min-w-0 flex items-start gap-3">
-            <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
-              <HardDrive size={15} strokeWidth={1.75} />
-            </span>
-            <div>
-              <p className="text-sm font-medium text-ink-900 dark:text-ink-50">{isLocalSession ? 'Apagar dados locais' : 'Limpar dados deste dispositivo'}</p>
-              <p className="text-xs text-ink-300 mt-0.5">
-                Apaga os dados deste aparelho. Faça um backup antes.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleLimparDispositivo}
-            disabled={loading === 'dispositivo'}
-            className="shrink-0 flex items-center gap-1.5 rounded-pill bg-ink-50 dark:bg-ink-900 text-ink-500 px-3.5 py-2 text-sm font-medium hover:bg-ink-100 transition-colors disabled:opacity-50"
-          >
-            <HardDrive size={15} strokeWidth={2} />
-            {loading === 'dispositivo' ? 'Limpando...' : 'Limpar'}
-          </button>
-        </div>
-
-        <div className={`${activeTab !== 'avancado' ? 'hidden' : 'block'} px-1 pt-2`}>
-          <p className="text-xs font-semibold uppercase text-signal-500">Zona de perigo</p>
-          <p className="mt-1 text-xs text-ink-300">Estas ações alteram ou apagam dados permanentemente.</p>
-        </div>
-
-        <div className={`${activeTab !== 'avancado' ? 'hidden' : 'flex'} flex-col divide-y divide-ink-100 overflow-hidden rounded-card bg-white shadow-card dark:divide-ink-900 dark:bg-ink-700`}>
-        <div className="p-4 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Zerar lançamentos</p>
-            <p className="text-xs text-ink-300 mt-0.5">
-              Apaga todos os lançamentos. Recorrências continuam ativas e voltam a gerar entradas.
-            </p>
-          </div>
-          <button
-            onClick={handleZerarLancamentos}
-            disabled={loading === 'lancamentos'}
-            className="shrink-0 flex items-center gap-1.5 rounded-pill bg-signal-50 text-signal-500 px-3.5 py-2 text-sm font-medium hover:bg-signal-100 transition-colors disabled:opacity-50"
-          >
-            <Trash2 size={15} strokeWidth={2} />
-            Zerar
-          </button>
-        </div>
-
-        <div className="p-4 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Zerar categorias</p>
-            <p className="text-xs text-ink-300 mt-0.5">
-              Apaga todas as categorias. As categorias padrão voltam na próxima visita.
-            </p>
-          </div>
-          <button
-            onClick={handleZerarCategorias}
-            disabled={loading === 'categorias'}
-            className="shrink-0 flex items-center gap-1.5 rounded-pill bg-signal-50 text-signal-500 px-3.5 py-2 text-sm font-medium hover:bg-signal-100 transition-colors disabled:opacity-50"
-          >
-            <Tag size={15} strokeWidth={2} />
-            Zerar
-          </button>
-        </div>
-
-        <div className="p-4 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Zerar Gestor Financeiro</p>
-            <p className="text-xs text-ink-300 mt-0.5">
-              Apaga os lançamentos importados manualmente para o Gestor Financeiro. O Movimento não é afetado.
-            </p>
-          </div>
-          <button
-            onClick={handleZerarGestor}
-            disabled={loading === 'gestor'}
-            className="shrink-0 flex items-center gap-1.5 rounded-pill bg-signal-50 text-signal-500 px-3.5 py-2 text-sm font-medium hover:bg-signal-100 transition-colors disabled:opacity-50"
-          >
-            <Landmark size={15} strokeWidth={2} />
-            Zerar
-          </button>
-        </div>
-
-        {!isLocalSession && <div className="p-4 flex items-center justify-between gap-3">
+        {activeTab === 'avancado' && !isLocalSession && <>
+        <p className="px-1 pt-2 text-xs font-semibold uppercase text-ink-300">Conta</p>
+        <div className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Excluir minha conta</p>
             <p className="text-xs text-ink-300 mt-0.5">Apaga permanentemente sua conta e todos os seus dados.</p>
@@ -439,8 +337,8 @@ export default function OpcoesPage() {
             <UserX size={15} strokeWidth={2} />
             {loading === 'conta' ? 'Excluindo...' : 'Excluir conta'}
           </button>
-        </div>}
         </div>
+        </>}
 
         <p className="text-center text-xs text-ink-300 mt-8">
           Conta Fechada v{__APP_VERSION__} · desenvolvido por <span className="font-medium text-ink-500">LeliaLabs</span>
