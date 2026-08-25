@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const apkPath = path.join(root, 'downloads', 'conta-fechada.apk');
 const metadataPath = path.join(root, 'downloads', 'conta-fechada.json');
-const generatedApk = path.join(root, 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
+const generatedApk = path.join(root, 'android', 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk');
 const inputs = [
   'android/app/build.gradle',
   'android/app/src/main',
@@ -81,10 +81,11 @@ async function check() {
 }
 
 async function update() {
+  run('node', ['scripts/android-signing.mjs', 'setup']);
   run('node', ['scripts/android-version.mjs', '--bump']);
   run('npm', ['run', 'build:android']);
   run('npx', ['cap', 'sync', 'android']);
-  run(process.platform === 'win32' ? 'gradlew.bat' : './gradlew', ['assembleDebug'], path.join(root, 'android'));
+  run(process.platform === 'win32' ? 'gradlew.bat' : './gradlew', ['assembleRelease'], path.join(root, 'android'));
   await mkdir(path.dirname(apkPath), { recursive: true });
   await copyFile(generatedApk, apkPath);
   const versions = await readVersions();

@@ -1,7 +1,7 @@
 {
   "name": "contafechada",
   "private": true,
-  "version": "5.3.10",
+  "version": "5.3.11",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,9 +12,11 @@
     "audit:android-bundle": "node scripts/audit-android-bundle.mjs",
     "android:version:check": "node scripts/android-version.mjs --check",
     "android:version:bump": "node scripts/android-version.mjs --bump",
+    "android:signing:setup": "node scripts/android-signing.mjs setup",
+    "android:signing:check": "node scripts/android-signing.mjs check",
     "android:download:check": "node scripts/android-download.mjs check",
     "android:download:update": "node scripts/android-download.mjs update",
-    "bundle:android:release": "npm run build:android && npx cap sync android && cd android && gradlew.bat bundleRelease",
+    "bundle:android:release": "npm run android:signing:setup && npm run build:android && npx cap sync android && cd android && gradlew.bat bundleRelease",
     "admin:set": "node scripts/set-admin-claim.mjs",
     "check:prelaunch": "node scripts/prelaunch-check.mjs",
     "check:prelaunch:rules": "node scripts/prelaunch-check.mjs --rules",

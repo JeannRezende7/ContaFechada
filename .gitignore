@@ -6,4 +6,5 @@ dist-android
 *.log
 .DS_Store
 android/.idea/
+android/signing/
 scripts/service-account.json
