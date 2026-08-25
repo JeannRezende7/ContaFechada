@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
+import { useModalHistory } from '../../../hooks/useModalHistory.js';
+import ModalHeader from '../../../components/ui/ModalHeader.jsx';
 
 const EMPTY_FORM = { valor: '', dataVencimento: '', descricao: '', categoriaId: '', status: '', observacoes: '' };
 
 export default function AcoesEmMassaModal({ open, count, tipo, categorias, onClose, onApply, applying = false }) {
+  useModalHistory(open, onClose);
   const [form, setForm] = useState(EMPTY_FORM);
   const [changed, setChanged] = useState(() => new Set());
   const categoriasDoTipo = useMemo(() => categorias.filter((item) => item.tipo === tipo), [categorias, tipo]);
@@ -23,9 +26,8 @@ export default function AcoesEmMassaModal({ open, count, tipo, categorias, onClo
   }
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink-900/50 sm:items-center sm:px-4">
-      <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-card bg-white p-5 shadow-pop dark:bg-ink-700 sm:max-w-lg sm:rounded-card sm:p-6">
-        <div className="mx-auto mb-4 h-1.5 w-10 rounded-pill bg-ink-100 dark:bg-ink-900 sm:hidden" />
-        <h2 className="mb-1 font-display text-base font-semibold text-ink-900 dark:text-ink-50">Editar {count} lançamento(s)</h2>
+      <div className="app-modal-sheet w-full overflow-y-auto rounded-t-card bg-white p-5 shadow-pop dark:bg-ink-700 sm:max-w-lg sm:rounded-card sm:p-6">
+        <ModalHeader onBack={onClose} title={`Editar ${count} lançamento(s)`} className="mb-1" />
         <p className="mb-4 text-xs text-ink-300">Preencha apenas o que deseja alterar. Campos não modificados serão mantidos.</p>
         <div className="mb-3 grid grid-cols-2 gap-3">
           <div><label className="mb-1 block text-xs font-medium text-ink-300">Valor</label><input type="number" min="0.01" step="0.01" value={form.valor} onChange={(e) => update('valor', e.target.value)} className={`${inputClass} money`} placeholder="Manter atual" /></div>

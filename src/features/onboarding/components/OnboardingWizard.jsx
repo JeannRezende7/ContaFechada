@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CheckCircle2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { repositories } from '../../../repositories/index.js';
 import { reportError } from '../../../utils/crashReporting.js';
+import { useModalHistory } from '../../../hooks/useModalHistory.js';
 
 const INITIAL = {
   incomeDescription: 'Renda principal', incomeValue: '', incomeDay: '5',
@@ -9,6 +10,7 @@ const INITIAL = {
 };
 
 export default function OnboardingWizard({ uid, open, onClose }) {
+  useModalHistory(open, onClose);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(INITIAL);
   const [saving, setSaving] = useState(false);
@@ -45,7 +47,7 @@ export default function OnboardingWizard({ uid, open, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink-900/60 sm:items-center sm:px-4">
-      <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-card bg-white p-5 shadow-pop dark:bg-ink-700 sm:max-w-lg sm:rounded-card sm:p-6">
+      <div className="app-modal-sheet w-full overflow-y-auto rounded-t-card bg-white p-5 shadow-pop dark:bg-ink-700 sm:max-w-lg sm:rounded-card sm:p-6">
         <div className="mb-5 flex gap-1">{[0, 1, 2, 3].map((item) => <span key={item} className={`h-1.5 flex-1 rounded-pill ${item <= step ? 'bg-ledger-500' : 'bg-ink-100 dark:bg-ink-900'}`} />)}</div>
         {step === 0 && <Intro />}
         {step === 1 && <RecurringForm title="Sua renda principal" description="Ela será criada como receita recorrente mensal." prefix="income" form={form} update={update} />}

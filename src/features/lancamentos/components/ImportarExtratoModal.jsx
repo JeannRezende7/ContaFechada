@@ -5,12 +5,14 @@ import { repositories } from '../../../repositories/index.js';
 import { parseExtrato } from '../utils/parseExtrato.js';
 import { parsePrintExtrato } from '../utils/parsePrintExtrato.js';
 import { extractPdfLines } from '../utils/extractPdfLines.js';
+import { useModalHistory } from '../../../hooks/useModalHistory.js';
 
 function isValidItem(item) {
   return /^\d{4}-\d{2}-\d{2}$/.test(item.dataVencimento) && Number(item.valor) > 0;
 }
 
 export default function ImportarExtratoModal({ open, uid, categorias, onClose, onImported }) {
+  useModalHistory(open, onClose);
   const [status, setStatus] = useState('idle');
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(new Set());
@@ -125,7 +127,7 @@ export default function ImportarExtratoModal({ open, uid, categorias, onClose, o
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink-900/50 sm:items-center sm:px-4">
-      <div className="flex max-h-[88vh] w-full flex-col rounded-t-card bg-white p-5 shadow-pop dark:bg-ink-700 sm:max-w-2xl sm:rounded-card">
+      <div className="app-modal-sheet flex w-full flex-col rounded-t-card bg-white p-5 shadow-pop dark:bg-ink-700 sm:max-w-2xl sm:rounded-card">
         <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50">Importar lançamentos</h2>
         <p className="mb-4 text-xs text-ink-300">Revise e corrija os dados reconhecidos antes de confirmar.</p>
 

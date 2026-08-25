@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { Repeat } from 'lucide-react';
 import { repositories } from '../../../repositories/index.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
+import { useModalHistory } from '../../../hooks/useModalHistory.js';
 
 /** Lets the user pick which active recorrências (standing monthly commitments) enter the Gestor Financeiro. */
 export default function ImportarRecorrenciasModal({ open, uid, onClose, onImported }) {
+  useModalHistory(open, onClose);
   const [status, setStatus] = useState('loading'); // loading | list | importing | done
   const [itens, setItens] = useState([]);
   const [selecionados, setSelecionados] = useState(new Set());
@@ -49,7 +51,7 @@ export default function ImportarRecorrenciasModal({ open, uid, onClose, onImport
 
   return (
     <div className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-30 px-0 sm:px-4">
-      <div className="bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop max-h-[85vh] flex flex-col">
+      <div className="app-modal-sheet bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop flex flex-col">
         <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
         <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1">Importar recorrências</h2>
         <p className="text-xs text-ink-300 mb-4">

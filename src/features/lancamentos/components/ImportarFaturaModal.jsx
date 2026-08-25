@@ -6,6 +6,7 @@ import { repositories } from '../../../repositories/index.js';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
+import { useModalHistory } from '../../../hooks/useModalHistory.js';
 
 /**
  * Imports a Nubank credit-card fatura PDF: extracts text client-side (pdf.js),
@@ -14,6 +15,7 @@ import { formatDateBR } from '../../../utils/formatDate.js';
  * — see parseFaturaNubank.js.
  */
 export default function ImportarFaturaModal({ open, uid, categorias = [], onClose, onImported, onImport = repositories.lancamentos.importLancamentos }) {
+  useModalHistory(open, onClose);
   const [status, setStatus] = useState('idle'); // idle | parsing | preview | importing | done | error
   const [itens, setItens] = useState([]);
   const [selecionados, setSelecionados] = useState(new Set());
@@ -84,7 +86,7 @@ export default function ImportarFaturaModal({ open, uid, categorias = [], onClos
 
   return (
     <div className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-30 px-0 sm:px-4">
-      <div className="bg-white dark:bg-ink-700 w-full sm:max-w-lg rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop max-h-[85vh] flex flex-col">
+      <div className="app-modal-sheet bg-white dark:bg-ink-700 w-full sm:max-w-lg rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop flex flex-col">
         <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
         <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1">Importar fatura (PDF)</h2>
         <p className="text-xs text-ink-300 mb-4">Hoje só reconheço faturas do Nubank.</p>

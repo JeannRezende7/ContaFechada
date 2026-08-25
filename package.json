@@ -1,7 +1,7 @@
 {
   "name": "contafechada",
   "private": true,
-  "version": "5.3.9",
+  "version": "5.3.10",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -30,6 +30,7 @@
     "@capacitor-firebase/authentication": "^8.4.0",
     "@capacitor-firebase/crashlytics": "^8.4.0",
     "@capacitor/android": "^8.4.2",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/cli": "^8.4.2",
     "@capacitor/core": "^8.4.2",
     "@capacitor/filesystem": "^8.1.3",

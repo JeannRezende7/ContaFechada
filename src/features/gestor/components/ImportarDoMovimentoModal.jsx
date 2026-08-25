@@ -4,9 +4,11 @@ import { repositories } from '../../../repositories/index.js';
 import { buildLancamentoMatcher } from '../../lancamentos/utils/searchLancamentos.js';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
+import { useModalHistory } from '../../../hooks/useModalHistory.js';
 
 /** Lets the user pick which existing Movimento lançamentos to copy into the Gestor Financeiro's own, separate ledger. */
 export default function ImportarDoMovimentoModal({ open, uid, categoriasById = {}, onClose, onImported }) {
+  useModalHistory(open, onClose);
   const [status, setStatus] = useState('loading'); // loading | list | importing | done
   const [itens, setItens] = useState([]);
   const [selecionados, setSelecionados] = useState(new Set());
@@ -58,7 +60,7 @@ export default function ImportarDoMovimentoModal({ open, uid, categoriasById = {
 
   return (
     <div className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-30 px-0 sm:px-4">
-      <div className="bg-white dark:bg-ink-700 w-full sm:max-w-lg rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop max-h-[85vh] flex flex-col">
+      <div className="app-modal-sheet bg-white dark:bg-ink-700 w-full sm:max-w-lg rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop flex flex-col">
         <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
         <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1">Importar do Movimento</h2>
         <p className="text-xs text-ink-300 mb-4">Selecione quais lançamentos do Movimento entram no Gestor Financeiro.</p>

@@ -41,6 +41,13 @@
   button, input, select, textarea {
     max-width: 100%;
   }
+
+  /* Android bottom sheets stay above gesture/navigation controls and remain scrollable. */
+  .app-modal-sheet {
+    max-height: calc(100dvh - max(env(safe-area-inset-top, 0px), 0.75rem));
+    overscroll-behavior: contain;
+    padding-bottom: max(2rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem)) !important;
+  }
   button:active {
     transform: scale(0.98);
   }

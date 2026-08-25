@@ -3,6 +3,7 @@ import { Plus, Save } from 'lucide-react';
 import { COLOR_MAP } from '../colorMap.js';
 import { ICON_MAP } from '../iconMap.js';
 import { useModalHistory } from '../../../hooks/useModalHistory.js';
+import ModalHeader from '../../../components/ui/ModalHeader.jsx';
 
 const EMPTY = { nome: '', corKey: 'cinza', icone: 'tag' };
 
@@ -45,15 +46,9 @@ export default function CategoriaModal({ open, tipo, initialData = null, onClose
     <div className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-30 px-0 sm:px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop max-h-[90vh] overflow-y-auto"
+        className="app-modal-sheet bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop overflow-y-auto"
       >
-        <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
-
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50">
-            {initialData ? 'Editar' : 'Nova'} categoria de {tipo === 'despesa' ? 'despesa' : 'receita'}
-          </h2>
-        </div>
+        <ModalHeader onBack={onClose} title={`${initialData ? 'Editar' : 'Nova'} categoria de ${tipo === 'despesa' ? 'despesa' : 'receita'}`} />
 
         <label className="block text-xs font-medium text-ink-300 mb-1">Nome</label>
         <input

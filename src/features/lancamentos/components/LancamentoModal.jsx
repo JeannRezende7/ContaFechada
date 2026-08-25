@@ -5,6 +5,7 @@ import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { getTodayISODate, shiftISODate, isSaneISODate } from '../../../utils/formatDate.js';
 import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
 import { useModalHistory } from '../../../hooks/useModalHistory.js';
+import ModalHeader from '../../../components/ui/ModalHeader.jsx';
 
 const EMPTY = {
   tipo: 'despesa',
@@ -203,13 +204,9 @@ export default function LancamentoModal({
     <div className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-30 px-0 sm:px-4">
       <form
         onSubmit={handleSubmit}
-        className="max-h-[92vh] overflow-y-auto bg-white dark:bg-ink-700 w-full sm:max-w-lg rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
+        className="app-modal-sheet overflow-y-auto bg-white dark:bg-ink-700 w-full sm:max-w-lg rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
       >
-        <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
-
-        <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-4">
-          {copyMode ? 'Duplicar lançamento' : isNew ? 'Novo lançamento' : 'Editar lançamento'}
-        </h2>
+        <ModalHeader onBack={onClose} title={copyMode ? 'Duplicar lançamento' : isNew ? 'Novo lançamento' : 'Editar lançamento'} />
 
         <div className="flex gap-2 mb-4">
           <button

@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 
 const HISTORY_KEY = '__contafechadaModal';
 
@@ -22,6 +24,20 @@ export function useModalHistory(open, onClose) {
     const handlePopState = () => onClose();
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open || !Capacitor.isNativePlatform()) return undefined;
+    let handle;
+    let disposed = false;
+    App.addListener('backButton', () => onClose()).then((nextHandle) => {
+      if (disposed) nextHandle.remove();
+      else handle = nextHandle;
+    });
+    return () => {
+      disposed = true;
+      handle?.remove();
+    };
   }, [open, onClose]);
 
   useEffect(() => {

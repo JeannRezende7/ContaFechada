@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Ban, ChevronDown, Plus, X } from 'lucide-react';
 import { getColor } from '../colorMap.js';
 import { getIcon } from '../iconMap.js';
+import { useModalHistory } from '../../../hooks/useModalHistory.js';
 
 /**
  * Trigger button + popover panel of icon tiles, replacing a plain
@@ -12,6 +13,7 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
   const [open, setOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const rootRef = useRef(null);
+  useModalHistory(showAll, () => setShowAll(false));
 
   const ordenadas = [...categorias].sort((a, b) => a.ordem - b.ordem);
   const selecionada = categorias.find((c) => c.id === value);
@@ -129,7 +131,7 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
       )}
 
       {showAll && <div className="fixed inset-0 z-[60] flex items-end justify-center bg-ink-900/55 px-0 backdrop-blur-[2px] sm:items-center sm:px-4" onClick={() => setShowAll(false)}>
-        <div role="dialog" aria-modal="true" aria-label="Todas as categorias" className="max-h-[85dvh] w-full overflow-y-auto rounded-t-card bg-white p-5 shadow-pop dark:bg-ink-700 sm:max-w-lg sm:rounded-card" onClick={(event) => event.stopPropagation()}>
+        <div role="dialog" aria-modal="true" aria-label="Todas as categorias" className="app-modal-sheet w-full overflow-y-auto rounded-t-card bg-white p-5 shadow-pop dark:bg-ink-700 sm:max-w-lg sm:rounded-card" onClick={(event) => event.stopPropagation()}>
           <div className="mb-5 flex items-center justify-between gap-3">
             <div><h2 className="font-display text-lg font-semibold">Todas as categorias</h2><p className="mt-0.5 text-xs text-ink-300">Escolha uma categoria para o lançamento.</p></div>
             <button type="button" onClick={() => setShowAll(false)} aria-label="Fechar categorias" className="flex h-9 w-9 items-center justify-center rounded-full bg-ink-50 text-ink-500 dark:bg-ink-900"><X size={18} /></button>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { COLOR_MAP } from '../../categorias/colorMap.js';
 import { useModalHistory } from '../../../hooks/useModalHistory.js';
+import ModalHeader from '../../../components/ui/ModalHeader.jsx';
 
 const EMPTY = { nome: '', valorAlvo: '', valorAtual: '', corKey: 'azul', aporteTipo: 'nenhum', aporteValor: '', lembreteAporte: false };
 
@@ -62,13 +63,9 @@ export default function MetaModal({ open, meta, onClose, onSave, onDelete }) {
     <div className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-30 px-0 sm:px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
+        className="app-modal-sheet overflow-y-auto bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
       >
-        <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
-
-        <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-4">
-          {meta ? 'Editar meta' : 'Nova meta financeira'}
-        </h2>
+        <ModalHeader onBack={onClose} title={meta ? 'Editar meta' : 'Nova meta financeira'} />
 
         <label className="block text-xs font-medium text-ink-300 mb-1">Nome</label>
         <input

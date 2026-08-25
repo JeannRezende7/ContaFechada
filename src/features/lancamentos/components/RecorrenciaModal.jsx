@@ -3,6 +3,7 @@ import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import { useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
 import { getCurrentMonthKey } from '../../../utils/monthKey.js';
 import { useModalHistory } from '../../../hooks/useModalHistory.js';
+import ModalHeader from '../../../components/ui/ModalHeader.jsx';
 
 const EMPTY = { descricao: '', valor: '', diaVencimento: '', categoriaId: '', observacoes: '' };
 
@@ -88,7 +89,7 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
       <div className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-30 px-0 sm:px-4">
         <form
           onSubmit={handleGeneratedUpdate}
-          className="bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
+          className="app-modal-sheet overflow-y-auto bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
         >
           <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1">
             Atualizar lançamentos gerados
@@ -131,11 +132,9 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
     <div className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-30 px-0 sm:px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
+        className="app-modal-sheet overflow-y-auto bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
       >
-        <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
-
-        <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1">Editar recorrência</h2>
+        <ModalHeader onBack={onClose} title="Editar recorrência" className="mb-1" />
         <p className="text-xs text-ink-300 mb-4">
           Ao salvar, você poderá escolher se os meses já lançados também devem mudar.
         </p>
