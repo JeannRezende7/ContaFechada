@@ -27,7 +27,7 @@ export default function AcoesEmMassaModal({ open, count, tipo, categorias, onClo
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink-900/50 sm:items-center sm:px-4">
       <div className="app-modal-sheet w-full overflow-y-auto rounded-t-card bg-white p-5 shadow-pop dark:bg-ink-700 sm:max-w-lg sm:rounded-card sm:p-6">
-        <ModalHeader onBack={onClose} title={`Editar ${count} lançamento(s)`} className="mb-1" />
+        <ModalHeader onBack={onClose} title={`Editar ${count} lançamento(s)`} actionLabel={applying ? 'Salvando…' : `Salvar ${count}`} onAction={submit} actionDisabled={applying || !canApply} className="mb-1" />
         <p className="mb-4 text-xs text-ink-300">Preencha apenas o que deseja alterar. Campos não modificados serão mantidos.</p>
         <div className="mb-3 grid grid-cols-2 gap-3">
           <div><label className="mb-1 block text-xs font-medium text-ink-300">Valor</label><input type="number" min="0.01" step="0.01" value={form.valor} onChange={(e) => update('valor', e.target.value)} className={`${inputClass} money`} placeholder="Manter atual" /></div>
@@ -45,10 +45,6 @@ export default function AcoesEmMassaModal({ open, count, tipo, categorias, onClo
         </select>
         <label className="mb-1 block text-xs font-medium text-ink-300">Observações</label>
         <textarea rows="2" value={form.observacoes} onChange={(e) => update('observacoes', e.target.value)} className={`${inputClass} mb-4 resize-none`} placeholder="Manter observações atuais" />
-        <div className="flex gap-2">
-          <button disabled={applying} onClick={onClose} className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 disabled:opacity-50 dark:hover:bg-ink-900">Cancelar</button>
-          <button disabled={applying || !canApply} onClick={submit} className="flex-1 rounded-xl bg-ledger-500 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{applying ? 'Salvando…' : `Salvar ${count}`}</button>
-        </div>
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus, Save } from 'lucide-react';
 import { COLOR_MAP } from '../colorMap.js';
 import { ICON_MAP } from '../iconMap.js';
 import { useModalHistory } from '../../../hooks/useModalHistory.js';
@@ -48,7 +47,12 @@ export default function CategoriaModal({ open, tipo, initialData = null, onClose
         onSubmit={handleSubmit}
         className="app-modal-sheet bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop overflow-y-auto"
       >
-        <ModalHeader onBack={onClose} title={`${initialData ? 'Editar' : 'Nova'} categoria de ${tipo === 'despesa' ? 'despesa' : 'receita'}`} />
+        <ModalHeader
+          onBack={onClose}
+          title={`${initialData ? 'Editar' : 'Nova'} categoria de ${tipo === 'despesa' ? 'despesa' : 'receita'}`}
+          actionLabel={initialData ? 'Salvar' : 'Adicionar'}
+          actionType="submit"
+        />
 
         <label className="block text-xs font-medium text-ink-300 mb-1">Nome</label>
         <input
@@ -92,22 +96,6 @@ export default function CategoriaModal({ open, tipo, initialData = null, onClose
           ))}
         </div>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-ledger-500 text-white py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
-          >
-            {initialData ? <Save size={16} strokeWidth={2.25} /> : <Plus size={16} strokeWidth={2.25} />}
-            {initialData ? 'Salvar' : 'Adicionar'}
-          </button>
-        </div>
       </form>
     </div>
   );

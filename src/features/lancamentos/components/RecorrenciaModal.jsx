@@ -134,7 +134,7 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
         onSubmit={handleSubmit}
         className="app-modal-sheet overflow-y-auto bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
       >
-        <ModalHeader onBack={onClose} title="Editar recorrência" className="mb-1" />
+        <ModalHeader onBack={onClose} title="Editar recorrência" actionLabel="Salvar" actionType="submit" className="mb-1" />
         <p className="text-xs text-ink-300 mb-4">
           Ao salvar, você poderá escolher se os meses já lançados também devem mudar.
         </p>
@@ -191,22 +191,6 @@ export default function RecorrenciaModal({ open, recorrencia, categorias = [], o
           rows={2}
           className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm mb-4 focus:border-ledger-500 transition-colors"
         />
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="flex-1 rounded-xl bg-ledger-500 text-white py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
-          >
-            Salvar
-          </button>
-        </div>
 
         <button
           type="button"

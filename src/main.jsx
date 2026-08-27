@@ -13,6 +13,10 @@ import './index.css';
 
 initializeCrashReporting();
 
+if (__NATIVE_ANDROID_BUILD__) {
+  document.documentElement.classList.add('native-app');
+}
+
 // Older Android builds accidentally installed the web/PWA service worker.
 // Remove it in native builds so it cannot serve stale hashed chunks after an
 // app update. Cache clearing here affects only web assets, not SQLite data.

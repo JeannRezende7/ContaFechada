@@ -7,6 +7,10 @@
     -webkit-text-size-adjust: 100%;
     overflow-x: hidden;
   }
+  html.native-app {
+    /* 18px makes Tailwind's rem-based type scale legible in Android WebView. */
+    font-size: 18px;
+  }
   body {
     font-family: 'Inter', sans-serif;
     min-width: 0;

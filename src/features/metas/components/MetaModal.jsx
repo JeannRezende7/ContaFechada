@@ -65,7 +65,7 @@ export default function MetaModal({ open, meta, onClose, onSave, onDelete }) {
         onSubmit={handleSubmit}
         className="app-modal-sheet overflow-y-auto bg-white dark:bg-ink-700 w-full sm:max-w-md rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
       >
-        <ModalHeader onBack={onClose} title={meta ? 'Editar meta' : 'Nova meta financeira'} />
+        <ModalHeader onBack={onClose} title={meta ? 'Editar meta' : 'Nova meta financeira'} actionLabel="Salvar" actionType="submit" />
 
         <label className="block text-xs font-medium text-ink-300 mb-1">Nome</label>
         <input
@@ -135,22 +135,6 @@ export default function MetaModal({ open, meta, onClose, onSave, onDelete }) {
               }`}
             />
           ))}
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="flex-1 rounded-xl bg-ledger-500 text-white py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
-          >
-            Salvar
-          </button>
         </div>
 
         {meta && (

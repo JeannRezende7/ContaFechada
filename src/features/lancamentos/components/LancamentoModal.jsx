@@ -206,7 +206,13 @@ export default function LancamentoModal({
         onSubmit={handleSubmit}
         className="app-modal-sheet overflow-y-auto bg-white dark:bg-ink-700 w-full sm:max-w-lg rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop"
       >
-        <ModalHeader onBack={onClose} title={copyMode ? 'Duplicar lançamento' : isNew ? 'Novo lançamento' : 'Editar lançamento'} />
+        <ModalHeader
+          onBack={onClose}
+          title={copyMode ? 'Duplicar lançamento' : isNew ? 'Novo lançamento' : 'Editar lançamento'}
+          actionLabel={saving ? 'Salvando…' : 'Salvar'}
+          actionType="submit"
+          actionDisabled={saving}
+        />
 
         <div className="flex gap-2 mb-4">
           <button
@@ -477,24 +483,6 @@ export default function LancamentoModal({
           rows={2}
           className="w-full rounded-xl border border-ink-100 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-50 px-3.5 py-2.5 text-sm mb-4 focus:border-ledger-500 transition-colors"
         />
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="flex-1 rounded-xl py-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex-1 rounded-xl bg-ledger-500 text-white py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all disabled:cursor-wait disabled:opacity-60"
-          >
-            {saving ? 'Salvando…' : 'Salvar'}
-          </button>
-        </div>
 
         {!isNew && (
           <div className="mt-2 grid grid-cols-2 gap-2">
