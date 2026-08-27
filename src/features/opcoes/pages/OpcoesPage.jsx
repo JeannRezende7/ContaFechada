@@ -111,10 +111,18 @@ export default function OpcoesPage() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    if (!(await confirm('Substituir todos os dados locais pelos dados deste backup? Uma cópia de recuperação será mantida internamente.'))) return;
+    let backup;
+    try {
+      backup = JSON.parse(await file.text());
+    } catch {
+      await confirm('Este arquivo não é um backup JSON válido do Conta Fechada. Nenhum dado foi alterado.');
+      return;
+    }
+    const visibleRecords = Object.values(backup).reduce((total, value) => total + (Array.isArray(value) ? value.length : 0), 0);
+    if (!(await confirm(`Arquivo selecionado: ${file.name}\n\n${visibleRecords} registro(s) encontrados. Ao restaurar, os dados atuais deste aparelho serão substituídos. Uma cópia de recuperação será criada antes. Continuar?`))) return;
     setLoading('importar');
     try {
-      const result = await importLocalData(JSON.parse(await file.text()));
+      const result = await importLocalData(backup);
       const total = result.summary.financialTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       await confirm(`${result.imported} registro(s) importado(s) e verificados. Total financeiro conferido: ${total}. O aplicativo será recarregado.`);
       window.location.reload();
@@ -233,24 +241,24 @@ export default function OpcoesPage() {
           <div className="p-4 pb-0">
           <div className="flex items-start gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ledger-50 text-ledger-600"><HardDrive size={15} /></span>
-            <div><h2 className="text-sm font-medium">Backup dos seus dados</h2><p className="mt-0.5 text-xs text-ink-300">Leve seus dados com você ao trocar ou restaurar o aparelho.</p></div>
+            <div><h2 className="text-base font-medium">Backup dos seus dados</h2><p className="mt-0.5 text-xs text-ink-300">Salve uma cópia fora do celular para recuperar seus dados depois.</p></div>
           </div>
           <div className="mt-3 flex items-start gap-2 rounded-card bg-gold-50 p-3 text-gold-900 dark:bg-ink-900 dark:text-gold-100">
             <TriangleAlert size={15} className="mt-0.5 shrink-0 text-gold-700" />
-            <p className="text-xs leading-relaxed"><strong>Salve fora deste aparelho.</strong> Escolha Google Drive, e-mail ou outro local seguro na tela de compartilhamento. Sem esse arquivo, os dados não poderão ser recuperados.</p>
+            <p className="text-xs leading-relaxed"><strong>Importante:</strong> escolha Drive, e-mail ou outro local seguro. Se o arquivo ficar apenas neste celular, ele poderá ser perdido.</p>
           </div>
           </div>
           <div className="mt-4 grid grid-cols-2 divide-x divide-ink-100 border-t border-ink-100 dark:divide-ink-900 dark:border-ink-900">
             <button type="button" onClick={handleExportarDados} disabled={loading === 'exportar'} className="flex min-h-20 flex-col items-center justify-center gap-1.5 px-3 py-3 text-sm font-medium text-ledger-600 disabled:opacity-50">
               <Download size={19} />
-              {loading === 'exportar' ? 'Salvando…' : 'Salvar backup'}
-              <span className="text-[10px] font-normal text-ink-300">Abre o compartilhamento</span>
+              {loading === 'exportar' ? 'Salvando…' : '1. Salvar backup'}
+              <span className="text-xs font-normal text-ink-300">Escolha onde guardar</span>
             </button>
             <input ref={importInputRef} type="file" accept="application/json,.json" onChange={handleImportarDados} className="sr-only" />
             <button type="button" onClick={() => importInputRef.current?.click()} disabled={loading === 'importar'} className="flex min-h-20 flex-col items-center justify-center gap-1.5 px-3 py-3 text-sm font-medium text-ink-500 dark:text-ink-100 disabled:opacity-50">
               <Upload size={19} />
-              {loading === 'importar' ? 'Restaurando…' : 'Restaurar backup'}
-              <span className="text-[10px] font-normal text-ink-300">Escolha um arquivo salvo</span>
+              {loading === 'importar' ? 'Restaurando…' : '2. Restaurar backup'}
+              <span className="text-xs font-normal text-ink-300">Substitui os dados atuais</span>
             </button>
           </div>
         </section>}
@@ -347,8 +355,6 @@ export default function OpcoesPage() {
           <Link to="/termos" className="underline hover:text-ink-500">Termos de Uso</Link>
           {' · '}
           <Link to="/privacidade" className="underline hover:text-ink-500">Política de Privacidade</Link>
-          {' · '}
-          <Link to="/excluir-conta" className="underline hover:text-ink-500">Exclusão de conta</Link>
         </p>
       </div>
     </>

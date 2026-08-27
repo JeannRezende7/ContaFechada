@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, ListOrdered, Pencil, Plus, X, Tag } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { GripHorizontal, Pencil, Plus, X, Tag } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { getColor } from '../colorMap.js';
@@ -15,7 +15,8 @@ export default function CategoriasPage() {
   const [tab, setTab] = useState('despesa');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [organizing, setOrganizing] = useState(false);
+  const [draggingId, setDraggingId] = useState(null);
+  const pendingOrder = useRef([]);
 
   const reload = async () => {
     if (!uid) return;
@@ -66,21 +67,34 @@ export default function CategoriasPage() {
     reload();
   }
 
-  async function handleMove(index, direction) {
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= doTipo.length) return;
-    const current = doTipo[index];
-    const target = doTipo[targetIndex];
-    setCategorias((items) => items.map((item) => {
-      if (item.id === current.id) return { ...item, ordem: target.ordem };
-      if (item.id === target.id) return { ...item, ordem: current.ordem };
-      return item;
-    }));
+  function moveDraggedCategory(sourceId, targetId) {
+    if (!sourceId || sourceId === targetId) return;
+    setCategorias((items) => {
+      const ordered = items.filter((item) => item.tipo === tab).sort((a, b) => a.ordem - b.ordem);
+      const sourceIndex = ordered.findIndex((item) => item.id === sourceId);
+      const targetIndex = ordered.findIndex((item) => item.id === targetId);
+      if (sourceIndex < 0 || targetIndex < 0) return items;
+      const next = [...ordered];
+      const [moved] = next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, moved);
+      pendingOrder.current = next.map((item, ordem) => ({ id: item.id, ordem }));
+      const orderById = new Map(pendingOrder.current.map((item) => [item.id, item.ordem]));
+      return items.map((item) => orderById.has(item.id) ? { ...item, ordem: orderById.get(item.id) } : item);
+    });
+  }
+
+  function handleDragMove(event, sourceId) {
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-category-id]');
+    if (target) moveDraggedCategory(sourceId, target.dataset.categoryId);
+  }
+
+  async function finishDragging() {
+    setDraggingId(null);
+    const changes = pendingOrder.current;
+    pendingOrder.current = [];
+    if (!changes.length) return;
     try {
-      await Promise.all([
-        repositories.categorias.update(uid, current.id, { ordem: target.ordem }),
-        repositories.categorias.update(uid, target.id, { ordem: current.ordem }),
-      ]);
+      await Promise.all(changes.map(({ id, ordem }) => repositories.categorias.update(uid, id, { ordem })));
     } catch {
       reload();
     }
@@ -109,61 +123,58 @@ export default function CategoriasPage() {
           </button>
         </div>
 
-        <div className="mb-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => setOrganizing((value) => !value)}
-            aria-pressed={organizing}
-            className={`flex items-center gap-1.5 rounded-pill px-3.5 py-2.5 text-sm font-medium transition-colors ${organizing ? 'bg-ink-900 text-white dark:bg-ledger-500' : 'bg-ink-50 text-ink-500 dark:bg-ink-700 dark:text-ink-100'}`}
-          >
-            <ListOrdered size={16} /> {organizing ? 'Concluir' : 'Organizar'}
-          </button>
+        <section className="mb-5 rounded-card bg-white p-3 shadow-card dark:bg-ink-700">
+          <div className="mb-3">
+            <h2 className="text-base font-semibold text-ink-900 dark:text-ink-50">Suas categorias</h2>
+            <p className="mt-0.5 text-xs text-ink-300">Toque para editar ou arraste pela alça para mudar a ordem.</p>
+          </div>
+          <div>
           <button
             onClick={openNew}
-            className="flex items-center gap-1.5 rounded-pill bg-ledger-500 text-white pl-3.5 pr-4 py-2.5 text-sm font-medium hover:bg-ledger-600 hover:shadow-card-hover transition-all"
+            className="flex items-center justify-center gap-1.5 rounded-xl bg-ledger-500 px-3 py-2.5 text-sm font-medium text-white transition-all hover:bg-ledger-600 hover:shadow-card-hover"
           >
             <Plus size={16} strokeWidth={2.25} />
-            Nova categoria
+            Adicionar
           </button>
-        </div>
+          </div>
+        </section>
 
         <div className="grid grid-cols-4 sm:grid-cols-6 gap-x-2 gap-y-4">
-          {doTipo.map((c, index) => {
+          {doTipo.map((c) => {
             const color = getColor(c.corKey);
             const Icon = getIcon(c.icone);
             return (
-              <div key={c.id} className="flex flex-col items-center gap-1">
+              <div key={c.id} data-category-id={c.id} className={`flex flex-col items-center gap-1 rounded-xl transition ${draggingId === c.id ? 'scale-105 bg-ledger-50/70 dark:bg-ink-700' : ''}`}>
                 <div className="relative">
-                  {!organizing && <button
+                  <button
                     type="button"
                     onClick={() => openEdit(c)}
                     aria-label={`Editar ${c.nome}`}
                     className={`w-14 h-14 rounded-full flex items-center justify-center ${color.dot} hover:scale-105 focus-visible:ring-2 focus-visible:ring-ledger-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-ink-900 transition-transform`}
                   >
                     <Icon size={22} strokeWidth={2} className="text-white" />
-                  </button>}
-                  {!organizing && <button
+                  </button>
+                  <button
                     type="button"
                     onClick={() => openEdit(c)}
                     aria-label={`Editar ${c.nome}`}
-                    className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-white dark:bg-ledger-500 shadow-card flex items-center justify-center text-ink-500 dark:text-white hover:text-ledger-600 transition-colors"
+                    className="absolute -top-2 -left-2 h-9 w-9 rounded-full bg-white dark:bg-ledger-500 shadow-card flex items-center justify-center text-ink-500 dark:text-white hover:text-ledger-600 transition-colors"
                   >
-                    <Pencil size={11} strokeWidth={2.5} />
-                  </button>}
+                    <Pencil size={15} strokeWidth={2.5} />
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleDelete(c.id)}
                     aria-label={`Excluir ${c.nome}`}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white dark:bg-ink-700 shadow-card flex items-center justify-center text-ink-300 hover:text-signal-500 transition-colors"
+                    className="absolute -top-2 -right-2 h-9 w-9 rounded-full bg-white dark:bg-ink-700 shadow-card flex items-center justify-center text-ink-300 hover:text-signal-500 transition-colors"
                   >
-                    <X size={12} strokeWidth={2.5} />
+                    <X size={16} strokeWidth={2.5} />
                   </button>
                 </div>
                 <span className="text-[11px] text-ink-500 text-center leading-tight line-clamp-2">{c.nome}</span>
-                {organizing && <div className="mt-1 flex gap-1">
-                  <button type="button" onClick={() => handleMove(index, -1)} disabled={index === 0} aria-label={`Mover ${c.nome} para antes`} className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-50 text-ink-500 disabled:opacity-25 dark:bg-ink-700"><ArrowLeft size={14} /></button>
-                  <button type="button" onClick={() => handleMove(index, 1)} disabled={index === doTipo.length - 1} aria-label={`Mover ${c.nome} para depois`} className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-50 text-ink-500 disabled:opacity-25 dark:bg-ink-700"><ArrowRight size={14} /></button>
-                </div>}
+                <button type="button" aria-label={`Arrastar ${c.nome} para mudar a ordem`} className="flex h-6 w-10 touch-none items-center justify-center rounded-pill text-ink-300 active:bg-ink-50 active:text-ledger-500 dark:active:bg-ink-700" onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); pendingOrder.current = []; setDraggingId(c.id); }} onPointerMove={(event) => handleDragMove(event, c.id)} onPointerUp={finishDragging} onPointerCancel={finishDragging}>
+                  <GripHorizontal size={17} />
+                </button>
               </div>
             );
           })}

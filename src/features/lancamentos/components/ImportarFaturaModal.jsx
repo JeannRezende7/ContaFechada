@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, Loader2, ArrowUpRight, ArrowDownRight, Layers } from 'lucide-react';
+import { Upload, Loader2, ArrowUpRight, ArrowDownRight, Layers, TriangleAlert } from 'lucide-react';
 import { extractPdfLines } from '../utils/extractPdfLines.js';
 import { extractFaturaContext, parseNubankTransacoes } from '../utils/parseFaturaNubank.js';
 import { repositories } from '../../../repositories/index.js';
@@ -89,14 +89,14 @@ export default function ImportarFaturaModal({ open, uid, categorias = [], onClos
       <div className="app-modal-sheet bg-white dark:bg-ink-700 w-full sm:max-w-lg rounded-t-card sm:rounded-card p-5 sm:p-6 shadow-pop flex flex-col">
         <div className="w-10 h-1.5 rounded-pill bg-ink-100 dark:bg-ink-900 mx-auto mb-4 sm:hidden" />
         <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50 mb-1">Importar fatura (PDF)</h2>
-        <p className="text-xs text-ink-300 mb-4">Hoje só reconheço faturas do Nubank.</p>
+        <p className="text-xs text-ink-300 mb-3">Compatível atualmente com faturas do Nubank.</p>
 
         {status === 'idle' && (
-          <label className="flex flex-col items-center gap-2 border-2 border-dashed border-ink-100 dark:border-ink-700 rounded-xl py-10 cursor-pointer hover:border-ledger-500 transition-colors">
+          <><div className="mb-3 flex items-start gap-2 rounded-xl bg-gold-50 p-3 text-xs text-gold-900 dark:bg-ink-900 dark:text-gold-100"><TriangleAlert size={16} className="mt-0.5 shrink-0" /><p>Confira valores, datas e parcelas na próxima etapa. A leitura pode variar conforme o PDF.</p></div><label className="flex flex-col items-center gap-2 border-2 border-dashed border-ink-100 dark:border-ink-700 rounded-xl py-10 cursor-pointer hover:border-ledger-500 transition-colors">
             <Upload size={24} strokeWidth={1.75} className="text-ink-300" />
             <span className="text-sm text-ink-500">Escolher arquivo PDF</span>
             <input type="file" accept="application/pdf" onChange={handleFile} className="hidden" />
-          </label>
+          </label></>
         )}
 
         {status === 'parsing' && (

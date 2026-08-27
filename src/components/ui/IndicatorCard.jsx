@@ -21,7 +21,7 @@ export default function IndicatorCard({ label, value, tone = 'neutral', hint, ic
           </span>
         )}
       </div>
-      <span className={`money text-xs sm:text-xl md:text-2xl font-semibold leading-tight break-all ${t.text}`}>
+      <span className={`money text-sm sm:text-xl md:text-2xl font-semibold leading-tight break-all ${t.text}`}>
         {formatCurrency(value)}
       </span>
       {hint && <span className="text-[11px] sm:text-xs md:text-sm text-ink-300 truncate">{hint}</span>}

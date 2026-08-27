@@ -129,13 +129,18 @@ export default function ImportarExtratoModal({ open, uid, categorias, onClose, o
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink-900/50 sm:items-center sm:px-4">
       <div className="app-modal-sheet flex w-full flex-col rounded-t-card bg-white p-5 shadow-pop dark:bg-ink-700 sm:max-w-2xl sm:rounded-card">
         <h2 className="font-display text-base font-semibold text-ink-900 dark:text-ink-50">Importar lançamentos</h2>
-        <p className="mb-4 text-xs text-ink-300">Revise e corrija os dados reconhecidos antes de confirmar.</p>
+        <p className="text-xs text-ink-300">Escolha o arquivo, revise os dados reconhecidos e só então confirme.</p>
+        <div className="mb-4 mt-3 grid grid-cols-3 gap-1 text-center text-xs font-medium">
+          <span className={`rounded-lg px-1 py-2 ${status === 'idle' || status === 'parsing' || status === 'error' ? 'bg-ledger-500 text-white' : 'bg-ink-50 text-ink-300 dark:bg-ink-900'}`}>1. Escolher</span>
+          <span className={`rounded-lg px-1 py-2 ${status === 'preview' ? 'bg-ledger-500 text-white' : 'bg-ink-50 text-ink-300 dark:bg-ink-900'}`}>2. Revisar</span>
+          <span className={`rounded-lg px-1 py-2 ${status === 'importing' || status === 'done' ? 'bg-ledger-500 text-white' : 'bg-ink-50 text-ink-300 dark:bg-ink-900'}`}>3. Importar</span>
+        </div>
 
         {status === 'idle' && (
           <div className="space-y-3">
             <div className="flex items-start gap-2 rounded-xl bg-gold-50 p-3 text-xs leading-relaxed text-gold-900 dark:bg-ink-900 dark:text-gold-100">
               <TriangleAlert size={16} className="mt-0.5 shrink-0 text-gold-700" />
-              <p><strong>A importação pode não reconhecer tudo corretamente.</strong> O resultado varia conforme o banco, o formato e a qualidade do arquivo ou imagem. Revise datas, valores e descrições antes de importar.</p>
+              <p><strong>Confira antes de importar.</strong> Bancos e arquivos usam formatos diferentes, então datas, valores ou descrições podem ser reconhecidos incorretamente.</p>
             </div>
             <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-ink-100 px-4 py-5 hover:border-ledger-500 dark:border-ink-700">
               <FileUp className="text-ink-300" />
@@ -164,9 +169,10 @@ export default function ImportarExtratoModal({ open, uid, categorias, onClose, o
         {status === 'preview' && (
           <>
             {error && <p className="mb-2 text-xs text-signal-500">{error}</p>}
-            <p className="mb-2 text-xs text-ink-300">
-              {selected.size} selecionados · {ignored} linhas inválidas serão ignoradas
-            </p>
+            <div className="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-ink-50 p-3 text-center dark:bg-ink-900">
+              <p><strong className="block text-base text-ledger-600">{selected.size}</strong><span className="text-xs text-ink-300">prontos para importar</span></p>
+              <p><strong className="block text-base text-signal-500">{ignored + items.length - selected.size}</strong><span className="text-xs text-ink-300">ignorados</span></p>
+            </div>
             <div className="mb-3 flex-1 space-y-1.5 overflow-y-auto">
               {items.map((item, index) => {
                 const Icon = item.tipo === 'receita' ? ArrowUpRight : ArrowDownRight;

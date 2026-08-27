@@ -216,7 +216,7 @@ export default function ValorLivrePage() {
 
         <div className="mt-4 grid grid-cols-2 gap-2 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
           <button type="button" onClick={() => setTab('acompanhamento')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'acompanhamento' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Acompanhamento</button>
-          <button type="button" onClick={() => setTab('configuracoes')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'configuracoes' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Distribuição</button>
+          <button type="button" onClick={() => setTab('configuracoes')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'configuracoes' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Dividir valor</button>
         </div>
 
         {tab === 'acompanhamento' && (
@@ -231,14 +231,14 @@ export default function ValorLivrePage() {
             ))}
             {gruposAcompanhamento.fora.length > 0 && (
               <LancamentosGrupo
-                grupo={{ nome: 'Fora da distribuição', lancamentos: gruposAcompanhamento.fora }}
+                grupo={{ nome: 'Gastos sem limite definido', lancamentos: gruposAcompanhamento.fora }}
                 categorias={categorias}
                 alerta
                 onSelect={setEditingLancamento}
               />
             )}
             {gruposAcompanhamento.finalidades.length === 0 && gruposAcompanhamento.fora.length === 0 && (
-              <p className="rounded-card bg-white p-6 text-center text-sm text-ink-300 shadow-card dark:bg-ink-700">Nenhuma finalidade ou gasto para acompanhar neste mês.</p>
+              <p className="rounded-card bg-white p-6 text-center text-sm text-ink-300 shadow-card dark:bg-ink-700">Nenhum limite ou gasto para acompanhar neste mês.</p>
             )}
           </div>
         )}
@@ -275,16 +275,16 @@ export default function ValorLivrePage() {
             ) : (
               <p className={`money mt-1 text-xl font-semibold ${resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>{formatCurrency(resumo.valorLivre)}</p>
             )}
-            <p className="mt-1 text-[11px] text-ink-300">Fotografia mensal; permanece fixa até você editar.</p>
+            <p className="mt-1 text-xs text-ink-300">Este valor fica salvo para o mês selecionado até você editar.</p>
           </div>
         </div>
 
         <section className="mt-4 rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold text-ink-900 dark:text-ink-50">Divida o que sobrou do mês</h2>
+              <h2 className="text-base font-semibold text-ink-900 dark:text-ink-50">Planeje o valor disponível</h2>
               <p className="mt-1 text-xs text-ink-300">
-                Crie limites para cada objetivo e acompanhe quanto ainda pode gastar.
+                Reserve uma parte para cada categoria e acompanhe quanto ainda pode gastar.
               </p>
             </div>
             <button
@@ -292,7 +292,7 @@ export default function ValorLivrePage() {
               onClick={gerarSugestao}
               className="inline-flex items-center gap-2 rounded-pill bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-600"
             >
-              <Sparkles size={14} /> Sugerir divisão
+              <Sparkles size={16} /> Criar sugestão
             </button>
           </div>
 
@@ -316,7 +316,7 @@ export default function ValorLivrePage() {
               <div key={item.id} className="rounded-xl border border-ink-100 p-3 dark:border-ink-900">
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(160px,1fr)_90px_minmax(190px,1fr)_140px_auto] lg:items-end">
                   <label className="text-xs text-ink-300">
-                    Nome do objetivo
+                    Nome do limite
                     <input value={item.nome} onChange={(e) => atualizar(item.id, 'nome', e.target.value)} placeholder="Ex.: Alimentação" className="mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
                   </label>
                   <label className="text-xs text-ink-300">
@@ -331,7 +331,7 @@ export default function ValorLivrePage() {
                     Valor reservado
                     <input type="number" min="0" step="0.01" value={item.planejado} onChange={(e) => atualizar(item.id, 'valor', e.target.value)} className="money mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm dark:border-ink-900 dark:bg-ink-900" />
                   </label>
-                  <button type="button" aria-label={`Remover ${item.nome || 'item'}`} onClick={() => setDistribuicoes((atual) => atual.filter((row) => row.id !== item.id))} className="mb-1 text-ink-300 hover:text-signal-500">
+                  <button type="button" aria-label={`Remover ${item.nome || 'item'}`} onClick={() => setDistribuicoes((atual) => atual.filter((row) => row.id !== item.id))} className="flex h-11 w-11 items-center justify-center rounded-full text-ink-300 hover:bg-signal-50 hover:text-signal-500">
                     <Trash2 size={17} />
                   </button>
                 </div>
@@ -344,16 +344,16 @@ export default function ValorLivrePage() {
                 </div>
               </div>
             ))}
-            {distribuicoes.length === 0 && <p className="rounded-xl bg-ink-50 p-4 text-sm text-ink-300 dark:bg-ink-900">Gere uma sugestão ou adicione sua primeira finalidade.</p>}
+            {distribuicoes.length === 0 && <p className="rounded-xl bg-ink-50 p-4 text-sm text-ink-300 dark:bg-ink-900">Crie uma sugestão ou adicione seu primeiro limite.</p>}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-ink-100 pt-4 dark:border-ink-900">
-            <button type="button" onClick={adicionar} className="inline-flex items-center gap-2 text-sm font-medium text-ledger-600"><Plus size={16} /> Adicionar finalidade</button>
+            <button type="button" onClick={adicionar} className="inline-flex items-center gap-2 rounded-xl bg-ledger-50 px-3 text-sm font-medium text-ledger-600 dark:bg-ink-900"><Plus size={16} /> Adicionar limite</button>
             <div className="text-right">
               <p className={`money text-sm font-semibold ${resumo.naoDistribuido < 0 ? 'text-signal-500' : 'text-ink-700 dark:text-ink-100'}`}>
                 Ainda disponível: {formatCurrency(resumo.naoDistribuido)}
               </p>
-              {resumo.naoDistribuido < 0 && <p className="text-xs text-signal-500">A distribuição ultrapassa o valor livre.</p>}
+              {resumo.naoDistribuido < 0 && <p className="text-xs text-signal-500">Os limites ultrapassam o valor disponível.</p>}
             </div>
           </div>
           <label className="mt-4 flex items-center gap-2 rounded-xl bg-ink-50 px-3 py-2.5 text-sm text-ink-500 dark:bg-ink-900 dark:text-ink-100">
@@ -365,8 +365,8 @@ export default function ValorLivrePage() {
             Aplicar esta divisão somente em {monthKey.split('-').reverse().join('/')}
           </label>
           <details className="mt-3 rounded-xl bg-indigo-50 p-3 text-xs text-indigo-700 dark:bg-ink-900 dark:text-indigo-200">
-            <summary className="cursor-pointer font-medium">Como essa divisão funciona?</summary>
-            <p className="mt-2 leading-relaxed">O valor para dividir parte das receitas menos as contas fixas do mês. Cada objetivo reserva uma parte desse valor. Os novos gastos da categoria escolhida diminuem apenas o saldo disponível daquele objetivo.</p>
+            <summary className="cursor-pointer font-medium">Como funciona?</summary>
+            <p className="mt-2 leading-relaxed">O app calcula receitas menos contas fixas. Você reserva partes desse valor por categoria; cada novo gasto reduz o disponível da categoria correspondente.</p>
           </details>
           <button type="button" disabled={saving} onClick={salvar} className="mt-4 w-full rounded-pill bg-ledger-500 py-2.5 text-sm font-medium text-white disabled:opacity-50">
             {saving ? 'Salvando…' : personalizada ? 'Salvar somente para este mês' : 'Salvar regra para todos os meses'}
@@ -424,7 +424,7 @@ function LancamentosGrupo({ grupo, categorias, alerta = false, onSelect }) {
             </button>
           ))}
         </div>
-      ) : <p className="border-t border-ink-100 px-4 py-3 text-xs text-ink-300 dark:border-ink-900">Nenhum lançamento nesta finalidade.</p>}
+      ) : <p className="border-t border-ink-100 px-4 py-3 text-xs text-ink-300 dark:border-ink-900">Nenhum lançamento neste limite.</p>}
     </section>
   );
 }

@@ -165,11 +165,6 @@ export function LancamentosActions({
           Importar
         </button>
       </div>
-      {filteredCount > 0 && (
-        <p className="mt-2 text-xs text-ink-300">
-          CSV é uma planilha compatível com Excel, Google Planilhas e outros aplicativos.
-        </p>
-      )}
     </div>
   );
 }

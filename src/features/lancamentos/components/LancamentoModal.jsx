@@ -55,6 +55,11 @@ export default function LancamentoModal({
   const [ajusteValor, setAjusteValor] = useState('');
   const valueFieldRef = useRef(null);
   const isNew = !initialData || copyMode;
+  const ajusteNumerico = Number(String(ajusteValor).replace(',', '.'));
+  const valorAtualNumerico = Number(form.valor);
+  const ajusteValido = Number.isFinite(ajusteNumerico) && ajusteNumerico > 0 && Number.isFinite(valorAtualNumerico);
+  const valorDiminuido = ajusteValido ? Math.max(0, valorAtualNumerico - ajusteNumerico) : null;
+  const valorAumentado = ajusteValido ? valorAtualNumerico + ajusteNumerico : null;
   const confirm = useConfirm();
   const confirmChoice = useConfirmChoice();
 
@@ -327,39 +332,44 @@ export default function LancamentoModal({
 
         {!isNew && (
           <div className="mb-3 rounded-xl border border-ink-100 bg-ink-50/60 p-3 dark:border-ink-700 dark:bg-ink-900">
-            <label className="block text-xs font-medium text-ink-500 dark:text-ink-100 mb-1">
-              Ajustar valor
-            </label>
-            <div className="flex gap-2">
+            <div className="mb-3">
+              <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">Corrigir o valor</p>
+              <p className="mt-0.5 text-xs text-ink-300">Informe quanto o valor aumentou ou diminuiu. Você verá o resultado antes de aplicar.</p>
+            </div>
+            <label className="block text-xs font-medium text-ink-500 dark:text-ink-100 mb-1.5">Quanto deseja ajustar?</label>
+            <div>
               <input
                 type="text"
                 inputMode="decimal"
                 value={ajusteValor}
                 onChange={(e) => setAjusteValor(e.target.value)}
-                className="money min-w-0 flex-1 rounded-xl border border-ink-100 bg-white px-3.5 py-2.5 text-sm text-ink-900 focus:border-ledger-500 dark:border-ink-700 dark:bg-ink-700 dark:text-ink-50"
-                placeholder="Ex: 22,39"
+                className="money w-full rounded-xl border border-ink-100 bg-white px-3.5 py-2.5 text-sm text-ink-900 focus:border-ledger-500 dark:border-ink-700 dark:bg-ink-700 dark:text-ink-50"
+                placeholder="Ex.: 22,39"
                 aria-label="Valor do ajuste"
               />
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => aplicarAjuste('subtrair')}
-                className="rounded-xl border border-ink-100 bg-white px-4 text-lg font-medium text-signal-500 hover:bg-signal-50 dark:border-ink-700 dark:bg-ink-700"
+                disabled={!ajusteValido}
+                className="rounded-xl border border-signal-200 bg-white px-2 py-2.5 text-sm font-medium text-signal-500 hover:bg-signal-50 disabled:border-ink-100 disabled:text-ink-300 disabled:opacity-60 dark:bg-ink-700"
                 aria-label="Subtrair do valor"
               >
-                −
+                <span className="block">Diminuir</span>
+                <span className="money mt-0.5 block text-xs">{ajusteValido ? `para ${formatCurrency(valorDiminuido)}` : 'do valor atual'}</span>
               </button>
               <button
                 type="button"
                 onClick={() => aplicarAjuste('somar')}
-                className="rounded-xl bg-ledger-500 px-4 text-lg font-medium text-white hover:bg-ledger-600"
+                disabled={!ajusteValido}
+                className="rounded-xl bg-ledger-500 px-2 py-2.5 text-sm font-medium text-white hover:bg-ledger-600 disabled:bg-ink-100 disabled:text-ink-300 dark:disabled:bg-ink-700"
                 aria-label="Somar ao valor"
               >
-                +
+                <span className="block">Aumentar</span>
+                <span className="money mt-0.5 block text-xs">{ajusteValido ? `para ${formatCurrency(valorAumentado)}` : 'o valor atual'}</span>
               </button>
             </div>
-            <p className="mt-1.5 text-[11px] text-ink-300">
-              Informe a diferença e escolha − ou +. O campo Valor acima será atualizado.
-            </p>
           </div>
         )}
 

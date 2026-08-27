@@ -69,9 +69,9 @@ export default {
         ledger: ['"IBM Plex Mono"', 'monospace'],
       },
       fontSize: {
-        xs: ['0.8125rem', { lineHeight: '1.125rem' }],
-        sm: ['0.9375rem', { lineHeight: '1.375rem' }],
-        base: ['1rem', { lineHeight: '1.5rem' }],
+        xs: ['0.875rem', { lineHeight: '1.25rem' }],
+        sm: ['1rem', { lineHeight: '1.5rem' }],
+        base: ['1.0625rem', { lineHeight: '1.625rem' }],
       },
       borderRadius: {
         card: '18px',
