@@ -15,7 +15,7 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
             key={opt.key}
             type="button"
             onClick={() => onChangePeriodType(opt.key)}
-            className={`flex-1 rounded-pill py-1.5 md:py-2 text-xs md:text-sm font-medium transition-colors ${
+            className={`flex-1 rounded-pill py-2 text-sm font-medium transition-colors ${
               periodType === opt.key
                 ? 'bg-white dark:bg-ledger-500 shadow-card text-ink-900 dark:text-white'
                 : 'text-ink-500 hover:bg-white/70 dark:text-ink-100 dark:hover:bg-ink-700/70'
@@ -29,7 +29,7 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
       {periodType === 'periodo' ? (
         <div className="flex items-center gap-2 bg-white dark:bg-ink-700 rounded-card shadow-card px-3 py-2 md:py-3">
           <div className="flex-1 min-w-0">
-            <label className="block text-[11px] text-ink-300 mb-0.5">De</label>
+            <label className="block text-xs text-ink-300 mb-0.5">De</label>
             <input
               type="date"
               min="1900-01-01"
@@ -41,7 +41,7 @@ export default function PeriodNav({ periodType, anchor, customRange, onChangePer
           </div>
           <span className="text-ink-300 text-sm mt-4">–</span>
           <div className="flex-1 min-w-0">
-            <label className="block text-[11px] text-ink-300 mb-0.5">Até</label>
+            <label className="block text-xs text-ink-300 mb-0.5">Até</label>
             <input
               type="date"
               min="1900-01-01"

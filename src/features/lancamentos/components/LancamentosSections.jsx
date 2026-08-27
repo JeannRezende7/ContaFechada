@@ -141,7 +141,7 @@ export function LancamentosActions({
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 min-w-0">
         {totalCount > 0 && (
-          <button type="button" onClick={onToggleSelecting} className="flex items-center gap-1 text-xs font-medium text-ledger-500 md:hover:text-ledger-600 transition-colors">
+          <button type="button" onClick={onToggleSelecting} className="flex items-center gap-1 text-sm font-medium text-ledger-500 md:hover:text-ledger-600 transition-colors">
             <CheckSquare size={14} />
             {selecting ? 'Sair' : 'Gerenciar vários'}
           </button>
@@ -150,7 +150,7 @@ export function LancamentosActions({
           <button
             type="button"
             onClick={onExport}
-            className="flex items-center gap-1 text-xs text-ink-300 md:hover:text-ledger-600 transition-colors shrink-0"
+            className="flex items-center gap-1 text-sm text-ink-300 md:hover:text-ledger-600 transition-colors shrink-0"
           >
             <Download size={14} strokeWidth={2} />
             Exportar CSV
@@ -159,14 +159,14 @@ export function LancamentosActions({
         <button
           type="button"
           onClick={onImport}
-          className="flex items-center gap-1 text-xs text-ink-300 md:hover:text-ledger-600 transition-colors shrink-0"
+          className="flex items-center gap-1 text-sm text-ink-300 md:hover:text-ledger-600 transition-colors shrink-0"
         >
           <FileUp size={14} strokeWidth={2} />
           Importar
         </button>
       </div>
       {filteredCount > 0 && (
-        <p className="mt-2 text-[11px] text-ink-300">
+        <p className="mt-2 text-xs text-ink-300">
           CSV é uma planilha compatível com Excel, Google Planilhas e outros aplicativos.
         </p>
       )}
