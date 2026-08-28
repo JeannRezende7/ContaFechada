@@ -109,10 +109,10 @@ export async function saveAndShareBackup(filename, data) {
       recursive: true,
     });
     await Share.share({
-      title: 'Salvar backup do Conta Fechada',
-      text: 'Guarde este arquivo fora do aplicativo para poder restaurar seus dados no futuro.',
+      title: 'Salvar backup no Google Drive',
+      text: 'Selecione o Google Drive para guardar este backup do Conta Fechada.',
       files: [saved.uri],
-      dialogTitle: 'Salvar backup em outro local',
+      dialogTitle: 'Escolha o Google Drive ou outro local seguro',
     });
     return;
   }

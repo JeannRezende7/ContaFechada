@@ -6,6 +6,7 @@ import Topbar from '../../../components/layout/Topbar.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import FinancialTotalsGrid from '../../../components/ui/FinancialTotalsGrid.jsx';
+import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
 import SectionTabs from '../../../components/ui/SectionTabs.jsx';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import LancamentoModal from '../../lancamentos/components/LancamentoModal.jsx';
@@ -34,6 +35,9 @@ export default function ValorLivrePage() {
   const [gastosIniciais, setGastosIniciais] = useState({});
   const [editandoValorBase, setEditandoValorBase] = useState(false);
   const [valorBaseRascunho, setValorBaseRascunho] = useState('');
+  const [usarMovimentoAutomatico, setUsarMovimentoAutomatico] = useState(false);
+  const [diaMovimentoAutomatico, setDiaMovimentoAutomatico] = useState(1);
+  const [movimentoAtualizadoEm, setMovimentoAtualizadoEm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -48,10 +52,22 @@ export default function ValorLivrePage() {
       repositories.lancamentos.listByMonth(uid, monthKey),
       repositories.categorias.ensureDefaults(uid),
       repositories.valorLivre.getDistribuicao(uid, monthKey),
-    ]).then(async ([items, categoryItems, saved]) => {
-      const fotografia = await repositories.valorLivre.ensureFotografiaMensal(
+      repositories.configuracoes.getValorLivreAutomatico(uid),
+    ]).then(async ([items, categoryItems, saved, automaticConfig]) => {
+      let fotografia = await repositories.valorLivre.ensureFotografiaMensal(
         uid, monthKey, calcularSaldoLancamentos(items), calcularGastosPorCategoria(items)
       );
+      const currentDay = new Date().getDate();
+      if (
+        automaticConfig.enabled
+        && monthKey === getCurrentMonthKey()
+        && currentDay >= automaticConfig.day
+        && !fotografia.movimentoAtualizadoEm
+      ) {
+        fotografia = await repositories.valorLivre.setValorBaseDoMovimento(
+          uid, monthKey, calcularSaldoLancamentos(items), calcularGastosPorCategoria(items)
+        );
+      }
       if (cancelled) return;
       setLancamentos(items);
       setCategorias(categoryItems);
@@ -59,6 +75,9 @@ export default function ValorLivrePage() {
       setPersonalizada(saved.personalizada);
       setValorBaseMensal(fotografia.valorBaseMensal);
       setGastosIniciais(fotografia.gastosIniciais);
+      setMovimentoAtualizadoEm(fotografia.movimentoAtualizadoEm ?? null);
+      setUsarMovimentoAutomatico(automaticConfig.enabled);
+      setDiaMovimentoAutomatico(automaticConfig.day);
       setEditandoValorBase(false);
       setLoading(false);
     });
@@ -183,6 +202,37 @@ export default function ValorLivrePage() {
     }
   }
 
+  async function configurarAtualizacaoAutomatica(enabled, day = diaMovimentoAutomatico) {
+    const normalizedDay = Math.min(28, Math.max(1, Number(day) || 1));
+    setUsarMovimentoAutomatico(enabled);
+    setDiaMovimentoAutomatico(normalizedDay);
+    setSaving(true);
+    setFeedback('');
+    try {
+      await repositories.configuracoes.setValorLivreAutomatico(uid, { enabled, day: normalizedDay });
+      if (
+        enabled
+        && monthKey === getCurrentMonthKey()
+        && new Date().getDate() >= normalizedDay
+        && !movimentoAtualizadoEm
+      ) {
+        const atualizado = await repositories.valorLivre.setValorBaseDoMovimento(
+          uid, monthKey, calcularSaldoLancamentos(lancamentos), calcularGastosPorCategoria(lancamentos)
+        );
+        setValorBaseMensal(atualizado.valorBaseMensal);
+        setGastosIniciais(atualizado.gastosIniciais);
+        setMovimentoAtualizadoEm(atualizado.movimentoAtualizadoEm);
+        setFeedback('Valor livre atualizado com o saldo atual do Movimento.');
+      } else {
+        setFeedback(enabled ? `Atualização pelo Movimento configurada para o dia ${normalizedDay}.` : 'Atualização automática desativada.');
+      }
+    } catch {
+      setFeedback('Não foi possível salvar esta configuração.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function salvar() {
     setSaving(true);
     setFeedback('');
@@ -249,10 +299,12 @@ export default function ValorLivrePage() {
 
         {tab === 'configuracoes' && (<>
 
-        <div className="grid grid-cols-2 gap-3 mt-5">
-          <Resumo label="Receitas do mês" valor={resumo.renda} />
-          <Resumo label="Contas fixas" valor={resumo.contasFixas} tone="text-signal-500" />
-          <div className={`col-span-2 mx-auto min-w-0 ${editandoValorBase ? 'w-full' : 'w-[48%]'}`}>
+        <div className="mt-5">
+          <div className="grid grid-cols-2 gap-2 md:gap-3">
+            <IndicatorCard label="Receitas" value={resumo.renda} tone="positive" />
+            <IndicatorCard label="Contas fixas" value={resumo.contasFixas} tone="negative" />
+          </div>
+          <div className={`mx-auto mt-3 min-w-0 ${editandoValorBase ? 'w-full' : 'w-[68%] sm:w-[48%]'}`}>
           <div className="rounded-card bg-white p-4 text-center shadow-card dark:bg-ink-700">
             <div className="flex items-center justify-between gap-2">
               <p className="flex-1 text-center text-xs text-ink-300">Valor livre do mês</p>
@@ -281,6 +333,37 @@ export default function ValorLivrePage() {
               <p className={`money mt-1 text-center text-xl font-semibold ${resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>{formatCurrency(resumo.valorLivre)}</p>
             )}
             <p className="mt-1 text-xs text-ink-300">Este valor fica salvo para o mês selecionado até você editar.</p>
+            <div className="mt-3 border-t border-ink-100 pt-3 text-left dark:border-ink-900">
+              <label className="flex items-start gap-2 text-sm text-ink-700 dark:text-ink-100">
+                <input
+                  type="checkbox"
+                  checked={usarMovimentoAutomatico}
+                  disabled={saving}
+                  onChange={(event) => configurarAtualizacaoAutomatica(event.target.checked)}
+                  className="mt-1 accent-ledger-600"
+                />
+                <span>
+                  <span className="block font-medium">Atualizar pelo Movimento</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-ink-300">Salva o saldo do Movimento uma vez por mês.</span>
+                </span>
+              </label>
+              {usarMovimentoAutomatico && (
+                <label className="mt-3 flex items-center justify-between gap-3 text-xs text-ink-300">
+                  Atualizar ao abrir esta tela a partir do dia
+                  <input
+                    type="number"
+                    min="1"
+                    max="28"
+                    value={diaMovimentoAutomatico}
+                    disabled={saving}
+                    onChange={(event) => setDiaMovimentoAutomatico(event.target.value)}
+                    onBlur={() => configurarAtualizacaoAutomatica(true, diaMovimentoAutomatico)}
+                    className="money w-16 rounded-xl border border-ink-100 bg-white px-2 py-1.5 text-center text-sm text-ink-900 dark:border-ink-900 dark:bg-ink-900 dark:text-ink-50"
+                  />
+                </label>
+              )}
+              {movimentoAtualizadoEm && <p className="mt-2 text-xs text-ledger-600">Valor deste mês já atualizado pelo Movimento.</p>}
+            </div>
           </div>
           </div>
         </div>
@@ -353,14 +436,9 @@ export default function ValorLivrePage() {
             {distribuicoes.length === 0 && <p className="rounded-xl bg-ink-50 p-4 text-sm text-ink-300 dark:bg-ink-900">Crie uma sugestão ou adicione seu primeiro limite.</p>}
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-ink-100 pt-4 dark:border-ink-900">
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-ink-100 pt-4 dark:border-ink-900">
             <button type="button" onClick={adicionar} className="inline-flex items-center gap-2 rounded-xl bg-ledger-50 px-3 text-sm font-medium text-ledger-600 dark:bg-ink-900"><Plus size={16} /> Adicionar limite</button>
-            <div className="text-right">
-              <p className={`money text-sm font-semibold ${resumo.naoDistribuido < 0 ? 'text-signal-500' : 'text-ink-700 dark:text-ink-100'}`}>
-                Ainda disponível: {formatCurrency(resumo.naoDistribuido)}
-              </p>
-              {resumo.naoDistribuido < 0 && <p className="text-xs text-signal-500">Os limites ultrapassam o valor disponível.</p>}
-            </div>
+            {resumo.naoDistribuido < 0 && <p className="text-xs text-signal-500">Os limites ultrapassam o valor disponível.</p>}
           </div>
           <fieldset className="mt-4">
             <legend className="text-sm font-semibold text-ink-900 dark:text-ink-50">Onde deseja usar estes limites?</legend>
@@ -474,13 +552,4 @@ function atualizarItem(item, campo, valor, valorLivre) {
     };
   }
   return { ...item, [campo]: valor };
-}
-
-function Resumo({ label, valor, tone = 'text-ink-900 dark:text-ink-50' }) {
-  return (
-    <div className="rounded-card bg-white p-4 text-center shadow-card dark:bg-ink-700">
-      <p className="text-xs text-ink-300">{label}</p>
-      <p className={`money mt-1 text-xl font-semibold ${tone}`}>{formatCurrency(valor)}</p>
-    </div>
-  );
 }

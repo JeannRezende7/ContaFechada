@@ -269,13 +269,12 @@ export default function DashboardPage() {
         </div>
 
         <FinancialTotalsGrid
-          incomeLabel="A receber"
+          incomeLabel="Receitas"
           incomeValue={indicators?.totalAReceber ?? 0}
-          expenseLabel="A pagar"
+          expenseLabel="Despesas"
           expenseValue={indicators?.totalAPagar ?? 0}
-          expenseTone="pending"
           expenseHint={indicators?.contasAtrasadas ? `${indicators.contasAtrasadas} atrasada(s)` : undefined}
-          balanceLabel="Saldo do mês"
+          balanceLabel="Saldo"
           balanceValue={indicators?.saldoMes ?? 0}
         />
 

@@ -106,6 +106,27 @@ describe('repositórios SQLite completos', () => {
     expect(await repositories.gestor.getUsaMovimento('local')).toBe(false);
   });
 
+  it('configura e registra a atualização mensal do valor livre pelo Movimento', async () => {
+    await repositories.configuracoes.setValorLivreAutomatico('local', { enabled: true, day: 12 });
+    expect(await repositories.configuracoes.getValorLivreAutomatico('local')).toEqual({ enabled: true, day: 12 });
+
+    const result = await repositories.valorLivre.setValorBaseDoMovimento(
+      'local', '2026-08', 1234.56, { mercado: 100 }
+    );
+    expect(result).toEqual(expect.objectContaining({
+      valorBaseMensal: 1234.56,
+      gastosIniciais: { mercado: 100 },
+      movimentoAtualizadoEm: expect.any(String),
+    }));
+    expect(await repositories.valorLivre.getFotografiaMensal('local', '2026-08')).toEqual(
+      expect.objectContaining({
+        valorBaseMensal: 1234.56,
+        gastosIniciais: { mercado: 100 },
+        movimentoAtualizadoEm: expect.any(String),
+      })
+    );
+  });
+
   it('cobre regras, valor livre e fechamento mensal sem Firebase', async () => {
     await repositories.regrasCategorizacao.create('local', {
       termo: 'farmácia', tipo: 'despesa', categoriaId: 'saude', prioridade: 1, ativa: true,

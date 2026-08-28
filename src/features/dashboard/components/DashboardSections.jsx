@@ -173,7 +173,7 @@ export function FreeValueSummary({ resumo, monthKey }) {
                   </p>
                   <p className="text-[10px] text-ink-300">gasto em outra categoria ou sem categoria</p>
                   <div className="mt-2 border-t border-signal-100 pt-2 text-[10px] text-ink-300 dark:border-ink-700">
-                    Após a fotografia: <b className="money text-signal-500">{formatCurrency(gastosFora.gastoDepoisDaFotografia)}</b>
+                    Gastos após definir o valor: <b className="money text-signal-500">{formatCurrency(gastosFora.gastoDepoisDaFotografia)}</b>
                   </div>
                 </div>
               )}
