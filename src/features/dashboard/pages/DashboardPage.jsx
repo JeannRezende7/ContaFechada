@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Wallet, ArrowDownCircle, ArrowUpCircle, Home, RefreshCw,
-} from 'lucide-react';
+import { Home, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import {
   getDashboardData,
@@ -10,7 +8,7 @@ import {
 } from '../services/dashboardService.js';
 import { repositories } from '../../../repositories/index.js';
 import { computeInsights } from '../utils/insights.js';
-import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
+import FinancialTotalsGrid from '../../../components/ui/FinancialTotalsGrid.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
@@ -270,27 +268,16 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-          <IndicatorCard
-            label="Saldo do mês"
-            value={indicators?.saldoMes ?? 0}
-            tone={indicators && indicators.saldoMes < 0 ? 'negative' : 'positive'}
-            icon={Wallet}
-          />
-          <IndicatorCard
-            label="A pagar (mês)"
-            value={indicators?.totalAPagar ?? 0}
-            tone="pending"
-            icon={ArrowDownCircle}
-            hint={indicators?.contasAtrasadas ? `${indicators.contasAtrasadas} atrasada(s)` : undefined}
-          />
-          <IndicatorCard
-            label="A receber (mês)"
-            value={indicators?.totalAReceber ?? 0}
-            tone="positive"
-            icon={ArrowUpCircle}
-          />
-        </div>
+        <FinancialTotalsGrid
+          incomeLabel="A receber"
+          incomeValue={indicators?.totalAReceber ?? 0}
+          expenseLabel="A pagar"
+          expenseValue={indicators?.totalAPagar ?? 0}
+          expenseTone="pending"
+          expenseHint={indicators?.contasAtrasadas ? `${indicators.contasAtrasadas} atrasada(s)` : undefined}
+          balanceLabel="Saldo do mês"
+          balanceValue={indicators?.saldoMes ?? 0}
+        />
 
         <MonthlyComparisonCard comparacao={comparacao} monthKey={monthKey} />
         <DailyBudgetCard gastoDiario={gastoDiario} diasRestantes={diasRestantes} />

@@ -150,7 +150,7 @@ export default function ImportarExtratoModal({ open, uid, categorias, onClose, o
             <div className="rounded-xl border border-ink-100 p-3 dark:border-ink-700">
               <p className="mb-2 text-xs font-medium text-ink-500 dark:text-ink-100">Os lançamentos do print ou PDF são</p>
               <div className="mb-3 grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setTipoPrint('despesa')} className={`rounded-lg py-2 text-sm ${tipoPrint === 'despesa' ? 'bg-signal-500 text-white' : 'bg-ink-50 text-ink-500 dark:bg-ink-900'}`}>Saídas</button>
+                <button type="button" onClick={() => setTipoPrint('despesa')} className={`rounded-lg py-2 text-sm ${tipoPrint === 'despesa' ? 'bg-expense-500 text-white shadow-card' : 'bg-ink-50 text-ink-500 dark:bg-ink-900'}`}>Saídas</button>
                 <button type="button" onClick={() => setTipoPrint('receita')} className={`rounded-lg py-2 text-sm ${tipoPrint === 'receita' ? 'bg-ledger-500 text-white' : 'bg-ink-50 text-ink-500 dark:bg-ink-900'}`}>Entradas</button>
               </div>
               <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-ink-900 py-2.5 text-sm font-medium text-white dark:bg-ledger-500">

@@ -9,7 +9,7 @@ export default function MonthNav({ monthKey, onChange }) {
         type="button"
         onClick={() => onChange(shiftMonthKey(monthKey, -1))}
         aria-label="Mês anterior"
-        className="w-9 h-9 flex items-center justify-center rounded-pill text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900 active:scale-95 transition"
+        className="w-9 h-9 flex items-center justify-center rounded-pill text-ledger-600 hover:bg-ledger-50 dark:text-ledger-400 dark:hover:bg-ink-900 active:scale-95 transition"
       >
         <ChevronLeft size={20} strokeWidth={1.75} />
       </button>
@@ -21,7 +21,7 @@ export default function MonthNav({ monthKey, onChange }) {
         type="button"
         onClick={() => onChange(shiftMonthKey(monthKey, 1))}
         aria-label="Próximo mês"
-        className="w-9 h-9 flex items-center justify-center rounded-pill text-ink-500 hover:bg-ink-50 dark:hover:bg-ink-900 active:scale-95 transition"
+        className="w-9 h-9 flex items-center justify-center rounded-pill text-ledger-600 hover:bg-ledger-50 dark:text-ledger-400 dark:hover:bg-ink-900 active:scale-95 transition"
       >
         <ChevronRight size={20} strokeWidth={1.75} />
       </button>

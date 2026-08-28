@@ -250,7 +250,7 @@ export default function PlanejamentoPage() {
                     onClick={() => setToolTab(item.id)}
                     className={`rounded-xl px-2 py-2 text-xs font-medium ${
                       toolTab === item.id
-                        ? 'bg-ink-900 text-white dark:bg-ledger-500'
+                        ? 'bg-ledger-500 text-white shadow-card'
                         : 'bg-ink-50 text-ink-500 dark:bg-ink-900'
                     }`}
                   >

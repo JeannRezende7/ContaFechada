@@ -7,10 +7,28 @@
     -webkit-text-size-adjust: 100%;
     overflow-x: hidden;
   }
+  @media (max-width: 380px) {
+    html { font-size: 15px; }
+  }
+  @media (max-width: 340px) {
+    html { font-size: 14.5px; }
+  }
   body {
     font-family: 'Inter', sans-serif;
     min-width: 0;
     overflow-x: hidden;
+  }
+  html:not(.dark) .text-ink-300 {
+    color: #657870;
+  }
+  html:not(.dark) .bg-white {
+    border-color: rgb(188 207 198 / 0.62);
+  }
+  html:not(.dark) [class~="bg-white"] {
+    border-color: rgb(188 207 198 / 0.62);
+  }
+  html.dark [class~="dark:bg-ink-700"] {
+    border-color: rgb(54 91 80 / 0.52);
   }
   [data-app-content] {
     padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + var(--admob-banner-height, 0px));
@@ -42,10 +60,10 @@
     max-width: 100%;
   }
   button:not([role='switch']) {
-    min-height: 2.75rem;
+    min-height: 44px;
   }
   input:not([type='checkbox']):not([type='radio']), select, textarea {
-    min-height: 2.75rem;
+    min-height: 44px;
   }
 
   /* Android bottom sheets stay above gesture/navigation controls and remain scrollable. */

@@ -25,7 +25,7 @@ export default function BottomNav() {
             end={item.to === '/'}
             className={({ isActive }) =>
               `flex flex-1 min-w-0 flex-col items-center gap-1 py-2.5 px-0.5 text-[10px] font-medium ${
-                isActive ? 'text-ledger-600' : 'text-ink-300'
+                isActive ? 'text-ledger-600 dark:text-ledger-400' : 'text-ink-500 dark:text-ink-300'
               }`
             }
           >
@@ -33,7 +33,7 @@ export default function BottomNav() {
               <>
                 <span
                   className={`flex items-center justify-center w-9 h-6 rounded-pill transition-colors ${
-                    isActive ? 'bg-ledger-50' : ''
+                    isActive ? 'bg-ledger-50 dark:bg-ledger-500/10' : ''
                   }`}
                 >
                   <Icon size={19} strokeWidth={isActive ? 2.25 : 1.75} />

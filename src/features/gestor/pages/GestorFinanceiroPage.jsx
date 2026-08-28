@@ -179,7 +179,7 @@ export default function GestorFinanceiroPage() {
         {analise.sugestoes.length > 0 && (
           <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 mb-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0">
+              <span className="w-8 h-8 rounded-full bg-ledger-500 text-white flex items-center justify-center shrink-0">
                 <Sparkles size={15} strokeWidth={1.75} />
               </span>
               <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Sugestões</p>
@@ -213,7 +213,7 @@ export default function GestorFinanceiroPage() {
               onClick={() => setAbaDetalhe('compromissos')}
               className={`flex-1 rounded-pill py-1.5 text-xs font-medium transition-colors ${
                 abaDetalhe === 'compromissos'
-                  ? 'bg-white dark:bg-ledger-500 shadow-card text-ink-900 dark:text-white'
+                  ? 'bg-ledger-500 text-white shadow-card'
                   : 'text-ink-500'
               }`}
             >
@@ -223,7 +223,7 @@ export default function GestorFinanceiroPage() {
               onClick={() => setAbaDetalhe('lancamentos')}
               className={`flex-1 rounded-pill py-1.5 text-xs font-medium transition-colors ${
                 abaDetalhe === 'lancamentos'
-                  ? 'bg-white dark:bg-ledger-500 shadow-card text-ink-900 dark:text-white'
+                  ? 'bg-ledger-500 text-white shadow-card'
                   : 'text-ink-500'
               }`}
             >

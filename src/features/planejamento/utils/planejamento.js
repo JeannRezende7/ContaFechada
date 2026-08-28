@@ -8,9 +8,14 @@ function isPending(item) {
 
 export function calcularPrevisao(lancamentos, monthKey, saldoInicial = 0, today = new Date().toISOString().slice(0, 10)) {
   const eventsByDate = {};
+  let receitasPrevistas = 0;
+  let despesasPrevistas = 0;
   for (const item of lancamentos) {
     if (!item.dataVencimento?.startsWith(monthKey)) continue;
-    const signedValue = item.tipo === 'receita' ? numericValue(item) : -numericValue(item);
+    const value = numericValue(item);
+    if (item.tipo === 'receita') receitasPrevistas += value;
+    else despesasPrevistas += value;
+    const signedValue = item.tipo === 'receita' ? value : -value;
     eventsByDate[item.dataVencimento] = (eventsByDate[item.dataVencimento] ?? 0) + signedValue;
   }
 
@@ -33,6 +38,8 @@ export function calcularPrevisao(lancamentos, monthKey, saldoInicial = 0, today 
 
   return {
     saldoInicial: Number(saldoInicial) || 0,
+    receitasPrevistas,
+    despesasPrevistas,
     saldoHojePrevisto: balanceToday,
     saldoFinalPrevisto: balance,
     menorSaldoPrevisto: minimumBalance,

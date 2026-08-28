@@ -15,6 +15,8 @@ describe('planejamento financeiro', () => {
 
     expect(result).toMatchObject({
       saldoInicial: 100,
+      receitasPrevistas: 1000,
+      despesasPrevistas: 1300,
       saldoHojePrevisto: 500,
       saldoFinalPrevisto: -200,
       menorSaldoPrevisto: -200,

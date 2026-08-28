@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GripHorizontal, Pencil, Plus, X, Tag } from 'lucide-react';
+import { Plus, X, Tag } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { getColor } from '../colorMap.js';
@@ -17,6 +17,7 @@ export default function CategoriasPage() {
   const [editing, setEditing] = useState(null);
   const [draggingId, setDraggingId] = useState(null);
   const pendingOrder = useRef([]);
+  const dragStart = useRef(null);
 
   const reload = async () => {
     if (!uid) return;
@@ -83,15 +84,32 @@ export default function CategoriasPage() {
     });
   }
 
-  function handleDragMove(event, sourceId) {
-    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-category-id]');
-    if (target) moveDraggedCategory(sourceId, target.dataset.categoryId);
+  function handleCategoryPointerDown(event, sourceId) {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStart.current = { sourceId, x: event.clientX, y: event.clientY, moved: false };
+    pendingOrder.current = [];
   }
 
-  async function finishDragging() {
+  function handleDragMove(event) {
+    const drag = dragStart.current;
+    if (!drag) return;
+    if (!drag.moved && Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 8) return;
+    drag.moved = true;
+    setDraggingId(drag.sourceId);
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-category-id]');
+    if (target) moveDraggedCategory(drag.sourceId, target.dataset.categoryId);
+  }
+
+  async function finishDragging(categoria) {
+    const wasDragging = dragStart.current?.moved;
+    dragStart.current = null;
     setDraggingId(null);
     const changes = pendingOrder.current;
     pendingOrder.current = [];
+    if (!wasDragging) {
+      openEdit(categoria);
+      return;
+    }
     if (!changes.length) return;
     try {
       await Promise.all(changes.map(({ id, ordem }) => repositories.categorias.update(uid, id, { ordem })));
@@ -108,7 +126,7 @@ export default function CategoriasPage() {
           <button
             onClick={() => setTab('despesa')}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-              tab === 'despesa' ? 'bg-ink-900 text-white dark:bg-ledger-500' : 'bg-ink-50 text-ink-500 dark:bg-ink-700 dark:text-ink-100'
+              tab === 'despesa' ? 'bg-expense-500 text-white shadow-card' : 'bg-ink-50 text-ink-500 dark:bg-ink-700 dark:text-ink-100'
             }`}
           >
             Despesas
@@ -126,7 +144,7 @@ export default function CategoriasPage() {
         <section className="mb-5 rounded-card bg-white p-3 shadow-card dark:bg-ink-700">
           <div className="mb-3">
             <h2 className="text-base font-semibold text-ink-900 dark:text-ink-50">Suas categorias</h2>
-            <p className="mt-0.5 text-xs text-ink-300">Toque para editar ou arraste pela alça para mudar a ordem.</p>
+            <p className="mt-0.5 text-xs text-ink-300">Toque para editar. Segure o ícone e arraste para mudar a ordem.</p>
           </div>
           <div>
           <button
@@ -144,37 +162,36 @@ export default function CategoriasPage() {
             const color = getColor(c.corKey);
             const Icon = getIcon(c.icone);
             return (
-              <div key={c.id} data-category-id={c.id} className={`flex flex-col items-center gap-1 rounded-xl transition ${draggingId === c.id ? 'scale-105 bg-ledger-50/70 dark:bg-ink-700' : ''}`}>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => openEdit(c)}
-                    aria-label={`Editar ${c.nome}`}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center ${color.dot} hover:scale-105 focus-visible:ring-2 focus-visible:ring-ledger-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-ink-900 transition-transform`}
-                  >
+              <div
+                key={c.id}
+                data-category-id={c.id}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openEdit(c); }}
+                className={`flex select-none flex-col items-center gap-1 rounded-xl px-1 py-1 transition ${draggingId === c.id ? 'z-10 scale-105 bg-ledger-50/70 shadow-card dark:bg-ink-700' : ''}`}
+              >
+                <div
+                  className="relative touch-none"
+                  onPointerDown={(event) => handleCategoryPointerDown(event, c.id)}
+                  onPointerMove={handleDragMove}
+                  onPointerUp={() => finishDragging(c)}
+                  onPointerCancel={() => { dragStart.current = null; setDraggingId(null); }}
+                >
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-full ${color.dot}`}>
                     <Icon size={22} strokeWidth={2} className="text-white" />
-                  </button>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => openEdit(c)}
-                    aria-label={`Editar ${c.nome}`}
-                    className="absolute -top-2 -left-2 h-9 w-9 rounded-full bg-white dark:bg-ledger-500 shadow-card flex items-center justify-center text-ink-500 dark:text-white hover:text-ledger-600 transition-colors"
-                  >
-                    <Pencil size={15} strokeWidth={2.5} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(c.id)}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onPointerUp={(event) => event.stopPropagation()}
+                    onClick={(event) => { event.stopPropagation(); handleDelete(c.id); }}
                     aria-label={`Excluir ${c.nome}`}
-                    className="absolute -top-2 -right-2 h-9 w-9 rounded-full bg-white dark:bg-ink-700 shadow-card flex items-center justify-center text-ink-300 hover:text-signal-500 transition-colors"
+                    className="absolute -right-3 -top-3 flex h-11 w-11 items-center justify-center rounded-full text-ink-300 transition-colors hover:text-signal-500"
                   >
-                    <X size={16} strokeWidth={2.5} />
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-card dark:bg-ink-700"><X size={13} strokeWidth={2.5} /></span>
                   </button>
                 </div>
                 <span className="text-[11px] text-ink-500 text-center leading-tight line-clamp-2">{c.nome}</span>
-                <button type="button" aria-label={`Arrastar ${c.nome} para mudar a ordem`} className="flex h-6 w-10 touch-none items-center justify-center rounded-pill text-ink-300 active:bg-ink-50 active:text-ledger-500 dark:active:bg-ink-700" onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); pendingOrder.current = []; setDraggingId(c.id); }} onPointerMove={(event) => handleDragMove(event, c.id)} onPointerUp={finishDragging} onPointerCancel={finishDragging}>
-                  <GripHorizontal size={17} />
-                </button>
               </div>
             );
           })}

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
+import FinancialTotalsGrid from '../../../components/ui/FinancialTotalsGrid.jsx';
 
 export function ForecastSection({ forecast, saldoInput, onSaldoInputChange, onSaveSaldo, saving }) {
   return (
@@ -45,9 +46,16 @@ export function ForecastSection({ forecast, saldoInput, onSaldoInputChange, onSa
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <FinancialTotalsGrid
+        incomeLabel="Receitas previstas"
+        incomeValue={forecast.receitasPrevistas}
+        expenseLabel="Despesas previstas"
+        expenseValue={forecast.despesasPrevistas}
+        balanceLabel="Saldo previsto"
+        balanceValue={forecast.saldoFinalPrevisto}
+      />
+      <div className="grid grid-cols-2 gap-3">
         <ForecastCard label="Saldo previsto hoje" value={forecast.saldoHojePrevisto} />
-        <ForecastCard label="Saldo no fim do mês" value={forecast.saldoFinalPrevisto} />
         <ForecastCard label="Menor saldo previsto" value={forecast.menorSaldoPrevisto} />
       </div>
 
@@ -322,7 +330,7 @@ const PENDING_GROUPS = [
   { key: 'proximosVencimentos', title: 'Próximos 7 dias', icon: CalendarClock, tone: 'text-pending-600 bg-pending-50' },
   { key: 'receitasPendentes', title: 'Receitas pendentes', icon: ArrowUpCircle, tone: 'text-ledger-600 bg-ledger-50' },
   { key: 'semCategoria', title: 'Sem categoria', icon: Tags, tone: 'text-clay-600 bg-clay-50' },
-  { key: 'parcelamentosFinalizando', title: 'Parcelamentos no fim', icon: Layers, tone: 'text-indigo-600 bg-indigo-50' },
+  { key: 'parcelamentosFinalizando', title: 'Parcelamentos no fim', icon: Layers, tone: 'text-clay-600 bg-clay-50' },
 ];
 
 export function PendingSection({ pending }) {

@@ -16,16 +16,16 @@ export default function Topbar({ title, icon: Icon }) {
         </h1>
       </div>
       <div className="flex items-center gap-3 md:gap-4">
-        <Link to="/buscar" aria-label="Busca global" className="flex items-center text-ink-300 hover:text-ledger-600">
+        <Link to="/buscar" aria-label="Busca global" className="flex items-center text-ledger-600 hover:text-ledger-700 dark:text-ledger-400">
           <Search size={18} />
         </Link>
-        <button onClick={privacy.toggle} aria-label={privacy.enabled ? 'Mostrar valores' : 'Ocultar valores'} className="flex items-center text-ink-300 hover:text-ledger-600">
+        <button onClick={privacy.toggle} aria-label={privacy.enabled ? 'Mostrar valores' : 'Ocultar valores'} className="flex items-center text-ledger-600 hover:text-ledger-700 dark:text-ledger-400">
           {privacy.enabled ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
         <button
           onClick={toggleTheme}
           aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
-          className="flex items-center text-ink-300 hover:text-ink-700 dark:hover:text-ink-50 transition-colors"
+          className="flex items-center text-ledger-600 hover:text-ledger-700 dark:text-ledger-400 transition-colors"
         >
           {theme === 'dark' ? (
             <Sun size={18} strokeWidth={1.75} className="md:w-5 md:h-5" />
@@ -37,7 +37,7 @@ export default function Topbar({ title, icon: Icon }) {
         <Link
           to="/opcoes"
           aria-label="Opções"
-          className="flex items-center text-ink-300 hover:text-ink-700 dark:hover:text-ink-50 transition-colors"
+          className="flex items-center text-ledger-600 hover:text-ledger-700 dark:text-ledger-400 transition-colors"
         >
           <Settings size={18} strokeWidth={1.75} className="md:w-5 md:h-5" />
         </Link>

@@ -5,6 +5,7 @@ import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
+import FinancialTotalsGrid from '../../../components/ui/FinancialTotalsGrid.jsx';
 import SectionTabs from '../../../components/ui/SectionTabs.jsx';
 import CategoriaPicker from '../../categorias/components/CategoriaPicker.jsx';
 import LancamentoModal from '../../lancamentos/components/LancamentoModal.jsx';
@@ -215,17 +216,20 @@ export default function ValorLivrePage() {
         <MonthNav monthKey={monthKey} onChange={setMonthKey} />
 
         <div className="mt-4 grid grid-cols-2 gap-2 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
-          <button type="button" onClick={() => setTab('acompanhamento')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'acompanhamento' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Acompanhamento</button>
-          <button type="button" onClick={() => setTab('configuracoes')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'configuracoes' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Dividir valor</button>
+          <button type="button" onClick={() => setTab('acompanhamento')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'acompanhamento' ? 'bg-ledger-500 text-white shadow-card' : 'text-ink-500 dark:text-ink-100'}`}>Acompanhamento</button>
+          <button type="button" onClick={() => setTab('configuracoes')} className={`rounded-pill py-2 text-sm font-medium ${tab === 'configuracoes' ? 'bg-ledger-500 text-white shadow-card' : 'text-ink-500 dark:text-ink-100'}`}>Dividir valor</button>
         </div>
 
         {tab === 'acompanhamento' && (
           <div className="mt-4 space-y-3">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Resumo label="Receitas do mês" valor={resumo.renda} />
-              <Resumo label="Contas fixas" valor={resumo.contasFixas} tone="text-signal-500" />
-              <Resumo label="Valor livre do mês" valor={resumo.valorLivre} tone={resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'} />
-            </div>
+            <FinancialTotalsGrid
+              incomeLabel="Receitas do mês"
+              incomeValue={resumo.renda}
+              expenseLabel="Contas fixas"
+              expenseValue={resumo.contasFixas}
+              balanceLabel="Valor livre"
+              balanceValue={resumo.valorLivre}
+            />
             {gruposAcompanhamento.finalidades.map((grupo) => (
               <LancamentosGrupo key={grupo.id} grupo={grupo} categorias={categorias} onSelect={setEditingLancamento} />
             ))}
@@ -245,12 +249,13 @@ export default function ValorLivrePage() {
 
         {tab === 'configuracoes' && (<>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+        <div className="grid grid-cols-2 gap-3 mt-5">
           <Resumo label="Receitas do mês" valor={resumo.renda} />
           <Resumo label="Contas fixas" valor={resumo.contasFixas} tone="text-signal-500" />
-          <div className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
+          <div className={`col-span-2 mx-auto min-w-0 ${editandoValorBase ? 'w-full' : 'w-[48%]'}`}>
+          <div className="rounded-card bg-white p-4 text-center shadow-card dark:bg-ink-700">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-ink-300">Valor livre do mês</p>
+              <p className="flex-1 text-center text-xs text-ink-300">Valor livre do mês</p>
               {!editandoValorBase && (
                 <button type="button" onClick={iniciarEdicaoValorBase} className="inline-flex items-center gap-1 text-xs font-medium text-ledger-600">
                   <Pencil size={13} /> Editar
@@ -273,9 +278,10 @@ export default function ValorLivrePage() {
                 <button type="button" onClick={() => setEditandoValorBase(false)} aria-label="Cancelar edição" className="rounded-full bg-ink-50 p-2 text-ink-400 dark:bg-ink-900"><X size={16} /></button>
               </div>
             ) : (
-              <p className={`money mt-1 text-xl font-semibold ${resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>{formatCurrency(resumo.valorLivre)}</p>
+              <p className={`money mt-1 text-center text-xl font-semibold ${resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>{formatCurrency(resumo.valorLivre)}</p>
             )}
             <p className="mt-1 text-xs text-ink-300">Este valor fica salvo para o mês selecionado até você editar.</p>
+          </div>
           </div>
         </div>
 
@@ -290,7 +296,7 @@ export default function ValorLivrePage() {
             <button
               type="button"
               onClick={gerarSugestao}
-              className="inline-flex items-center gap-2 rounded-pill bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-600"
+              className="inline-flex items-center gap-2 rounded-pill bg-ledger-50 px-3 py-2 text-xs font-medium text-ledger-700"
             >
               <Sparkles size={16} /> Criar sugestão
             </button>
@@ -303,7 +309,7 @@ export default function ValorLivrePage() {
             </div>
             <div className="border-x border-ink-100 p-3 dark:border-ink-700">
               <p className="text-[10px] text-ink-300">Já reservado</p>
-              <p className="money mt-1 text-sm font-semibold text-indigo-600">{formatCurrency(resumo.valorLivre - resumo.naoDistribuido)}</p>
+              <p className="money mt-1 text-sm font-semibold text-ledger-600">{formatCurrency(resumo.valorLivre - resumo.naoDistribuido)}</p>
             </div>
             <div className="p-3">
               <p className="text-[10px] text-ink-300">Ainda disponível</p>
@@ -356,20 +362,39 @@ export default function ValorLivrePage() {
               {resumo.naoDistribuido < 0 && <p className="text-xs text-signal-500">Os limites ultrapassam o valor disponível.</p>}
             </div>
           </div>
-          <label className="mt-4 flex items-center gap-2 rounded-xl bg-ink-50 px-3 py-2.5 text-sm text-ink-500 dark:bg-ink-900 dark:text-ink-100">
-            <input
-              type="checkbox"
-              checked={personalizada}
-              onChange={(event) => { setPersonalizada(event.target.checked); setFeedback(''); }}
-            />
-            Aplicar esta divisão somente em {monthKey.split('-').reverse().join('/')}
-          </label>
-          <details className="mt-3 rounded-xl bg-indigo-50 p-3 text-xs text-indigo-700 dark:bg-ink-900 dark:text-indigo-200">
+          <fieldset className="mt-4">
+            <legend className="text-sm font-semibold text-ink-900 dark:text-ink-50">Onde deseja usar estes limites?</legend>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <label className={`flex cursor-pointer gap-3 rounded-xl border p-3 transition-colors ${
+                !personalizada
+                  ? 'border-ledger-500 bg-ledger-50 dark:bg-ledger-500/10'
+                  : 'border-ink-100 bg-white dark:border-ink-900 dark:bg-ink-900'
+              }`}>
+                <input type="radio" name="periodo-distribuicao" checked={!personalizada} onChange={() => { setPersonalizada(false); setFeedback(''); }} className="mt-1 accent-ledger-600" />
+                <span>
+                  <span className="block text-sm font-medium text-ink-900 dark:text-ink-50">Todos os meses</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-ink-300">Usa estes limites como padrão daqui em diante.</span>
+                </span>
+              </label>
+              <label className={`flex cursor-pointer gap-3 rounded-xl border p-3 transition-colors ${
+                personalizada
+                  ? 'border-ledger-500 bg-ledger-50 dark:bg-ledger-500/10'
+                  : 'border-ink-100 bg-white dark:border-ink-900 dark:bg-ink-900'
+              }`}>
+                <input type="radio" name="periodo-distribuicao" checked={personalizada} onChange={() => { setPersonalizada(true); setFeedback(''); }} className="mt-1 accent-ledger-600" />
+                <span>
+                  <span className="block text-sm font-medium text-ink-900 dark:text-ink-50">Somente {monthKey.split('-').reverse().join('/')}</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-ink-300">Cria uma exceção apenas para este mês.</span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+          <details className="mt-3 rounded-xl bg-ledger-50 p-3 text-xs text-ledger-700 dark:bg-ink-900 dark:text-ledger-200">
             <summary className="cursor-pointer font-medium">Como funciona?</summary>
             <p className="mt-2 leading-relaxed">O app calcula receitas menos contas fixas. Você reserva partes desse valor por categoria; cada novo gasto reduz o disponível da categoria correspondente.</p>
           </details>
           <button type="button" disabled={saving} onClick={salvar} className="mt-4 w-full rounded-pill bg-ledger-500 py-2.5 text-sm font-medium text-white disabled:opacity-50">
-            {saving ? 'Salvando…' : personalizada ? 'Salvar somente para este mês' : 'Salvar regra para todos os meses'}
+            {saving ? 'Salvando…' : 'Salvar distribuição'}
           </button>
           {feedback && <p className="mt-2 text-center text-xs text-ink-300" aria-live="polite">{feedback}</p>}
         </section>
@@ -453,7 +478,7 @@ function atualizarItem(item, campo, valor, valorLivre) {
 
 function Resumo({ label, valor, tone = 'text-ink-900 dark:text-ink-50' }) {
   return (
-    <div className="rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
+    <div className="rounded-card bg-white p-4 text-center shadow-card dark:bg-ink-700">
       <p className="text-xs text-ink-300">{label}</p>
       <p className={`money mt-1 text-xl font-semibold ${tone}`}>{formatCurrency(valor)}</p>
     </div>

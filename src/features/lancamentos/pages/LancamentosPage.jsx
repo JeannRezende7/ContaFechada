@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowUpCircle, ArrowDownCircle, Wallet, Receipt, CheckSquare, Pencil, Trash2 } from 'lucide-react';
+import { Receipt, CheckSquare, Pencil, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
@@ -24,7 +24,7 @@ import {
   LancamentoTabs,
 } from '../components/LancamentosSections.jsx';
 import PeriodNav from '../../../components/ui/PeriodNav.jsx';
-import IndicatorCard from '../../../components/ui/IndicatorCard.jsx';
+import FinancialTotalsGrid from '../../../components/ui/FinancialTotalsGrid.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 
@@ -432,22 +432,23 @@ export default function LancamentosPage() {
           customRange={customRange}
           onChangePeriodType={(next) => {
             setPeriodType(next);
-            setAnchor(getTodayISODate());
+            const today = getTodayISODate();
+            setAnchor(today);
+            if (next === 'periodo') setCustomRange({ de: today, ate: today });
           }}
           onChangeAnchor={tryChangeAnchor}
           onChangeCustomRange={tryChangeCustomRange}
         />
 
-        <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4">
-          <IndicatorCard label="Receita" value={totais.receita} tone="positive" icon={ArrowUpCircle} />
-          <IndicatorCard label="Despesa" value={totais.despesa} tone="negative" icon={ArrowDownCircle} />
-          <IndicatorCard
-            label="Saldo"
-            value={totais.saldo}
-            tone={totais.saldo < 0 ? 'negative' : 'positive'}
-            icon={Wallet}
-          />
-        </div>
+        <FinancialTotalsGrid
+          className="mb-4"
+          incomeLabel="Receitas"
+          incomeValue={totais.receita}
+          expenseLabel="Despesas"
+          expenseValue={totais.despesa}
+          balanceLabel="Saldo"
+          balanceValue={totais.saldo}
+        />
 
         <LancamentosSearch
           busca={busca}

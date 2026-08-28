@@ -56,8 +56,8 @@ export default function RelatoriosPage() {
   const uid = user?.uid;
   const { canUse, openPaywall } = usePremium();
   const { theme } = useTheme();
-  const chartSurfaceColor = theme === 'dark' ? '#334155' : '#F8FAFC';
-  const chartGridColor = theme === 'dark' ? '#475569' : '#E2E8F0';
+  const chartSurfaceColor = theme === 'dark' ? '#17302B' : '#F6F9F7';
+  const chartGridColor = theme === 'dark' ? '#365B50' : '#D9E3DE';
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey());
   const [tipo, setTipo] = useState('despesa');
   const [categoriaData, setCategoriaData] = useState({ items: [], totalGeral: 0 });
@@ -107,7 +107,7 @@ export default function RelatoriosPage() {
               <button
                 onClick={() => setTipo('despesa')}
                 className={`rounded-pill px-3 py-1.5 text-xs font-medium transition-colors ${
-                  tipo === 'despesa' ? 'bg-ink-900 text-white' : 'text-ink-500'
+                  tipo === 'despesa' ? 'bg-expense-500 text-white shadow-card' : 'text-ink-500'
                 }`}
               >
                 Despesas
@@ -207,7 +207,7 @@ export default function RelatoriosPage() {
                     dataKey="label"
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fill: '#94A3B8', fontSize: 12 }}
+                    tick={{ fill: theme === 'dark' ? '#91A29C' : '#586C65', fontSize: 12 }}
                   />
                   <YAxis hide />
                   <Tooltip content={<EvolucaoTooltip />} cursor={{ fill: chartSurfaceColor }} />
@@ -215,8 +215,8 @@ export default function RelatoriosPage() {
                     formatter={(value) => (value === 'receitas' ? 'Entradas' : 'Saídas')}
                     wrapperStyle={{ fontSize: 13 }}
                   />
-                  <Bar dataKey="receitas" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                  <Bar dataKey="despesas" fill="#F43F5E" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="receitas" fill="#00B956" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="despesas" fill="#F62F35" radius={[4, 4, 0, 0]} maxBarSize={28} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -46,13 +46,16 @@ export default function BuscaGlobalPage() {
     ...data.categorias.map((item) => ({ ...item, recurso: 'categorias', titulo: item.nome, href: '/categorias' })),
     ...data.recorrencias.map((item) => ({ ...item, recurso: 'recorrencias', titulo: item.descricao, subtitulo: item.ativo ? 'Ativa' : 'Inativa', href: `/?q=${encodeURIComponent(item.descricao)}` })),
   ], [data]);
-  const results = useMemo(() => filtrarBuscaGlobal(items, filters).slice(0, 100), [items, filters]);
+  const advancedActive = Object.entries(filters).some(([key, value]) => key !== 'query' && value && value !== 'todos');
+  const hasSearch = Boolean(filters.query.trim() || advancedActive);
+  const results = useMemo(
+    () => hasSearch ? filtrarBuscaGlobal(items, filters).slice(0, 100) : [],
+    [items, filters, hasSearch]
+  );
 
   function update(field, value) {
     setFilters((current) => ({ ...current, [field]: value }));
   }
-
-  const advancedActive = Object.entries(filters).some(([key, value]) => key !== 'query' && value && value !== 'todos');
 
   if (loading) return <><Topbar title="Busca global" icon={Search} /><LoadingScreen /></>;
   if (!allowed) {
@@ -102,7 +105,7 @@ export default function BuscaGlobalPage() {
           <input type="number" placeholder="Valor mínimo" value={filters.valorMin} onChange={(e) => update('valorMin', e.target.value)} className="money rounded-xl border border-ink-100 p-2 text-xs dark:border-ink-700 dark:bg-ink-900" />
           <input type="number" placeholder="Valor máximo" value={filters.valorMax} onChange={(e) => update('valorMax', e.target.value)} className="money rounded-xl border border-ink-100 p-2 text-xs dark:border-ink-700 dark:bg-ink-900" />
         </div></div>}
-        <p className="my-4 text-xs text-ink-300">{results.length} resultado(s)</p>
+        <p className="my-4 text-xs text-ink-300">{hasSearch ? `${results.length} resultado(s)` : 'Digite algo ou escolha um filtro para começar.'}</p>
         <div className="space-y-2">
           {results.map((item) => (
             <Link key={`${item.recurso}-${item.id}`} to={item.href} className="flex items-center gap-3 rounded-card bg-white p-4 shadow-card hover:shadow-card-hover dark:bg-ink-700">

@@ -225,7 +225,7 @@ export default function LancamentoModal({
             onClick={() => handleTipoChange('despesa')}
             aria-pressed={form.tipo === 'despesa'}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-              form.tipo === 'despesa' ? 'bg-ledger-500 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
+              form.tipo === 'despesa' ? 'bg-expense-500 text-white shadow-card' : 'bg-ink-50 dark:bg-ink-900 text-ink-500'
             }`}
           >
             Despesa
@@ -253,7 +253,7 @@ export default function LancamentoModal({
                   update('modo', opt.key);
                 }}
                 className={`flex-1 rounded-pill py-1.5 text-xs font-medium transition-colors ${
-                  form.modo === opt.key ? 'bg-white dark:bg-ledger-500 shadow-card text-ink-900 dark:text-white' : 'text-ink-500 dark:text-ink-100'
+                  form.modo === opt.key ? 'bg-ledger-500 text-white shadow-card' : 'text-ink-500 dark:text-ink-100'
                 }`}
               >
                 {opt.label}
@@ -401,7 +401,7 @@ export default function LancamentoModal({
                   type="button"
                   onClick={() => update('dataVencimento', alvo)}
                   className={`rounded-pill px-3 py-1 text-xs font-medium transition-colors ${
-                    selecionado ? 'bg-ink-900 text-white' : 'bg-ink-50 dark:bg-ink-900 text-ink-500 hover:bg-ink-100'
+                    selecionado ? 'bg-ledger-500 text-white shadow-card' : 'bg-ink-50 dark:bg-ink-900 text-ink-500 hover:bg-ink-100'
                   }`}
                 >
                   {opt.label}
@@ -439,8 +439,8 @@ export default function LancamentoModal({
         )}
 
         {isNew && form.modo === 'simulacao' && (
-          <div className="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 dark:border-ink-900 dark:bg-ink-900">
-            <p className="flex items-center gap-2 text-sm font-medium text-indigo-700 dark:text-indigo-200">
+          <div className="mb-3 rounded-xl border border-clay-200 bg-clay-50/50 p-3 dark:border-clay-600/40 dark:bg-ink-900">
+            <p className="flex items-center gap-2 text-sm font-medium text-clay-600 dark:text-clay-400">
               <ShoppingCart size={16} /> Simulação da compra
             </p>
             <div className="mt-3 grid grid-cols-2 gap-3">

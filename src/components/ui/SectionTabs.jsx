@@ -16,7 +16,7 @@ export default function SectionTabs({ area }) {
     <div className="mx-auto max-w-4xl px-4 pt-4 md:px-8 md:pt-6">
       <nav aria-label="Seções" className="grid grid-cols-2 gap-1 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
         {AREAS[area].map((item) => (
-          <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `rounded-pill px-3 py-2 text-center text-xs font-semibold transition-colors md:text-sm ${isActive ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 hover:text-ink-700 dark:text-ink-100'}`}>
+          <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `rounded-pill px-3 py-2 text-center text-xs font-semibold transition-colors md:text-sm ${isActive ? 'bg-ledger-500 text-white shadow-card' : 'text-ink-500 hover:text-ledger-700 dark:text-ink-100'}`}>
             {item.label}
           </NavLink>
         ))}

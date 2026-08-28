@@ -1,8 +1,8 @@
 {
   "version": "5.3.14",
-  "versionCode": 19,
-  "sourceSha256": "e57f54b24539974e57ff6bd4a3ec587bfc6112141be2e501ce20fe914a5331f2",
-  "apkSha256": "1b798945f99765c5a901354bb993a8f9979c349e44c4c69e38cf7123b9af8fd8",
-  "size": 31230375,
-  "generatedAt": "2026-08-27T18:56:38.945Z"
+  "versionCode": 21,
+  "sourceSha256": "5f7eed0855a8bedced5a1f2a954494f40073be50c97a2e4388b55dacb6e31872",
+  "apkSha256": "d4d1c0b126c377577c71b6c30b8b10313b194284f574145b56e02f03b2b7dd47",
+  "size": 31230533,
+  "generatedAt": "2026-08-28T13:09:29.921Z"
 }

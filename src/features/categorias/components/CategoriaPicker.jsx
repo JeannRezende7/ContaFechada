@@ -138,7 +138,7 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
           </div>
           <div className="grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-5">
             <button type="button" onClick={() => pick('')} className="flex flex-col items-center gap-1">
-              <span className={`flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed ${!value ? 'border-ink-900 bg-ink-50 dark:bg-ink-900' : 'border-ink-100 text-ink-300'}`}><EmptyIcon size={18} /></span>
+              <span className={`flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed ${!value ? 'border-ledger-500 bg-ledger-50 text-ledger-600 dark:bg-ledger-500/10 dark:text-ledger-400' : 'border-ink-100 text-ink-300'}`}><EmptyIcon size={18} /></span>
               <span className="text-center text-[11px] leading-tight text-ink-500">{emptyLabel}</span>
             </button>
             {ordenadas.map((c) => {

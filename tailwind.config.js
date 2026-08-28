@@ -5,37 +5,43 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Slate - primary dark surface / text
+        // Green-black neutral scale: text and dark surfaces
         ink: {
-          DEFAULT: '#0F172A',
-          50: '#F8FAFC',
-          100: '#E2E8F0',
-          300: '#94A3B8',
-          500: '#64748B',
-          700: '#334155',
-          900: '#0F172A',
+          DEFAULT: '#10231F',
+          50: '#F1F6F3',
+          100: '#D9E3DE',
+          300: '#91A29C',
+          500: '#586C65',
+          700: '#17302B',
+          900: '#061B17',
         },
-        // Slate-tinted page background
+        // Soft green-white page background
         paper: {
-          DEFAULT: '#F8FAFC',
-          dim: '#F1F5F9',
+          DEFAULT: '#F6F9F7',
+          dim: '#ECF3EF',
         },
-        // Emerald - positive balances, primary actions, "pago"
+        // Brand green: navigation, selection, actions and positive values
         ledger: {
-          50: '#ECFDF5',
-          200: '#A7F3D0',
-          400: '#34D399',
-          500: '#10B981',
-          600: '#059669',
-          700: '#047857',
+          50: '#E8F9EF',
+          200: '#96E7B5',
+          400: '#19D468',
+          500: '#00B956',
+          600: '#009D49',
+          700: '#087B3E',
         },
-        // Rose - overdue, negative balances, destructive actions
+        // Clear red: negative values, overdue and destructive actions only
         signal: {
-          50: '#FFF1F2',
-          200: '#FECDD3',
-          400: '#FB7185',
-          500: '#F43F5E',
-          600: '#E11D48',
+          50: '#FFF0F0',
+          200: '#FFB8BA',
+          400: '#FF5156',
+          500: '#F62F35',
+          600: '#D91E25',
+        },
+        // Expense-type selection. Distinct from destructive/error red.
+        expense: {
+          50: '#FDECEF',
+          500: '#E8465A',
+          600: '#CE3549',
         },
         // Amber - pending / scheduled
         pending: {
@@ -78,9 +84,9 @@ export default {
         pill: '999px',
       },
       boxShadow: {
-        card: '0 1px 2px 0 rgb(15 23 42 / 0.05), 0 6px 20px -6px rgb(15 23 42 / 0.12)',
-        'card-hover': '0 2px 4px 0 rgb(15 23 42 / 0.06), 0 10px 28px -6px rgb(15 23 42 / 0.16)',
-        pop: '0 12px 32px -8px rgb(15 23 42 / 0.28)',
+        card: '0 2px 5px rgb(6 27 23 / 0.07), 0 10px 28px -14px rgb(6 27 23 / 0.24)',
+        'card-hover': '0 3px 8px rgb(6 27 23 / 0.10), 0 16px 34px -14px rgb(6 27 23 / 0.30)',
+        pop: '0 18px 42px -10px rgb(2 15 12 / 0.48)',
       },
     },
   },

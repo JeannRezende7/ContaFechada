@@ -27,7 +27,7 @@ export default function AppLayout() {
     return <Navigate to="/baixar-app" replace />;
   }
   return (
-    <div className="flex min-h-screen bg-paper text-ink-900 dark:bg-ink-900 dark:text-ink-50">
+    <div className="flex min-h-screen bg-paper text-ink-900 dark:bg-ink-900 dark:text-ink-50 selection:bg-ledger-200">
       <AdMobBannerController />
       <Sidebar />
       <div

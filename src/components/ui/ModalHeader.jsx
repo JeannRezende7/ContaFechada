@@ -12,12 +12,12 @@ export default function ModalHeader({
 }) {
   return (
     <header className={`mb-4 ${className}`}>
-      <div className="flex min-h-10 items-center justify-between gap-3">
+      <div className={`grid gap-3 ${actionLabel ? 'grid-cols-2' : 'grid-cols-1'}`}>
         <button
           type="button"
           onClick={onBack}
           aria-label="Cancelar e voltar"
-          className="-ml-2 inline-flex min-h-10 shrink-0 items-center gap-1 rounded-pill px-2.5 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:text-ink-100 dark:hover:bg-ink-900"
+          className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl border border-ink-100 bg-ink-50 px-4 text-sm font-semibold text-ink-500 hover:bg-ink-100 dark:border-ink-900 dark:bg-ink-900 dark:text-ink-100"
         >
           <X size={18} /> Cancelar
         </button>
@@ -26,7 +26,7 @@ export default function ModalHeader({
             type={actionType}
             onClick={onAction}
             disabled={actionDisabled}
-            className="min-h-10 shrink-0 rounded-pill bg-ledger-500 px-4 text-sm font-semibold text-white hover:bg-ledger-600 disabled:cursor-wait disabled:opacity-50"
+            className="min-h-12 rounded-xl bg-ledger-500 px-4 text-sm font-semibold text-white shadow-card hover:bg-ledger-600 disabled:cursor-wait disabled:opacity-50"
           >
             {actionLabel}
           </button>

@@ -6,20 +6,20 @@ import LancamentoRow from './LancamentoRow.jsx';
 export function LancamentoTabs({ tab, onChange }) {
   return (
     <div className="flex gap-2 mb-4">
-      <TabButton active={tab === 'despesa'} onClick={() => onChange('despesa')}>
+      <TabButton active={tab === 'despesa'} onClick={() => onChange('despesa')} expense>
         Despesas
       </TabButton>
-      <TabButton active={tab === 'receita'} onClick={() => onChange('receita')} positive>
+      <TabButton active={tab === 'receita'} onClick={() => onChange('receita')}>
         Receitas
       </TabButton>
     </div>
   );
 }
 
-function TabButton({ active, positive = false, onClick, children }) {
-  const activeClass = positive
-    ? 'bg-ledger-500 text-white shadow-card'
-    : 'bg-ink-900 text-white shadow-card dark:bg-ledger-500 dark:text-white';
+function TabButton({ active, onClick, children, expense = false }) {
+  const activeClass = expense
+    ? 'bg-expense-500 text-white shadow-card'
+    : 'bg-ledger-500 text-white shadow-card';
   return (
     <button
       type="button"

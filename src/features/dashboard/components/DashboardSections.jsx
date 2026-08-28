@@ -310,7 +310,7 @@ export function InsightsCard({ insights, locked = false, onUnlock }) {
   return (
     <div className="mt-4 bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
       <div className="flex items-center gap-2 mb-2">
-        <span className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0">
+        <span className="w-8 h-8 rounded-full bg-ledger-500 text-white flex items-center justify-center shrink-0">
           <Sparkles size={15} strokeWidth={1.75} />
         </span>
         <p className="text-sm font-medium text-ink-900 dark:text-ink-50">Insights automáticos</p>
@@ -357,7 +357,7 @@ export function DashboardLinks() {
       <DashboardLink
         to="/planejamento/gestor"
         icon={Landmark}
-        tone="bg-indigo-50 text-indigo-600"
+        tone="bg-ledger-50 text-ledger-600"
         text="Veja quanto da sua renda está comprometida e o que está parcelado"
         className="mt-3"
       />

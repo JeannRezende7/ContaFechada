@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { AdMob, BannerAdPosition, BannerAdSize, BannerAdPluginEvents } from '@capacitor-community/admob';
+import { AdMob, BannerAdPosition, BannerAdSize } from '@capacitor-community/admob';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { getAdMobRuntimeConfig } from '../../../config/ads.js';
 import { applyBannerLayout } from '../utils/adLayout.js';
 import { reportError } from '../../../utils/crashReporting.js';
 
 let initialized = false;
-let sizeListener;
 let consentPromise;
+const FIXED_BANNER_HEIGHT = 50;
 
 function clearBannerSpace() {
   applyBannerLayout(0);
@@ -24,9 +24,6 @@ export function hasBlockingOverlay(documentRef = document) {
 async function ensureInitialized() {
   if (initialized) return;
   await AdMob.initialize();
-  sizeListener = await AdMob.addListener(BannerAdPluginEvents.SizeChanged, ({ height }) => {
-    applyBannerLayout(height);
-  });
   initialized = true;
 }
 
@@ -44,36 +41,22 @@ async function showBanner() {
   }
   await AdMob.showBanner({
     adId: config.bannerId,
-    adSize: BannerAdSize.ADAPTIVE_BANNER,
+    adSize: BannerAdSize.BANNER,
     position: BannerAdPosition.BOTTOM_CENTER,
     margin: 0,
     isTesting: config.isTesting,
   });
+  applyBannerLayout(FIXED_BANNER_HEIGHT);
   return true;
 }
 
 export default function AdMobBannerController() {
   const { hasProAccess, loading } = usePremium();
-  const [overlayOpen, setOverlayOpen] = useState(false);
-
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return undefined;
-    const update = () => setOverlayOpen(hasBlockingOverlay());
-    const observer = new MutationObserver(update);
-    update();
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['aria-hidden', 'class'],
-      childList: true,
-      subtree: true,
-    });
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return undefined;
     let active = true;
-    const shouldShow = !loading && !hasProAccess && !overlayOpen;
+    const shouldShow = !loading && !hasProAccess;
 
     if (shouldShow) {
       showBanner().then((shown) => {
@@ -89,14 +72,12 @@ export default function AdMobBannerController() {
       clearBannerSpace();
       AdMob.removeBanner().catch(() => {});
     };
-  }, [hasProAccess, loading, overlayOpen]);
+  }, [hasProAccess, loading]);
 
   return null;
 }
 
 export async function disposeAdMobForTests() {
-  await sizeListener?.remove();
-  sizeListener = undefined;
   initialized = false;
   consentPromise = undefined;
   clearBannerSpace();

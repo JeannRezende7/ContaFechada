@@ -1,23 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ListRestart, Settings, Landmark, Crown, ChevronRight, Download, Upload, UserX, HardDrive, LogIn, LogOut, MonitorDown, TriangleAlert } from 'lucide-react';
+import { Settings, Landmark, Crown, ChevronRight, Download, Upload, UserX, HardDrive, LogIn, LogOut, MonitorDown, TriangleAlert } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { repositories } from '../../../repositories/index.js';
-import { exportUserData, deleteAllUserData, downloadJson, saveAndShareBackup } from '../services/dataPortabilityService.js';
+import { exportUserData, deleteAllUserData, saveAndShareBackup } from '../services/dataPortabilityService.js';
 import { deleteAccount, signOutUser } from '../../../firebase/auth.js';
 import { clearDeviceData } from '../../../utils/deviceCache.js';
 import { track, EVENTS } from '../../../utils/analytics.js';
 import { getPwaInstallState, requestPwaInstall, subscribeToPwaInstall } from '../../../utils/pwaInstall.js';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import {
-  clearLocalData,
   exportLocalData,
-  getLatestRecoverySnapshot,
   importLocalData,
   isNativeLocalDatabaseAvailable,
-  restoreLatestRecoverySnapshot,
 } from '../../../db/localDatabase.js';
 
 export default function OpcoesPage() {
@@ -27,7 +24,6 @@ export default function OpcoesPage() {
   const [loading, setLoading] = useState(null);
   const [activeTab, setActiveTab] = useState('geral');
   const [gestorUsaMovimento, setGestorUsaMovimentoState] = useState(true);
-  const [recoverySnapshot, setRecoverySnapshot] = useState(null);
   const [installState, setInstallState] = useState(getPwaInstallState);
   const importInputRef = useRef(null);
 
@@ -44,10 +40,6 @@ export default function OpcoesPage() {
     repositories.gestor.getUsaMovimento(user.uid).then(setGestorUsaMovimentoState);
   }, [user]);
 
-  useEffect(() => {
-    if (!isNativeLocalDatabaseAvailable()) return;
-    getLatestRecoverySnapshot().then(setRecoverySnapshot).catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (!isPremium) track(EVENTS.PREMIUM_CARD_VIEWED, { placement: 'opcoes' });
@@ -91,22 +83,6 @@ export default function OpcoesPage() {
     }
   }
 
-  async function handleRestaurarConfiguracaoInicial() {
-    const confirmado = await confirm(
-      'Restaurar a configuração inicial e apagar todos os dados deste aparelho? ' +
-      'Antes de continuar, salve um backup em outro local. Esta ação não pode ser desfeita.'
-    );
-    if (!confirmado) return;
-    setLoading('reiniciar');
-    try {
-      await clearLocalData();
-      window.location.reload();
-    } catch (error) {
-      setLoading(null);
-      await confirm(`Não foi possível restaurar a configuração inicial: ${error.message}`);
-    }
-  }
-
   async function handleImportarDados(event) {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -132,22 +108,6 @@ export default function OpcoesPage() {
     }
   }
 
-  function handleExportarSnapshot() {
-    if (!recoverySnapshot) return;
-    downloadJson(`conta-fechada-recuperacao-${Date.now()}.json`, recoverySnapshot.snapshot);
-  }
-
-  async function handleRestaurarSnapshot() {
-    if (!(await confirm('Restaurar o snapshot interno mais recente? Os dados atuais serão substituídos e também receberão um snapshot de segurança.'))) return;
-    setLoading('restaurar');
-    try {
-      await restoreLatestRecoverySnapshot();
-      window.location.reload();
-    } catch (error) {
-      setLoading(null);
-      await confirm(`Não foi possível restaurar: ${error.message}`);
-    }
-  }
 
   // Fase 11: "Criar fluxo de exclusao de conta". Apaga o Firestore primeiro
   // e só então a conta do Firebase Auth — na ordem inversa, os dados
@@ -213,10 +173,10 @@ export default function OpcoesPage() {
           </button>
         </section>
 
-        <div className="grid grid-cols-2 gap-1 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
-          <button type="button" onClick={() => setActiveTab('geral')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'geral' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Geral</button>
-          <button type="button" onClick={() => setActiveTab('avancado')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'avancado' ? 'bg-white text-ink-900 shadow-card dark:bg-ledger-500 dark:text-white' : 'text-ink-300 dark:text-ink-100'}`}>Avançado</button>
-        </div>
+        {!isLocalSession && <div className="grid grid-cols-2 gap-1 rounded-pill bg-ink-50 p-1 dark:bg-ink-900">
+          <button type="button" onClick={() => setActiveTab('geral')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'geral' ? 'bg-ledger-500 text-white shadow-card' : 'text-ink-500 dark:text-ink-100'}`}>Geral</button>
+          <button type="button" onClick={() => setActiveTab('avancado')} className={`rounded-pill py-2 text-sm font-medium ${activeTab === 'avancado' ? 'bg-ledger-500 text-white shadow-card' : 'text-ink-500 dark:text-ink-100'}`}>Avançado</button>
+        </div>}
 
         {activeTab === 'geral' && <Link
           to="/opcoes/meu-plano"
@@ -263,11 +223,6 @@ export default function OpcoesPage() {
           </div>
         </section>}
 
-        {activeTab === 'avancado' && <p className="px-1 text-xs font-semibold uppercase text-ink-300">Configuração</p>}
-        {activeTab === 'avancado' && <button onClick={handleRestaurarConfiguracaoInicial} disabled={loading === 'reiniciar'} className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3 text-left hover:shadow-card-hover disabled:opacity-50">
-          <div className="flex items-start gap-3"><span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><ListRestart size={15} /></span><div><p className="text-sm font-medium">Restaurar configuração inicial</p><p className="text-xs text-ink-300">Apaga os dados locais e inicia novamente a configuração do aplicativo.</p></div></div>
-          <span className="shrink-0 text-xs font-medium text-indigo-600">{loading === 'reiniciar' ? 'Restaurando…' : 'Restaurar'}</span>
-        </button>}
         {activeTab === 'geral' && installState.isBrowser && !installState.isInstalled && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">
           <div className="min-w-0 flex items-start gap-3">
             <span className="w-8 h-8 rounded-full bg-ledger-50 text-ledger-600 flex items-center justify-center shrink-0 mt-0.5">
@@ -286,9 +241,9 @@ export default function OpcoesPage() {
             Instalar
           </button>
         </div>}
-        <div className={`${activeTab !== 'avancado' ? 'hidden' : 'flex'} bg-white dark:bg-ink-700 rounded-card shadow-card p-4 items-center justify-between gap-3`}>
+        {activeTab === 'geral' && <div className="flex bg-white dark:bg-ink-700 rounded-card shadow-card p-4 items-center justify-between gap-3">
           <div className="min-w-0 flex items-start gap-3">
-            <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
+            <span className="w-8 h-8 rounded-full bg-ledger-50 text-ledger-600 flex items-center justify-center shrink-0 mt-0.5">
               <Landmark size={15} strokeWidth={1.75} />
             </span>
             <div>
@@ -315,19 +270,6 @@ export default function OpcoesPage() {
               }`}
             />
           </button>
-        </div>
-
-        {activeTab === 'avancado' && <p className="px-1 pt-2 text-xs font-semibold uppercase text-ink-300">Recuperação</p>}
-
-        {activeTab === 'avancado' && recoverySnapshot && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4">
-          <p className="text-sm font-medium">Backup automático de segurança</p>
-          <p className="mt-0.5 text-xs text-ink-300">Criado no aparelho antes da última restauração.</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" onClick={handleExportarSnapshot} className="rounded-pill bg-ink-50 px-3 py-2 text-xs font-medium dark:bg-ink-900">Salvar este backup</button>
-            <button type="button" onClick={handleRestaurarSnapshot} disabled={loading === 'restaurar'} className="rounded-pill bg-signal-50 px-3 py-2 text-xs font-medium text-signal-500 disabled:opacity-50">
-              {loading === 'restaurar' ? 'Restaurando…' : 'Restaurar este backup'}
-            </button>
-          </div>
         </div>}
 
         {activeTab === 'avancado' && !isLocalSession && <>
