@@ -85,7 +85,7 @@ async function update() {
   run('node', ['scripts/android-version.mjs', '--bump']);
   run('npm', ['run', 'build:android']);
   run('npx', ['cap', 'sync', 'android']);
-  run(process.platform === 'win32' ? 'gradlew.bat' : './gradlew', ['assembleRelease'], path.join(root, 'android'));
+  run(process.platform === 'win32' ? '.\\gradlew.bat' : './gradlew', ['assembleRelease'], path.join(root, 'android'));
   await mkdir(path.dirname(apkPath), { recursive: true });
   await copyFile(generatedApk, apkPath);
   const versions = await readVersions();

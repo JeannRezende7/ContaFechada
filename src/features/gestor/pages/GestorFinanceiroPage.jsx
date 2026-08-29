@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Landmark, Sparkles, ListPlus, Trash2, Repeat, Plus } from 'lucide-react';
+import { Landmark, Sparkles, ListPlus, Trash2, Repeat, Plus, WalletCards } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -18,6 +18,7 @@ import ImportarDoMovimentoModal from '../components/ImportarDoMovimentoModal.jsx
 import ImportarRecorrenciasModal from '../components/ImportarRecorrenciasModal.jsx';
 import LancamentoRow from '../../lancamentos/components/LancamentoRow.jsx';
 import LancamentoModal from '../../lancamentos/components/LancamentoModal.jsx';
+import EmptyState from '../../../components/ui/EmptyState.jsx';
 
 // A importação de fatura em PDF foi desativada (docs/ROADMAP_MONETIZACAO.txt,
 // item 2) — mantida no repositório para retomada futura, só não é mais
@@ -233,7 +234,7 @@ export default function GestorFinanceiroPage() {
 
           {abaDetalhe === 'compromissos' ? (
             analise.parcelamentosAtivos.length === 0 ? (
-              <p className="text-sm text-ink-300">Nenhum compromisso ativo neste mês.</p>
+              <EmptyState compact icon={Repeat} title="Nenhum compromisso ativo" description="Parcelamentos e recorrências aparecerão aqui." />
             ) : (
               <div className="flex flex-col divide-y divide-ink-100 dark:divide-ink-900 -mx-4">
                 {analise.parcelamentosAtivos.map((p, i) => (
@@ -258,7 +259,7 @@ export default function GestorFinanceiroPage() {
               </div>
             )
           ) : lancamentosDoMes.length === 0 ? (
-            <p className="text-sm text-ink-300">Nenhum lançamento neste mês.</p>
+            <EmptyState compact icon={WalletCards} title="Nenhum lançamento neste mês" description="Importe ou adicione um lançamento para começar a análise." />
           ) : (
             <div className="flex flex-col gap-2">
               {lancamentosDoMes.map((l) => (

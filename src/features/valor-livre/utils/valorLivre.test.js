@@ -1,7 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { calcularValorLivre, criarSugestao } from './valorLivre.js';
+import { calcularPlanejamentoCategorias, calcularValorLivre, criarSugestao } from './valorLivre.js';
 
 describe('valor livre', () => {
+  it('compara o planejamento por categoria com os gastos do mês', () => {
+    const resultado = calcularPlanejamentoCategorias([
+      { id: '1', tipo: 'despesa', categoriaId: 'mercado', valor: 350 },
+      { id: '2', tipo: 'despesa', categoriaId: 'lazer', valor: 250 },
+      { id: '3', tipo: 'despesa', categoriaId: '', valor: 40 },
+      { id: '4', tipo: 'despesa', categoriaId: 'transporte', valor: 60 },
+      { id: '5', tipo: 'receita', categoriaId: 'salario', valor: 5000 },
+    ], [
+      { id: 'p1', categoriaId: 'mercado', valor: 500 },
+      { id: 'p2', categoriaId: 'lazer', valor: 200 },
+    ]);
+
+    expect(resultado.totalPlanejado).toBe(700);
+    expect(resultado.totalGasto).toBe(700);
+    expect(resultado.itens).toEqual(expect.arrayContaining([
+      expect.objectContaining({ categoriaId: 'mercado', gasto: 350, restante: 150 }),
+      expect.objectContaining({ categoriaId: 'lazer', gasto: 250, restante: -50 }),
+    ]));
+    expect(resultado.semPlanejamento).toEqual(expect.arrayContaining([
+      expect.objectContaining({ categoriaId: '', gasto: 40 }),
+      expect.objectContaining({ categoriaId: 'transporte', gasto: 60 }),
+    ]));
+  });
+
   it('mostra o valor livre real e mantém a base de distribuição após contas fixas', () => {
     const resultado = calcularValorLivre([
       { tipo: 'receita', valor: 5000 },

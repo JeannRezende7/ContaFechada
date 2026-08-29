@@ -225,18 +225,7 @@ export function createSqliteRepositories(driver) {
         valorBaseMensal: await this.getValorBaseMensal(uid, monthKey),
         gastosIniciais: gastosIniciaisDefinidos ? item.gastosIniciais : {},
         gastosIniciaisDefinidos,
-        movimentoAtualizadoEm: item?.movimentoAtualizadoEm ?? null,
       };
-    },
-    async setValorBaseDoMovimento(_uid, monthKey, valor, gastosIniciais = {}) {
-      const current = await store.get('valorLivre', monthKey) ?? {};
-      const valorBaseMensal = Math.round((Number(valor) || 0) * 100) / 100;
-      const movimentoAtualizadoEm = new Date().toISOString();
-      await store.put('valorLivre', {
-        ...current, valorBaseMensal, gastosIniciais, movimentoAtualizadoEm,
-        valorBaseDefinidoEm: movimentoAtualizadoEm,
-      }, { id: monthKey, operation: 'update' });
-      return { valorBaseMensal, gastosIniciais, movimentoAtualizadoEm };
     },
     async ensureFotografiaMensal(uid, monthKey, valorCalculado, gastosIniciais = {}) {
       const existente = await this.getFotografiaMensal(uid, monthKey);
@@ -340,17 +329,6 @@ export function createSqliteRepositories(driver) {
   const configuracoes = {
     async getMetaEconomiaMensal() { return (await getConfig()).metaEconomiaMensal ?? null; },
     setMetaEconomiaMensal: (_uid, valor) => setConfig({ metaEconomiaMensal: valor }),
-    async getValorLivreAutomatico() {
-      const config = await getConfig();
-      return {
-        enabled: Boolean(config.valorLivreAutomatico),
-        day: Math.min(28, Math.max(1, Number(config.valorLivreDiaAtualizacao) || 1)),
-      };
-    },
-    setValorLivreAutomatico: (_uid, config) => setConfig({
-      valorLivreAutomatico: Boolean(config.enabled),
-      valorLivreDiaAtualizacao: Math.min(28, Math.max(1, Number(config.day) || 1)),
-    }),
     async getOnboardingState() {
       const config = await getConfig();
       return { completed: Boolean(config.onboardingCompleted), skipped: Boolean(config.onboardingSkipped) };

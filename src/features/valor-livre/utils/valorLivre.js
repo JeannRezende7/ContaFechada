@@ -7,6 +7,44 @@ export const SUGESTAO_DISTRIBUICAO = [
 const dinheiro = (valor) => Math.round((Number(valor) || 0) * 100) / 100;
 const SEM_CATEGORIA = '__sem_categoria__';
 
+export function calcularPlanejamentoCategorias(lancamentos = [], regras = []) {
+  const gastos = new Map();
+  for (const item of lancamentos) {
+    if (item.tipo !== 'despesa') continue;
+    const categoriaId = item.categoriaId || SEM_CATEGORIA;
+    gastos.set(categoriaId, dinheiro((gastos.get(categoriaId) || 0) + dinheiro(item.valor)));
+  }
+
+  const categoriasPlanejadas = new Set();
+  const itens = regras.map((regra) => {
+    const categoriaId = regra.categoriaId || '';
+    if (categoriaId) categoriasPlanejadas.add(categoriaId);
+    const planejado = dinheiro(Math.max(0, Number(regra.valor) || 0));
+    const gasto = dinheiro(gastos.get(categoriaId) || 0);
+    return {
+      ...regra,
+      planejado,
+      gasto,
+      restante: dinheiro(planejado - gasto),
+      percentualUsado: planejado > 0 ? Math.min(100, Math.round((gasto / planejado) * 100)) : 0,
+    };
+  });
+
+  const semPlanejamento = [...gastos.entries()]
+    .filter(([categoriaId]) => !categoriasPlanejadas.has(categoriaId))
+    .map(([categoriaId, gasto]) => ({
+      categoriaId: categoriaId === SEM_CATEGORIA ? '' : categoriaId,
+      gasto,
+    }));
+
+  return {
+    itens,
+    semPlanejamento,
+    totalPlanejado: dinheiro(itens.reduce((total, item) => total + item.planejado, 0)),
+    totalGasto: dinheiro([...gastos.values()].reduce((total, valor) => total + valor, 0)),
+  };
+}
+
 export function calcularSaldoLancamentos(lancamentos = []) {
   return dinheiro(lancamentos.reduce((total, item) => {
     const valor = dinheiro(item.valor);

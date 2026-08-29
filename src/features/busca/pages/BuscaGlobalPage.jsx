@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, SearchX, SlidersHorizontal, X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
@@ -10,6 +10,7 @@ import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
+import EmptyState from '../../../components/ui/EmptyState.jsx';
 
 const EMPTY_FILTERS = { query: '', recurso: 'todos', tipo: 'todos', status: 'todos', categoriaId: '', de: '', ate: '', valorMin: '', valorMax: '' };
 
@@ -113,6 +114,7 @@ export default function BuscaGlobalPage() {
               {item.valor != null && <span className="money text-sm font-medium">{formatCurrency(item.valor)}</span>}
             </Link>
           ))}
+          {hasSearch && results.length === 0 && <EmptyState icon={SearchX} compact title="Nenhum resultado encontrado" description="Tente outro termo ou remova alguns filtros." actionLabel="Limpar busca" onAction={() => setFilters(EMPTY_FILTERS)} />}
         </div>
       </div>
     </>

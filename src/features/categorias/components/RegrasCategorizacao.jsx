@@ -4,6 +4,8 @@ import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
+import FeedbackMessage from '../../../components/ui/FeedbackMessage.jsx';
+import CategoriaPicker from './CategoriaPicker.jsx';
 
 export default function RegrasCategorizacao({ uid, categorias }) {
   const confirm = useConfirm();
@@ -77,23 +79,32 @@ export default function RegrasCategorizacao({ uid, categorias }) {
         </div>
       </div>
 
-      <form onSubmit={create} className="space-y-3 rounded-card bg-white p-4 shadow-card dark:bg-ink-700">
-        <label className="block text-sm font-medium text-ink-900 dark:text-ink-50">Quando a descrição contiver
-          <input required placeholder="Ex.: Uber, mercado, aluguel" value={form.termo} onChange={(e) => setForm({ ...form, termo: e.target.value })} className="mt-1.5 w-full rounded-xl border border-ink-100 px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900" />
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          <label className="block text-sm font-medium text-ink-900 dark:text-ink-50">Tipo
-            <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value, categoriaId: '' })} className="mt-1.5 w-full rounded-xl border border-ink-100 px-2 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900"><option value="despesa">Despesa</option><option value="receita">Receita</option></select>
-          </label>
-          <label className="block text-sm font-medium text-ink-900 dark:text-ink-50">Usar categoria
-            <select required value={form.categoriaId} onChange={(e) => setForm({ ...form, categoriaId: e.target.value })} className="mt-1.5 w-full rounded-xl border border-ink-100 px-2 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900"><option value="">Selecione</option>{available.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select>
-          </label>
+      <form onSubmit={create} className="overflow-hidden rounded-card bg-white shadow-card dark:bg-ink-700">
+        <div className="border-b border-ink-100 p-4 dark:border-ink-900">
+          <h3 className="text-sm font-semibold text-ink-900 dark:text-ink-50">Nova regra</h3>
+          <p className="mt-1 text-xs text-ink-300">Escolha uma palavra e para qual categoria ela deve apontar.</p>
         </div>
-        <details className="text-xs text-ink-300">
-          <summary className="cursor-pointer font-medium text-ink-500 dark:text-ink-100">Opção avançada: prioridade</summary>
-          <label className="mt-2 block">Se duas regras combinarem, vence o maior número.<input type="number" value={form.prioridade} onChange={(e) => setForm({ ...form, prioridade: e.target.value })} className="mt-1.5 w-full rounded-xl border border-ink-100 px-3 py-2 text-sm dark:border-ink-700 dark:bg-ink-900" /></label>
-        </details>
-        <button disabled={Boolean(busy)} className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-ledger-500 px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50"><Plus size={16} /> {busy === 'create' ? 'Criando…' : 'Criar regra'}</button>
+        <div className="space-y-4 p-4">
+          <label className="block text-sm font-medium text-ink-900 dark:text-ink-50"><span className="mb-1.5 flex items-center gap-2"><b className="flex h-5 w-5 items-center justify-center rounded-full bg-ledger-500 text-[11px] text-white">1</b> Palavra ou nome</span>
+            <input required placeholder="Ex.: Uber, mercado ou aluguel" value={form.termo} onChange={(e) => setForm({ ...form, termo: e.target.value })} className="w-full rounded-xl border border-ink-100 bg-ink-50/60 px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900" />
+          </label>
+          <div>
+            <p className="mb-1.5 flex items-center gap-2 text-sm font-medium"><b className="flex h-5 w-5 items-center justify-center rounded-full bg-ledger-500 text-[11px] text-white">2</b> É uma</p>
+            <div className="grid grid-cols-2 gap-2 rounded-xl bg-ink-50 p-1 dark:bg-ink-900">
+              <button type="button" onClick={() => setForm({ ...form, tipo: 'despesa', categoriaId: '' })} className={`rounded-lg px-3 py-2 text-sm font-medium ${form.tipo === 'despesa' ? 'bg-expense-500 text-white shadow-card' : 'text-ink-500 dark:text-ink-100'}`}>Despesa</button>
+              <button type="button" onClick={() => setForm({ ...form, tipo: 'receita', categoriaId: '' })} className={`rounded-lg px-3 py-2 text-sm font-medium ${form.tipo === 'receita' ? 'bg-ledger-500 text-white shadow-card' : 'text-ink-500 dark:text-ink-100'}`}>Receita</button>
+            </div>
+          </div>
+          <div>
+            <p className="mb-1.5 flex items-center gap-2 text-sm font-medium"><b className="flex h-5 w-5 items-center justify-center rounded-full bg-ledger-500 text-[11px] text-white">3</b> Usar categoria</p>
+            <CategoriaPicker categorias={available} value={form.categoriaId} onChange={(categoriaId) => setForm({ ...form, categoriaId })} emptyLabel="Escolha uma categoria" />
+          </div>
+          <details className="rounded-xl border border-ink-100 px-3 py-2 text-xs text-ink-300 dark:border-ink-700">
+            <summary className="cursor-pointer font-medium text-ink-500 dark:text-ink-100">Prioridade da regra (opcional)</summary>
+            <label className="mt-2 block">Se duas regras combinarem, o maior número vence.<input type="number" inputMode="numeric" value={form.prioridade} onChange={(e) => setForm({ ...form, prioridade: e.target.value })} className="mt-1.5 w-full rounded-xl border border-ink-100 bg-ink-50 px-3 py-2 text-sm dark:border-ink-700 dark:bg-ink-900" /></label>
+          </details>
+          <button disabled={Boolean(busy) || !form.termo.trim() || !form.categoriaId} className="flex min-h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-ledger-500 px-3 text-sm font-semibold text-white shadow-card disabled:cursor-not-allowed disabled:opacity-45"><Plus size={17} /> {busy === 'create' ? 'Criando…' : 'Criar regra'}</button>
+        </div>
       </form>
 
       {rules.length > 0 && <h3 className="mb-2 mt-5 text-sm font-semibold text-ink-900 dark:text-ink-50">Regras criadas</h3>}
@@ -111,7 +122,7 @@ export default function RegrasCategorizacao({ uid, categorias }) {
         ))}
       </div>
       {rules.length > 0 && <button disabled={Boolean(busy)} onClick={applyOld} className="mt-3 w-full rounded-xl border border-ink-100 px-3 py-2.5 text-sm font-medium text-ledger-600 hover:bg-ledger-50 disabled:opacity-50 dark:border-ink-700 dark:hover:bg-ink-700">{busy === 'apply' ? 'Aplicando…' : 'Aplicar regras aos lançamentos antigos'}</button>}
-      {feedback && <p role="status" aria-live="polite" className={`mt-2 text-xs ${feedback.startsWith('Não foi') ? 'text-signal-500' : 'text-ledger-600'}`}>{feedback}</p>}
+      <FeedbackMessage message={feedback} error={feedback.startsWith('Não foi')} className="mt-2" />
     </section>
   );
 }

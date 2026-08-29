@@ -10,6 +10,5 @@ export const valorLivreRepository = {
   ensureValorBaseMensal: valorLivreService.ensureValorBaseMensal,
   getFotografiaMensal: valorLivreService.getFotografiaMensal,
   ensureFotografiaMensal: valorLivreService.ensureFotografiaMensal,
-  setValorBaseDoMovimento: valorLivreService.setValorBaseDoMovimento,
   setDistribuicaoMensal: valorLivreService.setDistribuicaoMensal,
 };

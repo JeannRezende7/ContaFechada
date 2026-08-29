@@ -73,7 +73,6 @@
  * @property {(uid: string, monthKey: string, valorCalculado: number) => Promise<number>} ensureValorBaseMensal
  * @property {(uid: string, monthKey: string) => Promise<{valorBaseMensal: number|null, gastosIniciais: object}>} getFotografiaMensal
  * @property {(uid: string, monthKey: string, valorCalculado: number, gastosIniciais: object) => Promise<{valorBaseMensal: number, gastosIniciais: object}>} ensureFotografiaMensal
- * @property {(uid: string, monthKey: string, valor: number, gastosIniciais: object) => Promise<{valorBaseMensal: number, gastosIniciais: object, movimentoAtualizadoEm: string}>} setValorBaseDoMovimento
  *
  * @typedef {Object} PlanejamentoRepository
  * @property {(uid: string, monthKey: string) => Promise<{ saldoInicial: number, orcamentos: object }>} getMensal
@@ -101,8 +100,6 @@
  * @typedef {Object} ConfiguracoesRepository
  * @property {(uid: string) => Promise<number|null>} getMetaEconomiaMensal
  * @property {(uid: string, valor: number) => Promise<void>} setMetaEconomiaMensal
- * @property {(uid: string) => Promise<{enabled: boolean, day: number}>} getValorLivreAutomatico
- * @property {(uid: string, config: {enabled: boolean, day: number}) => Promise<void>} setValorLivreAutomatico
  * @property {(uid: string) => Promise<{ completed: boolean, skipped: boolean }>} getOnboardingState
  * @property {(uid: string) => Promise<void>} skipOnboarding
  * @property {(uid: string, data: object) => Promise<void>} completeOnboarding

@@ -41,7 +41,7 @@ export function LancamentosSearch({ busca, onChange, filtersOpen, filtersActive,
         <input
           value={busca}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Pesquisar: pix, mercado, junho, acima de 500..."
+          placeholder="pix, mercado, junho, acima de 500..."
           className="w-full rounded-pill border border-ink-100 bg-white dark:bg-ink-900 dark:border-ink-700 text-ink-900 dark:text-ink-50 pl-10 pr-4 py-2.5 text-sm focus:border-ledger-500 transition-colors"
         />
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { PieChart as PieChartIcon, TrendingUp } from 'lucide-react';
+import { PieChart as PieChartIcon, TrendingUp, WalletCards } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -25,6 +25,7 @@ import { formatCurrency } from '../../../utils/formatCurrency.js';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import SectionTabs from '../../../components/ui/SectionTabs.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
+import EmptyState from '../../../components/ui/EmptyState.jsx';
 
 function CategoriaTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -124,9 +125,7 @@ export default function RelatoriosPage() {
           </div>
 
           {chartData.length === 0 ? (
-            <p className="text-sm text-ink-300 text-center py-10">
-              Nenhum lançamento de {tipo === 'despesa' ? 'despesa' : 'receita'} neste mês.
-            </p>
+            <EmptyState icon={WalletCards} compact title={`Nenhuma ${tipo === 'despesa' ? 'despesa' : 'receita'} neste mês`} description="Os lançamentos cadastrados aparecerão aqui por categoria." />
           ) : (
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div className="w-full sm:w-52 h-52 shrink-0">

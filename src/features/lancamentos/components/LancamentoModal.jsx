@@ -285,6 +285,7 @@ export default function LancamentoModal({
               ref={valueFieldRef}
               required
               type="number"
+              inputMode="decimal"
               step="0.01"
               min="0.01"
               value={form.valor}
@@ -301,6 +302,7 @@ export default function LancamentoModal({
               <input
                 required
                 type="number"
+                inputMode="numeric"
                 min="1"
                 max="31"
                 value={form.diaVencimento}
@@ -418,6 +420,7 @@ export default function LancamentoModal({
               <input
                 required
                 type="number"
+                inputMode="numeric"
                 min="2"
                 max="60"
                 value={form.numParcelas}
@@ -446,11 +449,11 @@ export default function LancamentoModal({
             <div className="mt-3 grid grid-cols-2 gap-3">
               <label className="text-xs text-ink-300">
                 Entrada
-                <input type="number" min="0" max={Number(form.valor) || undefined} step="0.01" value={form.entrada} onChange={(e) => update('entrada', e.target.value)} className="money mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2 text-sm dark:border-ink-700 dark:bg-ink-700" />
+              <input type="number" inputMode="decimal" min="0" max={Number(form.valor) || undefined} step="0.01" value={form.entrada} onChange={(e) => update('entrada', e.target.value)} className="money mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2 text-sm dark:border-ink-700 dark:bg-ink-700" />
               </label>
               <label className="text-xs text-ink-300">
                 Parcelas
-                <input type="number" min="1" max="60" value={form.numParcelas} onChange={(e) => update('numParcelas', e.target.value)} className="mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2 text-sm dark:border-ink-700 dark:bg-ink-700" />
+              <input type="number" inputMode="numeric" min="1" max="60" value={form.numParcelas} onChange={(e) => update('numParcelas', e.target.value)} className="mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2 text-sm dark:border-ink-700 dark:bg-ink-700" />
               </label>
             </div>
             {Number(form.valor) > 0 && (() => {

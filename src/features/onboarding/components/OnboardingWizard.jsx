@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, HardDrive, ShieldCheck, Sparkles, WalletCards } from 'lucide-react';
 import { repositories } from '../../../repositories/index.js';
 import { reportError } from '../../../utils/crashReporting.js';
 import { useModalHistory } from '../../../hooks/useModalHistory.js';
@@ -68,7 +68,12 @@ export default function OnboardingWizard({ uid, open, onClose }) {
 }
 
 function Intro() {
-  return <div className="py-3 text-center"><span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-ledger-50 text-ledger-600"><Sparkles /></span><h2 className="mt-4 font-display text-xl font-semibold">Bem-vindo ao Conta Fechada</h2><p className="mx-auto mt-2 max-w-sm text-sm text-ink-300">Cadastre sua receita principal e uma conta recorrente para gerar seu primeiro resumo.</p></div>;
+  const items = [
+    [ShieldCheck, 'Seus dados ficam neste aparelho'],
+    [WalletCards, 'Registre receitas e despesas'],
+    [HardDrive, 'Salve backups regularmente'],
+  ];
+  return <div className="py-2 text-center"><span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-ledger-50 text-ledger-600"><Sparkles /></span><h2 className="mt-4 font-display text-xl font-semibold">Bem-vindo ao Conta Fechada</h2><p className="mx-auto mt-2 max-w-sm text-sm text-ink-300">Organize sua vida financeira com privacidade e simplicidade.</p><div className="mt-5 space-y-2 text-left">{items.map(([Icon, label]) => <div key={label} className="flex items-center gap-3 rounded-xl bg-ink-50 px-3 py-2.5 text-sm dark:bg-ink-900"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ledger-50 text-ledger-600 dark:bg-ledger-500/10"><Icon size={16} /></span><span>{label}</span></div>)}</div></div>;
 }
 function RecurringForm({ title, description, prefix, form, update }) {
   return <div><h2 className="font-display text-xl font-semibold">{title}</h2><p className="mt-1 text-sm text-ink-300">{description}</p><input value={form[`${prefix}Description`]} onChange={(e) => update(`${prefix}Description`, e.target.value)} placeholder="Descrição" className="mt-5 w-full rounded-xl border border-ink-100 px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900" /><div className="mt-3 grid grid-cols-2 gap-3"><input type="number" min="0" step="0.01" value={form[`${prefix}Value`]} onChange={(e) => update(`${prefix}Value`, e.target.value)} placeholder="Valor mensal" className="money rounded-xl border border-ink-100 px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900" /><input type="number" min="1" max="31" value={form[`${prefix}Day`]} onChange={(e) => update(`${prefix}Day`, e.target.value)} placeholder="Dia" className="rounded-xl border border-ink-100 px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900" /></div></div>;

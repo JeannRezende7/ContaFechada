@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Settings, Landmark, Crown, ChevronRight, CloudUpload, CloudDownload, UserX, HardDrive, LogIn, LogOut, MonitorDown, TriangleAlert } from 'lucide-react';
+import { Settings, Landmark, Crown, ChevronRight, Download, Upload, UserX, HardDrive, LogIn, LogOut, MonitorDown, TriangleAlert } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -17,6 +17,8 @@ import {
   isNativeLocalDatabaseAvailable,
 } from '../../../db/localDatabase.js';
 
+const LAST_BACKUP_KEY = 'contafechada:last-backup-at';
+
 export default function OpcoesPage() {
   const { user, isLocalSession } = useAuth();
   const confirm = useConfirm();
@@ -25,6 +27,7 @@ export default function OpcoesPage() {
   const [activeTab, setActiveTab] = useState('geral');
   const [gestorUsaMovimento, setGestorUsaMovimentoState] = useState(true);
   const [installState, setInstallState] = useState(getPwaInstallState);
+  const [lastBackupAt, setLastBackupAt] = useState(() => localStorage.getItem(LAST_BACKUP_KEY));
   const importInputRef = useRef(null);
 
   async function handleSignOut() {
@@ -76,6 +79,9 @@ export default function OpcoesPage() {
       const data = isNativeLocalDatabaseAvailable() ? await exportLocalData() : await exportUserData(user.uid);
       const date = new Date().toISOString().slice(0, 10);
       await saveAndShareBackup(`backup-conta-fechada-${date}.json`, data);
+      const createdAt = new Date().toISOString();
+      localStorage.setItem(LAST_BACKUP_KEY, createdAt);
+      setLastBackupAt(createdAt);
     } catch (error) {
       await confirm(`Não foi possível salvar o backup: ${error.message}`);
     } finally {
@@ -201,24 +207,24 @@ export default function OpcoesPage() {
           <div className="p-4 pb-0">
           <div className="flex items-start gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ledger-50 text-ledger-600"><HardDrive size={15} /></span>
-            <div><h2 className="text-base font-medium">Backup no Google Drive</h2><p className="mt-0.5 text-xs text-ink-300">Guarde e recupere manualmente uma cópia dos seus dados.</p></div>
+            <div><h2 className="text-base font-medium">Backup dos seus dados</h2><p className="mt-0.5 text-xs text-ink-300">Salve uma cópia fora do celular para recuperar seus dados depois.</p><p className={`mt-1 text-xs font-medium ${lastBackupAt ? 'text-ledger-600' : 'text-signal-500'}`}>{lastBackupAt ? `Último backup preparado em ${new Date(lastBackupAt).toLocaleDateString('pt-BR')}` : 'Nenhum backup foi preparado neste aparelho.'}</p></div>
           </div>
           <div className="mt-3 flex items-start gap-2 rounded-card bg-gold-50 p-3 text-gold-900 dark:bg-ink-900 dark:text-gold-100">
             <TriangleAlert size={15} className="mt-0.5 shrink-0 text-gold-700" />
-            <p className="text-xs leading-relaxed"><strong>Como funciona:</strong> o Android abrirá o Google Drive ou o seletor de arquivos. O app não acessa sua conta nem restaura dados sozinho.</p>
+            <p className="text-xs leading-relaxed"><strong>Importante:</strong> escolha Drive, e-mail ou outro local seguro. Se o arquivo ficar apenas neste celular, ele poderá ser perdido.</p>
           </div>
           </div>
           <div className="mt-4 grid grid-cols-2 divide-x divide-ink-100 border-t border-ink-100 dark:divide-ink-900 dark:border-ink-900">
             <button type="button" onClick={handleExportarDados} disabled={loading === 'exportar'} className="flex min-h-20 flex-col items-center justify-center gap-1.5 px-3 py-3 text-sm font-medium text-ledger-600 disabled:opacity-50">
-              <CloudUpload size={19} />
-              {loading === 'exportar' ? 'Preparando…' : '1. Salvar no Drive'}
-              <span className="text-xs font-normal text-ink-300">Escolha Drive na próxima tela</span>
+              <Download size={19} />
+              {loading === 'exportar' ? 'Salvando…' : '1. Salvar backup'}
+              <span className="text-xs font-normal text-ink-300">Escolha onde guardar</span>
             </button>
             <input ref={importInputRef} type="file" accept="application/json,.json" onChange={handleImportarDados} className="sr-only" />
             <button type="button" onClick={() => importInputRef.current?.click()} disabled={loading === 'importar'} className="flex min-h-20 flex-col items-center justify-center gap-1.5 px-3 py-3 text-sm font-medium text-ink-500 dark:text-ink-100 disabled:opacity-50">
-              <CloudDownload size={19} />
-              {loading === 'importar' ? 'Restaurando…' : '2. Restaurar do Drive'}
-              <span className="text-xs font-normal text-ink-300">Escolha o arquivo de backup</span>
+              <Upload size={19} />
+              {loading === 'importar' ? 'Restaurando…' : '2. Restaurar backup'}
+              <span className="text-xs font-normal text-ink-300">Substitui os dados atuais</span>
             </button>
           </div>
         </section>}

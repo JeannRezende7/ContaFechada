@@ -7,6 +7,7 @@ import { getIcon } from '../iconMap.js';
 import CategoriaModal from '../components/CategoriaModal.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import RegrasCategorizacao from '../components/RegrasCategorizacao.jsx';
+import EmptyState from '../../../components/ui/EmptyState.jsx';
 
 export default function CategoriasPage() {
   const { user } = useAuth();
@@ -196,7 +197,7 @@ export default function CategoriasPage() {
             );
           })}
           {doTipo.length === 0 && (
-            <p className="col-span-full text-sm text-ink-300 text-center py-6">Nenhuma categoria ainda.</p>
+            <EmptyState compact className="col-span-full" title={`Nenhuma categoria de ${tab === 'despesa' ? 'despesa' : 'receita'}`} description="Crie uma categoria para organizar seus lançamentos." actionLabel="Adicionar categoria" onAction={() => { setEditing(null); setModalOpen(true); }} />
           )}
         </div>
         <RegrasCategorizacao uid={uid} categorias={categorias} />

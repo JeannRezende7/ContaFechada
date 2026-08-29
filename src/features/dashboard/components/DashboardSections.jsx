@@ -5,7 +5,6 @@ import {
   ChevronRight,
   Clock,
   Flame,
-  Info,
   Landmark,
   Pencil,
   PieChart,
@@ -77,12 +76,9 @@ export function DailyBudgetCard({ gastoDiario, diasRestantes }) {
 
 export function FreeValueSummary({ resumo, monthKey }) {
   if (!resumo) return null;
-  const distribuido = Math.max(0, resumo.totalPlanejado);
-  const percentual = resumo.valorLivre > 0
-    ? Math.min(100, Math.round((distribuido / resumo.valorLivre) * 100))
-    : 0;
-  const gastosFora = resumo.gastosForaDistribuicao;
-  const temGastosFora = gastosFora?.gasto > 0;
+  const totalPlanejado = Math.max(0, resumo.totalPlanejado);
+  const totalGasto = resumo.totalGasto;
+  const restante = totalPlanejado - totalGasto;
 
   return (
     <Link
@@ -95,39 +91,15 @@ export function FreeValueSummary({ resumo, monthKey }) {
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="flex items-center gap-1 text-xs text-ink-300">
-                Valor livre inicial do mês
-                <Info
-                  size={13}
-                  className="text-ink-300"
-                  aria-label="Receitas do mês menos contas fixas"
-                  title="Cálculo: receitas do mês menos contas fixas"
-                />
-              </p>
-              <p className={`money text-xl font-semibold ${resumo.valorLivre < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>
-                {formatCurrency(resumo.valorLivre)}
-              </p>
-            </div>
+            <div><p className="text-sm font-semibold text-ink-900 dark:text-ink-50">Planejamento do mês</p><p className="mt-0.5 text-xs text-ink-300">Limites por categoria e gastos realizados</p></div>
             <ChevronRight size={17} className="shrink-0 text-ink-300" />
           </div>
-
-          <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
-            <span className="text-ink-300">Receitas do mês <b className="money block text-ink-500 dark:text-ink-100">{formatCurrency(resumo.renda)}</b></span>
-            <span className="text-ink-300">Contas fixas <b className="money block text-ink-500 dark:text-ink-100">{formatCurrency(resumo.contasFixas)}</b></span>
-            <span className="col-span-2 text-ink-300 sm:col-span-1">Não distribuído <b className={`money block ${resumo.naoDistribuido < 0 ? 'text-signal-500' : 'text-ink-500 dark:text-ink-100'}`}>{formatCurrency(resumo.naoDistribuido)}</b></span>
-          </div>
-
-          {resumo.valorLivre > 0 && distribuido > 0 && (
-            <div className="mt-3">
-              <div className="h-2 overflow-hidden rounded-pill bg-ink-50 dark:bg-ink-900">
-                <div className="h-full rounded-pill bg-ledger-500" style={{ width: `${percentual}%` }} />
-              </div>
-              <p className="mt-1 text-[11px] text-ink-300">{percentual}% do valor livre distribuído</p>
+          {resumo.itens.length === 0 ? <p className="mt-3 rounded-xl bg-ink-50 p-3 text-sm text-ink-300 dark:bg-ink-900">Nenhum limite definido. Toque para criar seu planejamento.</p> : <>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+              <span className="text-ink-300">Planejado<b className="money mt-1 block text-ink-700 dark:text-ink-100">{formatCurrency(totalPlanejado)}</b></span>
+              <span className="text-ink-300">Gasto<b className="money mt-1 block text-signal-500">{formatCurrency(totalGasto)}</b></span>
+              <span className="text-ink-300">Restante<b className={`money mt-1 block ${restante < 0 ? 'text-signal-500' : 'text-ledger-600'}`}>{formatCurrency(restante)}</b></span>
             </div>
-          )}
-
-          {(resumo.itens.length > 0 || temGastosFora) && (
             <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {resumo.itens.map((item) => (
                 <div
@@ -138,20 +110,17 @@ export function FreeValueSummary({ resumo, monthKey }) {
                     <p className="truncate text-xs font-medium text-ink-700 dark:text-ink-100">
                       {item.nome || 'Sem nome'}
                     </p>
-                    <span className="shrink-0 text-[10px] text-ink-300">
-                      {Number(item.percentual) || 0}%
-                    </span>
                   </div>
                   <p className={`money mt-1 text-base font-semibold ${
-                    item.disponivel < 0 ? 'text-signal-500' : 'text-ledger-600'
+                    item.restante < 0 ? 'text-signal-500' : 'text-ledger-600'
                   }`}>
-                    {formatCurrency(item.disponivel)}
+                    {formatCurrency(item.restante)}
                   </p>
-                  <p className="text-[10px] text-ink-300">Disponível</p>
+                  <p className="text-[10px] text-ink-300">Restante</p>
                   <div className="mt-2 h-1.5 overflow-hidden rounded-pill bg-white dark:bg-ink-700">
                     <div
                       className={`h-full rounded-pill ${
-                        item.disponivel < 0 ? 'bg-signal-500' : 'bg-ledger-500'
+                        item.restante < 0 ? 'bg-signal-500' : 'bg-ledger-500'
                       }`}
                       style={{ width: `${item.percentualUsado}%` }}
                     />
@@ -162,23 +131,8 @@ export function FreeValueSummary({ resumo, monthKey }) {
                   </div>
                 </div>
               ))}
-              {temGastosFora && (
-                <div className="rounded-xl border border-signal-200 bg-signal-50/60 p-3 dark:border-signal-900/50 dark:bg-ink-900">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-xs font-medium text-ink-700 dark:text-ink-100">Fora da distribuição</p>
-                    <span className="text-[10px] text-signal-500">Atenção</span>
-                  </div>
-                  <p className="money mt-1 text-base font-semibold text-signal-500">
-                    -{formatCurrency(gastosFora.gasto)}
-                  </p>
-                  <p className="text-[10px] text-ink-300">gasto em outra categoria ou sem categoria</p>
-                  <div className="mt-2 border-t border-signal-100 pt-2 text-[10px] text-ink-300 dark:border-ink-700">
-                    Gastos após definir o valor: <b className="money text-signal-500">{formatCurrency(gastosFora.gastoDepoisDaFotografia)}</b>
-                  </div>
-                </div>
-              )}
             </div>
-          )}
+          </>}
         </div>
       </div>
     </Link>
@@ -345,7 +299,7 @@ export function DashboardLinks() {
         to="/planejamento"
         icon={CalendarRange}
         tone="bg-ledger-50 text-ledger-600"
-        text="Distribua seu valor livre e acompanhe quanto ainda pode gastar"
+        text="Defina limites por categoria e compare o planejado com seus gastos"
       />
       <DashboardLink
         to="/resumo/relatorios"

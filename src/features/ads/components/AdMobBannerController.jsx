@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { AdMob, BannerAdPosition, BannerAdSize } from '@capacitor-community/admob';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
@@ -52,11 +52,20 @@ async function showBanner() {
 
 export default function AdMobBannerController() {
   const { hasProAccess, loading } = usePremium();
+  const [overlayOpen, setOverlayOpen] = useState(() => hasBlockingOverlay());
+
+  useEffect(() => {
+    const refresh = () => setOverlayOpen(hasBlockingOverlay());
+    refresh();
+    const observer = new MutationObserver(refresh);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return undefined;
     let active = true;
-    const shouldShow = !loading && !hasProAccess;
+    const shouldShow = !loading && !hasProAccess && !overlayOpen;
 
     if (shouldShow) {
       showBanner().then((shown) => {
@@ -72,7 +81,7 @@ export default function AdMobBannerController() {
       clearBannerSpace();
       AdMob.removeBanner().catch(() => {});
     };
-  }, [hasProAccess, loading]);
+  }, [hasProAccess, loading, overlayOpen]);
 
   return null;
 }

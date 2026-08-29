@@ -25,6 +25,7 @@ import {
 } from '../components/LancamentosSections.jsx';
 import PeriodNav from '../../../components/ui/PeriodNav.jsx';
 import FinancialTotalsGrid from '../../../components/ui/FinancialTotalsGrid.jsx';
+import FeedbackMessage from '../../../components/ui/FeedbackMessage.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 
@@ -475,11 +476,7 @@ export default function LancamentosPage() {
             setCategoryFilter('');
           }}
         />
-        {feedback && (
-          <p role="status" aria-live="polite" className={`mb-3 rounded-xl px-3 py-2 text-sm ${feedback.startsWith('Não foi') ? 'bg-signal-50 text-signal-500' : 'bg-ledger-50 text-ledger-600'}`}>
-            {feedback}
-          </p>
-        )}
+        <FeedbackMessage message={feedback} error={feedback.startsWith('Não foi')} className="mb-3" />
         <LancamentosActions
           filteredCount={lancamentosFiltrados.length}
           totalCount={lancamentosDoTipo.length}

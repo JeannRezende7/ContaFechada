@@ -65,18 +65,7 @@ export async function getFotografiaMensal(uid, monthKey) {
     gastosIniciaisDefinidos,
     gastosIniciais: gastosIniciaisDefinidos
       ? documento.gastosIniciais : {},
-    movimentoAtualizadoEm: documento?.movimentoAtualizadoEm ?? null,
   };
-}
-
-export async function setValorBaseDoMovimento(uid, monthKey, valor, gastosIniciais = {}) {
-  const valorBaseMensal = Math.round((Number(valor) || 0) * 100) / 100;
-  const movimentoAtualizadoEm = new Date().toISOString();
-  await setUserDocMerged(uid, COLLECTION, monthKey, {
-    monthKey, valorBaseMensal, gastosIniciais, movimentoAtualizadoEm,
-    valorBaseDefinidoEm: movimentoAtualizadoEm,
-  });
-  return { valorBaseMensal, gastosIniciais, movimentoAtualizadoEm };
 }
 
 export async function ensureFotografiaMensal(uid, monthKey, valorCalculado, gastosIniciais = {}) {
