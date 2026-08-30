@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Settings, Landmark, Crown, ChevronRight, Download, Upload, UserX, HardDrive, LogIn, LogOut, MonitorDown, TriangleAlert } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
-import { useConfirm } from '../../../contexts/ConfirmContext.jsx';
+import { useConfirm, useConfirmChoice } from '../../../contexts/ConfirmContext.jsx';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { repositories } from '../../../repositories/index.js';
 import { exportUserData, deleteAllUserData, saveAndShareBackup } from '../services/dataPortabilityService.js';
@@ -16,18 +16,31 @@ import {
   importLocalData,
   isNativeLocalDatabaseAvailable,
 } from '../../../db/localDatabase.js';
+import FeedbackMessage from '../../../components/ui/FeedbackMessage.jsx';
 
-const LAST_BACKUP_KEY = 'contafechada:last-backup-at';
+const LAST_BACKUP_KEY = 'contafechada:last-backup-info';
+
+function readBackupInfo() {
+  try { return JSON.parse(localStorage.getItem(LAST_BACKUP_KEY)) || null; } catch { return null; }
+}
+
+function formatFileSize(bytes = 0) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
 
 export default function OpcoesPage() {
   const { user, isLocalSession } = useAuth();
   const confirm = useConfirm();
+  const confirmChoice = useConfirmChoice();
   const { isPremium } = usePremium();
   const [loading, setLoading] = useState(null);
   const [activeTab, setActiveTab] = useState('geral');
   const [gestorUsaMovimento, setGestorUsaMovimentoState] = useState(true);
   const [installState, setInstallState] = useState(getPwaInstallState);
-  const [lastBackupAt, setLastBackupAt] = useState(() => localStorage.getItem(LAST_BACKUP_KEY));
+  const [lastBackup, setLastBackup] = useState(readBackupInfo);
+  const [feedback, setFeedback] = useState(null);
   const importInputRef = useRef(null);
 
   async function handleSignOut() {
@@ -75,15 +88,23 @@ export default function OpcoesPage() {
   // Fase 11: "Criar exportacao dos dados pessoais" (LGPD).
   async function handleExportarDados() {
     setLoading('exportar');
+    setFeedback(null);
     try {
       const data = isNativeLocalDatabaseAvailable() ? await exportLocalData() : await exportUserData(user.uid);
       const date = new Date().toISOString().slice(0, 10);
       await saveAndShareBackup(`backup-conta-fechada-${date}.json`, data);
-      const createdAt = new Date().toISOString();
-      localStorage.setItem(LAST_BACKUP_KEY, createdAt);
-      setLastBackupAt(createdAt);
+      const info = {
+        createdAt: new Date().toISOString(),
+        size: new Blob([JSON.stringify(data)]).size,
+        entries: Array.isArray(data.lancamentos) ? data.lancamentos.length : 0,
+      };
+      localStorage.setItem(LAST_BACKUP_KEY, JSON.stringify(info));
+      setLastBackup(info);
+      setFeedback({ message: 'Backup preparado. Confirme que o arquivo foi salvo fora do aplicativo.', error: false });
+      return true;
     } catch (error) {
-      await confirm(`Não foi possível salvar o backup: ${error.message}`);
+      setFeedback({ message: `Não foi possível salvar o backup: ${error.message}`, error: true });
+      return false;
     } finally {
       setLoading(null);
     }
@@ -101,15 +122,26 @@ export default function OpcoesPage() {
       return;
     }
     const visibleRecords = Object.values(backup).reduce((total, value) => total + (Array.isArray(value) ? value.length : 0), 0);
-    if (!(await confirm(`Arquivo selecionado: ${file.name}\n\n${visibleRecords} registro(s) encontrados. Ao restaurar, os dados atuais deste aparelho serão substituídos. Uma cópia de recuperação será criada antes. Continuar?`))) return;
+    const entries = Array.isArray(backup.lancamentos) ? backup.lancamentos.length : 0;
+    const choice = await confirmChoice(
+      `Arquivo: ${file.name}\nTamanho: ${formatFileSize(file.size)}\nLançamentos: ${entries}\nTotal de registros: ${visibleRecords}\n\nA restauração substituirá os dados atuais deste aparelho.`,
+      [
+        { value: 'backup', label: 'Salvar backup atual e restaurar', tone: 'primary' },
+        { value: 'restore', label: 'Restaurar sem novo backup', tone: 'danger' },
+        { value: 'cancel', label: 'Cancelar', tone: 'neutral' },
+      ]
+    );
+    if (!choice || choice === 'cancel') return;
+    if (choice === 'backup' && !await handleExportarDados()) return;
     setLoading('importar');
+    setFeedback(null);
     try {
       const result = await importLocalData(backup);
       const total = result.summary.financialTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      await confirm(`${result.imported} registro(s) importado(s) e verificados. Total financeiro conferido: ${total}. O aplicativo será recarregado.`);
+      await confirm(`${result.imported} registro(s) restaurado(s) e verificados. Total financeiro conferido: ${total}. O aplicativo será recarregado.`);
       window.location.reload();
     } catch (error) {
-      await confirm(`Não foi possível importar o backup: ${error.message}`);
+      setFeedback({ message: `Não foi possível restaurar o backup: ${error.message}`, error: true });
       setLoading(null);
     }
   }
@@ -207,7 +239,7 @@ export default function OpcoesPage() {
           <div className="p-4 pb-0">
           <div className="flex items-start gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ledger-50 text-ledger-600"><HardDrive size={15} /></span>
-            <div><h2 className="text-base font-medium">Backup dos seus dados</h2><p className="mt-0.5 text-xs text-ink-300">Salve uma cópia fora do celular para recuperar seus dados depois.</p><p className={`mt-1 text-xs font-medium ${lastBackupAt ? 'text-ledger-600' : 'text-signal-500'}`}>{lastBackupAt ? `Último backup preparado em ${new Date(lastBackupAt).toLocaleDateString('pt-BR')}` : 'Nenhum backup foi preparado neste aparelho.'}</p></div>
+            <div className="min-w-0"><h2 className="text-base font-medium">Backup dos seus dados</h2><p className="mt-0.5 text-xs text-ink-300">Salve uma cópia fora do celular para recuperar seus dados depois.</p>{lastBackup ? <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-ledger-600"><span>Último: {new Date(lastBackup.createdAt).toLocaleString('pt-BR')}</span><span>{formatFileSize(lastBackup.size)}</span><span>{lastBackup.entries} lançamento(s)</span></div> : <p className="mt-1 text-xs font-medium text-signal-500">Nenhum backup foi preparado neste aparelho.</p>}</div>
           </div>
           <div className="mt-3 flex items-start gap-2 rounded-card bg-gold-50 p-3 text-gold-900 dark:bg-ink-900 dark:text-gold-100">
             <TriangleAlert size={15} className="mt-0.5 shrink-0 text-gold-700" />
@@ -227,6 +259,7 @@ export default function OpcoesPage() {
               <span className="text-xs font-normal text-ink-300">Substitui os dados atuais</span>
             </button>
           </div>
+          <FeedbackMessage message={feedback?.message} error={feedback?.error} className="mx-4 mb-4" />
         </section>}
 
         {activeTab === 'geral' && installState.isBrowser && !installState.isInstalled && <div className="bg-white dark:bg-ink-700 rounded-card shadow-card p-4 flex items-center justify-between gap-3">

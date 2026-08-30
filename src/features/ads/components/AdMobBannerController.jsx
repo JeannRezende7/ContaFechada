@@ -4,7 +4,7 @@ import { AdMob, BannerAdPluginEvents, BannerAdPosition, BannerAdSize } from '@ca
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { getAdMobRuntimeConfig } from '../../../config/ads.js';
 import { applyBannerLayout } from '../utils/adLayout.js';
-import { reportError } from '../../../utils/crashReporting.js';
+import { reportDiagnostic, reportError } from '../../../utils/crashReporting.js';
 
 let initialized = false;
 let consentPromise;
@@ -60,8 +60,20 @@ export default function AdMobBannerController() {
     const handles = [];
     Promise.all([
       AdMob.addListener(BannerAdPluginEvents.SizeChanged, ({ height }) => {
-        if (!disposed && bannerMayOccupySpace.current) applyBannerLayout(height);
+        if (!disposed && bannerMayOccupySpace.current) {
+          applyBannerLayout(height);
+          reportDiagnostic('admob_banner_size', {
+            height,
+            viewportWidth: window.innerWidth,
+            viewportHeight: window.innerHeight,
+            pixelRatio: window.devicePixelRatio,
+          });
+        }
       }),
+      AdMob.addListener(BannerAdPluginEvents.Loaded, () => reportDiagnostic('admob_banner_loaded', {
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+      })),
       AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (error) => {
         clearBannerSpace();
         reportError(error, 'admob_banner_load');

@@ -20,7 +20,26 @@ async function crashlytics() {
   // Capacitor plugin proxies expose every property dynamically, including
   // `then`. Returning one directly from an async function makes JavaScript
   // treat it as a Promise and call a non-existent native `then` method.
-  return { recordException: (options) => FirebaseCrashlytics.recordException(options) };
+  return {
+    recordException: (options) => FirebaseCrashlytics.recordException(options),
+    log: (options) => FirebaseCrashlytics.log(options),
+    setCustomKey: (options) => FirebaseCrashlytics.setCustomKey(options),
+  };
+}
+
+export async function reportDiagnostic(area, details = {}) {
+  try {
+    const client = await crashlytics();
+    if (!client) return;
+    await Promise.all(Object.entries(details).map(([key, value]) => client.setCustomKey({
+      key: sanitizeCrashText(`${area}_${key}`).slice(0, 64),
+      value: sanitizeCrashText(value),
+      type: typeof value === 'number' ? 'number' : 'string',
+    })));
+    await client.log({ message: sanitizeCrashText(area) });
+  } catch {
+    // Diagnostics must never interfere with the user flow.
+  }
 }
 
 export async function reportError(error, area = 'app') {

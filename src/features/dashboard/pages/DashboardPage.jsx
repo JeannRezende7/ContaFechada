@@ -7,33 +7,23 @@ import {
   syncDashboardRecorrencias,
 } from '../services/dashboardService.js';
 import { repositories } from '../../../repositories/index.js';
-import { computeInsights } from '../utils/insights.js';
 import FinancialTotalsGrid from '../../../components/ui/FinancialTotalsGrid.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import MonthNav from '../../../components/ui/MonthNav.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import SectionTabs from '../../../components/ui/SectionTabs.jsx';
-import { getCurrentMonthKey, daysRemainingInMonth, daysInMonth } from '../../../utils/monthKey.js';
+import { getCurrentMonthKey } from '../../../utils/monthKey.js';
 import {
-  DailyBudgetCard,
-  DashboardHighlights,
-  DashboardLinks,
-  InsightsCard,
-  MonthlyComparisonCard,
-  FreeValueSummary,
+  BudgetAlerts,
+  UpcomingBills,
 } from '../components/DashboardSections.jsx';
-import { usePremium } from '../../../contexts/PremiumContext.jsx';
-import { FEATURES } from '../../../config/premium.js';
 import { calcularPlanejamentoCategorias } from '../../valor-livre/utils/valorLivre.js';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const uid = user?.uid;
-  const { canUse, openPaywall } = usePremium();
-  const insightsAllowed = canUse(FEATURES.INSIGHTS_AVANCADOS);
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey());
   const [indicators, setIndicators] = useState(null);
-  const [comparacao, setComparacao] = useState(null);
   const [dashboardItems, setDashboardItems] = useState({ atual: [], anterior: [] });
   const [categorias, setCategorias] = useState([]);
   const [loadError, setLoadError] = useState(null);
@@ -53,7 +43,6 @@ export default function DashboardPage() {
     if (memory) {
       cachePainted = true;
       setIndicators(memory.indicators);
-      setComparacao(memory.comparacao);
       setDashboardItems({ atual: memory.lancamentosAtual || [], anterior: memory.lancamentosAnterior || [] });
       setRefreshing(false);
       return () => {
@@ -61,7 +50,6 @@ export default function DashboardPage() {
       };
     } else {
       setIndicators(null);
-      setComparacao(null);
     }
     setLoadError(null);
     setRefreshing(true);
@@ -75,7 +63,6 @@ export default function DashboardPage() {
           if (cancelled || serverApplied || cached.documentCount === 0) return;
           cachePainted = true;
           setIndicators(cached.indicators);
-          setComparacao(cached.comparacao);
           setDashboardItems({ atual: cached.lancamentosAtual || [], anterior: cached.lancamentosAnterior || [] });
           if (import.meta.env.DEV) {
             console.debug(`[dashboard] cache em ${Math.round(performance.now() - startedAt)}ms`);
@@ -98,7 +85,6 @@ export default function DashboardPage() {
         if (cancelled) return;
         serverApplied = true;
         setIndicators(data.indicators);
-        setComparacao(data.comparacao);
         setDashboardItems({ atual: data.lancamentosAtual || [], anterior: data.lancamentosAnterior || [] });
         setRefreshing(false);
         if (import.meta.env.DEV) {
@@ -112,7 +98,6 @@ export default function DashboardPage() {
           .then((updated) => {
             if (cancelled || !updated) return;
             setIndicators(updated.indicators);
-            setComparacao(updated.comparacao);
             setDashboardItems({ atual: updated.lancamentosAtual || [], anterior: updated.lancamentosAnterior || [] });
           })
           .catch((error) => {
@@ -158,24 +143,6 @@ export default function DashboardPage() {
     () => Object.fromEntries(categorias.map((c) => [c.id, c])),
     [categorias]
   );
-
-  const diasRestantes = daysRemainingInMonth(monthKey);
-  const diasNoMes = daysInMonth(monthKey);
-  const gastoDiario = indicators && diasRestantes > 0 ? indicators.saldoMes / diasRestantes : null;
-
-  const insights = useMemo(() => {
-    if (!indicators || !comparacao || !insightsAllowed) return [];
-    return computeInsights({
-      despesaPorCategoriaAtual: comparacao.porCategoriaAtual,
-      despesaPorCategoriaAnterior: comparacao.porCategoriaAnterior,
-      categoriasById,
-      saldoMes: indicators.saldoMes,
-      diasRestantes,
-      diasNoMes,
-      lancamentosAtual: dashboardItems.atual,
-      lancamentosAnterior: dashboardItems.anterior,
-    });
-  }, [indicators, comparacao, categoriasById, diasRestantes, diasNoMes, dashboardItems, insightsAllowed]);
 
   const resumoValorLivre = useMemo(
     () => calcularPlanejamentoCategorias(dashboardItems.atual, distribuicaoValorLivre),
@@ -235,17 +202,8 @@ export default function DashboardPage() {
           balanceValue={indicators?.saldoMes ?? 0}
         />
 
-        <MonthlyComparisonCard comparacao={comparacao} monthKey={monthKey} />
-        <DailyBudgetCard gastoDiario={gastoDiario} diasRestantes={diasRestantes} />
-        <FreeValueSummary resumo={resumoValorLivre} monthKey={monthKey} />
-        <DashboardHighlights indicators={indicators} />
-
-        <InsightsCard
-          insights={insights}
-          locked={!insightsAllowed}
-          onUnlock={() => openPaywall({ feature: FEATURES.INSIGHTS_AVANCADOS })}
-        />
-        <DashboardLinks />
+        <UpcomingBills items={dashboardItems.atual} categoriasById={categoriasById} />
+        <BudgetAlerts resumo={resumoValorLivre} />
       </div>
     </>
   );

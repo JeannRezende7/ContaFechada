@@ -246,7 +246,7 @@ function ForecastCard({ label, value, currency = true }) {
 
 export function BudgetsSection({ items, onSave, savingCategory }) {
   if (items.length === 0) {
-    return <p className="text-sm text-ink-300">Cadastre categorias de despesa para definir orçamentos.</p>;
+    return <div className="rounded-card bg-white p-6 text-center shadow-card dark:bg-ink-700"><p className="text-sm font-semibold text-ink-900 dark:text-ink-50">Nenhuma categoria de despesa</p><p className="mt-1 text-sm text-ink-300">Cadastre uma categoria para começar seu planejamento.</p><Link to="/categorias" className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-ledger-500 px-4 text-sm font-semibold text-white">Cadastrar categoria</Link></div>;
   }
 
   return (
@@ -285,12 +285,12 @@ function BudgetRow({ item, saving, onSave }) {
         <div className="flex-1 min-w-0">
           <div className="flex justify-between gap-3">
             <p className="text-sm font-medium text-ink-900 dark:text-ink-50">{item.categoria.nome}</p>
-            <p className="money text-sm text-ink-500">{formatCurrency(item.gasto)} gastos</p>
+            <p className={`money text-sm font-semibold ${item.status === 'excedido' ? 'text-signal-500' : item.status === 'atencao' ? 'text-gold-700' : 'text-ledger-600'}`}>{formatCurrency(item.gasto)} de {formatCurrency(item.limite)} planejados</p>
           </div>
           {item.limite > 0 && (
             <>
-              <div className="h-2 rounded-pill bg-ink-50 dark:bg-ink-900 overflow-hidden mt-2">
-                <div className={`h-full rounded-pill ${barTone}`} style={{ width: `${width}%` }} />
+              <div className="h-2.5 rounded-pill bg-ink-50 dark:bg-ink-900 overflow-hidden mt-2" role="progressbar" aria-label={`Uso do planejamento de ${item.categoria.nome}`} aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(item.percentual)}>
+                <div className={`h-full rounded-pill transition-[width] ${barTone}`} style={{ width: `${width}%` }} />
               </div>
               <p className={`mt-1 text-xs ${item.status === 'excedido' ? 'text-signal-500' : 'text-ink-300'}`}>
                 {Math.round(item.percentual)}% do limite · {item.restante >= 0

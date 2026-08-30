@@ -22,6 +22,7 @@ import { calcularFechamento } from '../utils/fechamento.js';
 import { compararParcelamentos } from '../utils/simuladorParcelamento.js';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { FEATURES } from '../../../config/premium.js';
+import FeedbackMessage from '../../../components/ui/FeedbackMessage.jsx';
 
 const TABS = [
   { id: 'resumo', label: 'Resumo' },
@@ -50,6 +51,7 @@ export default function PlanejamentoPage() {
   const [saldoInput, setSaldoInput] = useState('0');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(null);
+  const [feedback, setFeedback] = useState(null);
   const [fechamento, setFechamento] = useState(null);
   const [saldoReal, setSaldoReal] = useState('');
   const [closingNotes, setClosingNotes] = useState('');
@@ -116,10 +118,14 @@ export default function PlanejamentoPage() {
 
   async function handleSaveSaldo() {
     setSaving('saldo');
+    setFeedback(null);
     try {
       const value = Number(saldoInput) || 0;
       await repositories.planejamento.setSaldoInicial(uid, monthKey, value);
       setPlanejamento((current) => ({ ...current, saldoInicial: value }));
+      setFeedback({ message: 'Saldo inicial atualizado.', error: false });
+    } catch (error) {
+      setFeedback({ message: `Não foi possível salvar: ${error.message}`, error: true });
     } finally {
       setSaving(null);
     }
@@ -127,6 +133,7 @@ export default function PlanejamentoPage() {
 
   async function handleSaveBudget(categoryId, value) {
     setSaving(categoryId);
+    setFeedback(null);
     try {
       const orcamentos = await repositories.planejamento.setOrcamentoCategoria(
         uid,
@@ -136,6 +143,9 @@ export default function PlanejamentoPage() {
         planejamento.orcamentos
       );
       setPlanejamento((current) => ({ ...current, orcamentos }));
+      setFeedback({ message: 'Planejamento da categoria salvo.', error: false });
+    } catch (error) {
+      setFeedback({ message: `Não foi possível salvar o planejamento: ${error.message}`, error: true });
     } finally {
       setSaving(null);
     }
@@ -203,6 +213,7 @@ export default function PlanejamentoPage() {
       <Topbar title="Planejamento" icon={CalendarRange} />
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
         <MonthNav monthKey={monthKey} onChange={setMonthKey} />
+        <FeedbackMessage message={feedback?.message} error={feedback?.error} className="mb-4" />
         <div className="grid grid-cols-3 gap-2 mb-5">
           {TABS.map((item) => (
             <button

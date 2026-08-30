@@ -19,6 +19,38 @@ import { formatCurrency } from '../../../utils/formatCurrency.js';
 import { formatDateBR } from '../../../utils/formatDate.js';
 import { formatMonthShort } from '../../../utils/monthKey.js';
 
+export function UpcomingBills({ items, categoriasById }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = items
+    .filter((item) => item.tipo === 'despesa' && item.status !== 'pago' && item.dataVencimento && item.dataVencimento >= today)
+    .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento))
+    .slice(0, 4);
+
+  return (
+    <section className="mt-4 overflow-hidden rounded-card bg-white shadow-card dark:bg-ink-700">
+      <div className="flex items-center justify-between px-4 py-3">
+        <div><h2 className="text-base font-semibold text-ink-900 dark:text-ink-50">Contas próximas</h2><p className="text-xs text-ink-300">Próximos vencimentos ainda pendentes</p></div>
+        <CalendarClock size={19} className="text-ledger-600" aria-hidden="true" />
+      </div>
+      {upcoming.length === 0 ? (
+        <div className="border-t border-ink-100 px-4 py-5 text-center dark:border-ink-900"><p className="text-sm font-medium text-ink-700 dark:text-ink-100">Nenhuma conta próxima.</p><Link to="/" className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-ledger-600">Criar lançamento</Link></div>
+      ) : (
+        <div className="divide-y divide-ink-100 border-t border-ink-100 dark:divide-ink-900 dark:border-ink-900">{upcoming.map((item) => <div key={item.id} className="flex min-h-16 items-center justify-between gap-3 px-4 py-3"><div className="min-w-0"><p className="truncate text-sm font-medium text-ink-900 dark:text-ink-50">{item.descricao || 'Sem descrição'}</p><p className="text-xs text-ink-300">{formatDateBR(item.dataVencimento)} · {categoriasById[item.categoriaId]?.nome || 'Sem categoria'}</p></div><span className="money shrink-0 text-sm font-semibold text-signal-500">{formatCurrency(item.valor)}</span></div>)}</div>
+      )}
+    </section>
+  );
+}
+
+export function BudgetAlerts({ resumo }) {
+  const exceeded = resumo?.itens?.filter((item) => item.restante < 0) || [];
+  return (
+    <section className="mt-4 overflow-hidden rounded-card bg-white shadow-card dark:bg-ink-700">
+      <div className="flex items-center justify-between px-4 py-3"><div><h2 className="text-base font-semibold text-ink-900 dark:text-ink-50">Planejamento</h2><p className="text-xs text-ink-300">Categorias acima do limite</p></div><Target size={19} className={exceeded.length ? 'text-signal-500' : 'text-ledger-600'} aria-hidden="true" /></div>
+      {exceeded.length === 0 ? <div className="border-t border-ink-100 px-4 py-5 text-center dark:border-ink-900"><p className="text-sm font-medium text-ink-700 dark:text-ink-100">Nenhuma categoria acima do planejado.</p><Link to="/planejamento" className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-ledger-600">Planejar gastos</Link></div> : <div className="divide-y divide-ink-100 border-t border-ink-100 dark:divide-ink-900 dark:border-ink-900">{exceeded.map((item) => <div key={item.id} className="px-4 py-3"><div className="flex justify-between gap-3 text-sm"><span className="truncate font-medium text-ink-900 dark:text-ink-50">{item.nome || 'Sem categoria'}</span><span className="money shrink-0 font-semibold text-signal-500">{formatCurrency(item.gasto)} de {formatCurrency(item.planejado)}</span></div><div className="mt-2 h-2 overflow-hidden rounded-pill bg-ink-50 dark:bg-ink-900"><div className="h-full w-full rounded-pill bg-signal-500" /></div></div>)}</div>}
+    </section>
+  );
+}
+
 export function MonthlyComparisonCard({ comparacao, monthKey }) {
   if (!comparacao || comparacao.percentual == null) return null;
   const increased = comparacao.percentual > 0;

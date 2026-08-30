@@ -46,6 +46,9 @@ export function ConfirmProvider({ children }) {
       {children}
       {state && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirmação"
           className="fixed inset-0 bg-ink-900/50 backdrop-blur-[2px] flex items-center justify-center z-50 px-4"
           onKeyDown={(e) => e.key === 'Escape' && handle(state.choices ? null : false)}
         >
@@ -54,7 +57,7 @@ export function ConfirmProvider({ children }) {
               <span className="w-9 h-9 rounded-full bg-signal-50 text-signal-500 flex items-center justify-center shrink-0">
                 <TriangleAlert size={18} strokeWidth={2} />
               </span>
-              <p className="text-sm text-ink-900 dark:text-ink-50 pt-1.5">{state.message}</p>
+              <p className="whitespace-pre-line text-sm text-ink-900 dark:text-ink-50 pt-1.5">{state.message}</p>
             </div>
 
             {state.choices ? (
