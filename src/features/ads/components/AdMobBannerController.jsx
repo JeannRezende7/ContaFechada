@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { AdMob, BannerAdPosition, BannerAdSize } from '@capacitor-community/admob';
+import { AdMob, BannerAdPluginEvents, BannerAdPosition, BannerAdSize } from '@capacitor-community/admob';
 import { usePremium } from '../../../contexts/PremiumContext.jsx';
 import { getAdMobRuntimeConfig } from '../../../config/ads.js';
 import { applyBannerLayout } from '../utils/adLayout.js';
@@ -8,7 +8,6 @@ import { reportError } from '../../../utils/crashReporting.js';
 
 let initialized = false;
 let consentPromise;
-const FIXED_BANNER_HEIGHT = 50;
 
 function clearBannerSpace() {
   applyBannerLayout(0);
@@ -41,18 +40,41 @@ async function showBanner() {
   }
   await AdMob.showBanner({
     adId: config.bannerId,
-    adSize: BannerAdSize.BANNER,
+    adSize: BannerAdSize.ADAPTIVE_BANNER,
     position: BannerAdPosition.BOTTOM_CENTER,
     margin: 0,
     isTesting: config.isTesting,
   });
-  applyBannerLayout(FIXED_BANNER_HEIGHT);
   return true;
 }
 
 export default function AdMobBannerController() {
   const { hasProAccess, loading } = usePremium();
   const [overlayOpen, setOverlayOpen] = useState(() => hasBlockingOverlay());
+  const bannerMayOccupySpace = useRef(false);
+  bannerMayOccupySpace.current = !loading && !hasProAccess && !overlayOpen;
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return undefined;
+    let disposed = false;
+    const handles = [];
+    Promise.all([
+      AdMob.addListener(BannerAdPluginEvents.SizeChanged, ({ height }) => {
+        if (!disposed && bannerMayOccupySpace.current) applyBannerLayout(height);
+      }),
+      AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (error) => {
+        clearBannerSpace();
+        reportError(error, 'admob_banner_load');
+      }),
+    ]).then((listeners) => {
+      if (disposed) listeners.forEach((handle) => handle.remove());
+      else handles.push(...listeners);
+    }).catch((error) => reportError(error, 'admob_banner_listeners'));
+    return () => {
+      disposed = true;
+      handles.forEach((handle) => handle.remove());
+    };
+  }, []);
 
   useEffect(() => {
     const refresh = () => setOverlayOpen(hasBlockingOverlay());
@@ -70,7 +92,10 @@ export default function AdMobBannerController() {
     if (shouldShow) {
       showBanner().then((shown) => {
         if (!active && shown) AdMob.removeBanner().catch(() => {});
-      }).catch((error) => reportError(error, 'admob_banner'));
+      }).catch((error) => {
+        clearBannerSpace();
+        reportError(error, 'admob_banner');
+      });
     } else {
       clearBannerSpace();
       AdMob.removeBanner().catch(() => {});

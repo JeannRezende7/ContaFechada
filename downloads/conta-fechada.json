@@ -1,8 +1,8 @@
 {
-  "version": "5.3.16",
-  "versionCode": 24,
-  "sourceSha256": "fd80627d25c02e2e2aab9e800602df4644755f33ca932345b23b5f307e4075e1",
-  "apkSha256": "bd09ea686acbd7adc3a22d6a63af2b7c39b8a617cdf7cc697dfaf51d14b50318",
-  "size": 31231056,
-  "generatedAt": "2026-08-29T00:32:17.278Z"
+  "version": "5.3.17",
+  "versionCode": 25,
+  "sourceSha256": "11cba4516ee7799b9e0dd5c2e1dd9935c6a16d57b2e01d8e03c37a5a27f202b4",
+  "apkSha256": "8f2c783c7407f4807aae8cf6772c43c6757735725235c80d0950f44957007f62",
+  "size": 31231244,
+  "generatedAt": "2026-08-30T00:28:10.892Z"
 }
