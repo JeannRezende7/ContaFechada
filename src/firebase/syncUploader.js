@@ -1,4 +1,5 @@
-import { deleteUserDoc, setUserDoc } from './firestore.js';
+import { setUserDoc, tombstoneUserDoc } from './firestore.js';
+import { getRemoteCollection } from '../db/sync/localFirstTransfer.js';
 
 /**
  * Adapter de produção — liga a interface genérica de upload da fila de
@@ -13,7 +14,7 @@ import { deleteUserDoc, setUserDoc } from './firestore.js';
  */
 export function createFirestoreSyncUploader(uid) {
   return {
-    upsert: (entidade, registroId, payload) => setUserDoc(uid, entidade, registroId, payload),
-    remove: (entidade, registroId) => deleteUserDoc(uid, entidade, registroId),
+    upsert: (entidade, registroId, payload) => setUserDoc(uid, getRemoteCollection(entidade), registroId, payload),
+    remove: (entidade, registroId) => tombstoneUserDoc(uid, getRemoteCollection(entidade), registroId),
   };
 }

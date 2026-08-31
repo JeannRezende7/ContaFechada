@@ -1,4 +1,4 @@
-import { listUserDocs, setUserDoc, deleteUserDoc } from '../../firebase/firestore.js';
+import { listUserDocs, setUserDoc, tombstoneUserDoc } from '../../firebase/firestore.js';
 import { createLocalDocumentStore } from '../../repositories/sqlite/localDocumentStore.js';
 
 export const LOCAL_FIRST_DOMAINS = [
@@ -6,7 +6,11 @@ export const LOCAL_FIRST_DOMAINS = [
   'valorLivre', 'planejamento', 'fechamentos', 'gestorLancamentos', 'configuracoes',
 ];
 
-const REMOTE_COLLECTION = { configuracoes: 'config' };
+export const REMOTE_COLLECTION = { configuracoes: 'config' };
+
+export function getRemoteCollection(domain) {
+  return REMOTE_COLLECTION[domain] ?? domain;
+}
 
 function timestampMs(value) {
   if (typeof value === 'string') return new Date(value).getTime();
@@ -19,9 +23,9 @@ export function createFirestoreTransferAdapter(uid) {
   return {
     // Transferências completas precisam vir do servidor. Usar o cache aqui
     // pode produzir um snapshot parcial e omitir documentos antigos.
-    list: (domain) => listUserDocs(uid, REMOTE_COLLECTION[domain] ?? domain, { source: 'server' }),
-    upsert: (domain, id, payload) => setUserDoc(uid, REMOTE_COLLECTION[domain] ?? domain, id, payload),
-    remove: (domain, id) => deleteUserDoc(uid, REMOTE_COLLECTION[domain] ?? domain, id),
+    list: (domain) => listUserDocs(uid, getRemoteCollection(domain), { source: 'server' }),
+    upsert: (domain, id, payload) => setUserDoc(uid, getRemoteCollection(domain), id, payload),
+    remove: (domain, id) => tombstoneUserDoc(uid, getRemoteCollection(domain), id),
   };
 }
 

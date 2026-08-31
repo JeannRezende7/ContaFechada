@@ -7,6 +7,7 @@ import { ConfirmProvider } from './contexts/ConfirmContext.jsx';
 import { ThemeProvider } from './contexts/ThemeContext.jsx';
 import { PremiumProvider } from './contexts/PremiumContext.jsx';
 import { PrivacyProvider } from './contexts/PrivacyContext.jsx';
+import SyncManager from './features/sync/components/SyncManager.jsx';
 import './utils/pwaInstall.js';
 import { initializeCrashReporting } from './utils/crashReporting.js';
 import './index.css';
@@ -31,6 +32,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <ConfirmProvider>
             <PremiumProvider>
               <PrivacyProvider>
+                <SyncManager />
                 <App />
               </PrivacyProvider>
             </PremiumProvider>

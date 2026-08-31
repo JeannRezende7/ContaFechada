@@ -40,7 +40,6 @@ export default function AppRoutes() {
         <Route path="/termos" element={<TermosPage />} />
         <Route path="/privacidade" element={<PrivacidadePage />} />
         <Route path="/excluir-conta" element={<ExclusaoContaPage />} />
-        {!__NATIVE_ANDROID_BUILD__ && <Route path="/" element={<DownloadAppPage />} />}
         {!__NATIVE_ANDROID_BUILD__ && <Route path="/baixar-app" element={<DownloadAppPage />} />}
 
         <Route
@@ -58,7 +57,7 @@ export default function AppRoutes() {
 
           {/* Módulos financeiros — exclusivos do Premium na Web; o Android
               gratuito continua liberado (RequirePremiumWeb passa direto). */}
-          {__NATIVE_ANDROID_BUILD__ && <Route path="/" element={<LancamentosPage />} />}
+          <Route path="/" element={<LancamentosPage />} />
           <Route path="/resumo" element={<DashboardPage />} />
           <Route path="/lancamentos" element={<Navigate to="/" replace />} />
           <Route path="/categorias" element={<CategoriasPage />} />

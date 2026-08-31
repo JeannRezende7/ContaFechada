@@ -26,6 +26,7 @@ import MonthNav from '../../../components/ui/MonthNav.jsx';
 import SectionTabs from '../../../components/ui/SectionTabs.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import EmptyState from '../../../components/ui/EmptyState.jsx';
+import { useSyncRevision } from '../../sync/hooks/useSyncRevision.js';
 
 function CategoriaTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -53,6 +54,7 @@ function EvolucaoTooltip({ active, payload, label }) {
 }
 
 export default function RelatoriosPage() {
+  const syncRevision = useSyncRevision();
   const { user } = useAuth();
   const uid = user?.uid;
   const { canUse, openPaywall } = usePremium();
@@ -77,12 +79,12 @@ export default function RelatoriosPage() {
   useEffect(() => {
     if (!uid) return;
     getGastosPorCategoria(uid, monthKey, tipo).then(setCategoriaData);
-  }, [uid, monthKey, tipo]);
+  }, [uid, monthKey, tipo, syncRevision]);
 
   useEffect(() => {
     if (!uid || !podeVerEvolucao) return;
     getEvolucaoMensal(uid, monthKey, 6).then(setEvolucao);
-  }, [uid, monthKey, podeVerEvolucao]);
+  }, [uid, monthKey, podeVerEvolucao, syncRevision]);
 
   const chartData = useMemo(
     () => categoriaData.items.map((item) => ({ ...item, color: getColor(item.corKey).hex })),

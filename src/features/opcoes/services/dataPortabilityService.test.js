@@ -4,7 +4,7 @@ const firestore = vi.hoisted(() => ({
   listUserDocs: vi.fn(),
   getUserDoc: vi.fn(),
   deleteAllUserDocs: vi.fn(),
-  deleteUserDoc: vi.fn(),
+  deleteUserDocPermanently: vi.fn(),
 }));
 const authMock = vi.hoisted(() => ({ currentUser: null }));
 
@@ -53,7 +53,7 @@ describe('dataPortabilityService', () => {
     for (const collection of COLLECTIONS) {
       expect(firestore.deleteAllUserDocs).toHaveBeenCalledWith('u1', collection);
     }
-    expect(firestore.deleteUserDoc).toHaveBeenCalledWith('u1', 'config', 'geral');
+    expect(firestore.deleteUserDocPermanently).toHaveBeenCalledWith('u1', 'config', 'geral');
     expect(fetchMock).toHaveBeenCalledWith('/api/delete-private-user-data', {
       method: 'POST',
       headers: { authorization: 'Bearer token-123' },
@@ -66,8 +66,8 @@ describe('dataPortabilityService', () => {
     for (const collection of COLLECTIONS) {
       expect(firestore.deleteAllUserDocs).toHaveBeenCalledWith('u1', collection);
     }
-    expect(firestore.deleteUserDoc).toHaveBeenCalledWith('u1', 'config', 'geral');
-    expect(firestore.deleteUserDoc).not.toHaveBeenCalledWith('u1', 'private', 'subscription');
+    expect(firestore.deleteUserDocPermanently).toHaveBeenCalledWith('u1', 'config', 'geral');
+    expect(firestore.deleteUserDocPermanently).not.toHaveBeenCalledWith('u1', 'private', 'subscription');
   });
 
   it('rejects private deletion when the authenticated user does not match', async () => {

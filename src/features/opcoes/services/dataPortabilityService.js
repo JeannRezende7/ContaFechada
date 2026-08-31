@@ -1,4 +1,4 @@
-import { listUserDocs, getUserDoc, deleteAllUserDocs, deleteUserDoc } from '../../../firebase/firestore.js';
+import { listUserDocs, getUserDoc, deleteAllUserDocs, deleteUserDocPermanently } from '../../../firebase/firestore.js';
 import { auth } from '../../../firebase/config.js';
 import { USER_FINANCIAL_COLLECTIONS } from '../../../../shared/userDataCollections.js';
 import { Capacitor } from '@capacitor/core';
@@ -44,7 +44,7 @@ export async function exportUserData(uid) {
  */
 export async function deleteAllUserData(uid) {
   await Promise.all(COLLECTIONS.map((name) => deleteAllUserDocs(uid, name)));
-  await deleteUserDoc(uid, 'config', 'geral');
+  await deleteUserDocPermanently(uid, 'config', 'geral');
 
   const user = auth.currentUser;
   if (!user || user.uid !== uid) throw new Error('Usuário não autenticado.');
@@ -73,7 +73,7 @@ export async function deleteAllUserData(uid) {
  */
 export async function deleteCloudCopyOnly(uid) {
   await Promise.all(COLLECTIONS.map((name) => deleteAllUserDocs(uid, name)));
-  await deleteUserDoc(uid, 'config', 'geral');
+  await deleteUserDocPermanently(uid, 'config', 'geral');
 }
 
 export function downloadJson(filename, data) {

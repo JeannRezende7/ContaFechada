@@ -11,7 +11,6 @@ import {
   query,
   where,
   orderBy,
-  limit,
   serverTimestamp,
   increment,
   writeBatch,
@@ -95,6 +94,15 @@ function invalidateCollection(uid, subcollection) {
     collectionKey(uid, subcollection),
     (collectionRevisions.get(collectionKey(uid, subcollection)) || 0) + 1
   );
+}
+
+function visibleDocument(docSnapshot) {
+  const item = { id: docSnapshot.id, ...docSnapshot.data() };
+  return item.deletedAt ? null : item;
+}
+
+function visibleDocuments(snapshot) {
+  return snapshot.docs.map(visibleDocument).filter(Boolean);
 }
 
 export function getCollectionRevision(uid, subcollection) {
@@ -206,7 +214,31 @@ export async function updateUserDoc(uid, subcollection, docId, data) {
 }
 
 export async function deleteUserDoc(uid, subcollection, docId) {
+  return tombstoneUserDoc(uid, subcollection, docId);
+}
+
+export async function deleteUserDocPermanently(uid, subcollection, docId) {
   await deleteDoc(userDoc(uid, subcollection, docId));
+  invalidateCollection(uid, subcollection);
+}
+
+/**
+ * Synchronised removals stay visible long enough for every device to receive
+ * them through the incremental `updatedAt` query. Permanent cleanup is a
+ * separate retention concern.
+ */
+export async function tombstoneUserDoc(uid, subcollection, docId) {
+  await setDoc(
+    userDoc(uid, subcollection, docId),
+    {
+      deletedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      deviceId: getDeviceId(),
+      syncStatus: 'synced',
+      localVersion: increment(1),
+    },
+    { merge: true }
+  );
   invalidateCollection(uid, subcollection);
 }
 
@@ -216,7 +248,17 @@ export async function deleteUserDocsByIds(uid, subcollection, ids) {
   for (let i = 0; i < ids.length; i += CHUNK) {
     const batch = writeBatch(db);
     for (const id of ids.slice(i, i + CHUNK)) {
-      batch.delete(userDoc(uid, subcollection, id));
+      batch.set(
+        userDoc(uid, subcollection, id),
+        {
+          deletedAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          deviceId: getDeviceId(),
+          syncStatus: 'synced',
+          localVersion: increment(1),
+        },
+        { merge: true }
+      );
     }
     await batch.commit();
   }
@@ -226,7 +268,13 @@ export async function deleteUserDocsByIds(uid, subcollection, ids) {
 /** Deletes every doc in a subcollection. */
 export async function deleteAllUserDocs(uid, subcollection) {
   const snap = await getDocs(userCollection(uid, subcollection));
-  await deleteUserDocsByIds(uid, subcollection, snap.docs.map((d) => d.id));
+  const CHUNK = 400;
+  for (let i = 0; i < snap.docs.length; i += CHUNK) {
+    const batch = writeBatch(db);
+    for (const item of snap.docs.slice(i, i + CHUNK)) batch.delete(item.ref);
+    await batch.commit();
+  }
+  invalidateCollection(uid, subcollection);
 }
 
 /** Applies the same partial update to multiple docs — chunked like batchSetUserDocs. */
@@ -260,7 +308,7 @@ export async function getUserDoc(uid, subcollection, docId) {
   const key = queryCacheKey(uid, subcollection, 'doc', { docId });
   return cachedQuery(key, async () => {
     const snap = await getDoc(userDoc(uid, subcollection, docId));
-    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+    return snap.exists() ? visibleDocument(snap) : null;
   }, { bypass: subcollection === 'private' });
 }
 
@@ -270,7 +318,7 @@ export async function listUserDocs(uid, subcollection, { field, direction = 'des
   const key = queryCacheKey(uid, subcollection, 'list', { field: field || '', direction });
   return cachedQuery(key, async () => {
     const snap = await getDocsFromSource(q, source);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    return visibleDocuments(snap);
   }, { bypass: source !== 'default' });
 }
 
@@ -285,7 +333,7 @@ export async function listUserDocsInRange(
   const key = queryCacheKey(uid, subcollection, 'range', { field, gte, lte, direction });
   return cachedQuery(key, async () => {
     const snap = await getDocsFromSource(q, source);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    return visibleDocuments(snap);
   }, { bypass: source !== 'default' });
 }
 
@@ -296,7 +344,7 @@ export async function listUserDocsWhereEquals(uid, subcollection, field, value) 
   const key = queryCacheKey(uid, subcollection, 'equals', { field, value });
   return cachedQuery(key, async () => {
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    return visibleDocuments(snap);
   });
 }
 
@@ -310,7 +358,7 @@ export async function listUserDocsWhereEquals(uid, subcollection, field, value) 
 export async function listUserDocsUpdatedSince(uid, subcollection, sinceIso, { source = 'default' } = {}) {
   const col = userCollection(uid, subcollection);
   const sinceTimestamp = Timestamp.fromDate(new Date(sinceIso));
-  const q = query(col, where('updatedAt', '>=', sinceTimestamp), orderBy('updatedAt', 'asc'));
+  const q = query(col, where('updatedAt', '>', sinceTimestamp), orderBy('updatedAt', 'asc'));
   const key = queryCacheKey(uid, subcollection, 'updatedSince', { sinceIso });
   return cachedQuery(key, async () => {
     const snap = await getDocsFromSource(q, source);
@@ -320,11 +368,8 @@ export async function listUserDocsUpdatedSince(uid, subcollection, sinceIso, { s
 
 /** Cheapest possible existence check — fetches at most 1 doc instead of the whole subcollection. */
 export async function hasAnyUserDoc(uid, subcollection) {
-  const key = queryCacheKey(uid, subcollection, 'exists');
-  return cachedQuery(key, async () => {
-    const snap = await getDocs(query(userCollection(uid, subcollection), limit(1)));
-    return !snap.empty;
-  });
+  const items = await listUserDocs(uid, subcollection);
+  return items.length > 0;
 }
 
 export { where, query, orderBy };

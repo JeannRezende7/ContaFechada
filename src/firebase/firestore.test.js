@@ -51,6 +51,7 @@ import {
   listUserDocsUpdatedSince,
   setUserDoc,
   setUserDocMerged,
+  tombstoneUserDoc,
   updateUserDoc,
 } from './firestore.js';
 
@@ -106,6 +107,21 @@ describe('firestore.js — Fase 2 sync metadata', () => {
         syncStatus: 'synced',
         localVersion: { __increment: 1 },
       },
+      { merge: true }
+    );
+  });
+
+  it('writes a mergeable tombstone for incremental deletion sync', async () => {
+    await tombstoneUserDoc('u1', 'lancamentos', 'l1');
+
+    expect(mocks.setDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        deletedAt: 'SERVER_TIMESTAMP',
+        updatedAt: 'SERVER_TIMESTAMP',
+        syncStatus: 'synced',
+        localVersion: { __increment: 1 },
+      }),
       { merge: true }
     );
   });

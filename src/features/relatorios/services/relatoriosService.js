@@ -1,12 +1,11 @@
-import { listLancamentosByMonth } from '../../lancamentos/services/lancamentosService.js';
-import { listCategorias } from '../../categorias/services/categoriasService.js';
+import { repositories } from '../../../repositories/index.js';
 import { shiftMonthKey, formatMonthShort } from '../../../utils/monthKey.js';
 
 /** Totals for the given month, grouped by categoria, sorted highest first. */
 export async function getGastosPorCategoria(uid, monthKey, tipo = 'despesa') {
   const [lancamentos, categorias] = await Promise.all([
-    listLancamentosByMonth(uid, monthKey),
-    listCategorias(uid),
+    repositories.lancamentos.listByMonth(uid, monthKey),
+    repositories.categorias.list(uid),
   ]);
   const categoriasById = Object.fromEntries(categorias.map((c) => [c.id, c]));
 
@@ -33,7 +32,9 @@ export async function getGastosPorCategoria(uid, monthKey, tipo = 'despesa') {
 /** Entradas vs saídas for the `count` months ending at `monthKey`, oldest first. */
 export async function getEvolucaoMensal(uid, monthKey, count = 6) {
   const keys = Array.from({ length: count }, (_, i) => shiftMonthKey(monthKey, i - (count - 1)));
-  const porMes = await Promise.all(keys.map((key) => listLancamentosByMonth(uid, key)));
+  const porMes = await Promise.all(
+    keys.map((key) => repositories.lancamentos.listByMonth(uid, key))
+  );
 
   return keys.map((key, i) => {
     let receitas = 0;

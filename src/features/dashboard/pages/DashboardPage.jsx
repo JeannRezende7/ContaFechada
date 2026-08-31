@@ -5,6 +5,7 @@ import {
   getDashboardData,
   getDashboardMemoryCache,
   syncDashboardRecorrencias,
+  clearDashboardMemoryCache,
 } from '../services/dashboardService.js';
 import { repositories } from '../../../repositories/index.js';
 import FinancialTotalsGrid from '../../../components/ui/FinancialTotalsGrid.jsx';
@@ -18,8 +19,10 @@ import {
   UpcomingBills,
 } from '../components/DashboardSections.jsx';
 import { calcularPlanejamentoCategorias } from '../../valor-livre/utils/valorLivre.js';
+import { useSyncRevision } from '../../sync/hooks/useSyncRevision.js';
 
 export default function DashboardPage() {
+  const syncRevision = useSyncRevision();
   const { user } = useAuth();
   const uid = user?.uid;
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey());
@@ -30,6 +33,10 @@ export default function DashboardPage() {
   const [reloadToken, setReloadToken] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [distribuicaoValorLivre, setDistribuicaoValorLivre] = useState([]);
+
+  useEffect(() => {
+    if (syncRevision > 0) clearDashboardMemoryCache(uid);
+  }, [uid, syncRevision]);
 
   useEffect(() => {
     if (!uid) return;
@@ -122,12 +129,12 @@ export default function DashboardPage() {
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [uid, monthKey, reloadToken]);
+  }, [uid, monthKey, reloadToken, syncRevision]);
 
   useEffect(() => {
     if (!uid) return;
     repositories.categorias.list(uid).then(setCategorias);
-  }, [uid]);
+  }, [uid, syncRevision]);
 
   useEffect(() => {
     if (!uid) return;
@@ -137,7 +144,7 @@ export default function DashboardPage() {
       .then((items) => { if (!cancelled) setDistribuicaoValorLivre(items); })
       .catch(() => { if (!cancelled) setDistribuicaoValorLivre([]); });
     return () => { cancelled = true; };
-  }, [uid, monthKey]);
+  }, [uid, monthKey, syncRevision]);
 
   const categoriasById = useMemo(
     () => Object.fromEntries(categorias.map((c) => [c.id, c])),

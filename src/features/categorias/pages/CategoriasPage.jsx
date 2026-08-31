@@ -8,8 +8,10 @@ import CategoriaModal from '../components/CategoriaModal.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
 import RegrasCategorizacao from '../components/RegrasCategorizacao.jsx';
 import EmptyState from '../../../components/ui/EmptyState.jsx';
+import { useSyncRevision } from '../../sync/hooks/useSyncRevision.js';
 
 export default function CategoriasPage() {
+  const syncRevision = useSyncRevision();
   const { user } = useAuth();
   const uid = user?.uid;
   const [categorias, setCategorias] = useState([]);
@@ -32,7 +34,7 @@ export default function CategoriasPage() {
       await reload();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid]);
+  }, [uid, syncRevision]);
 
   const doTipo = useMemo(
     () => categorias.filter((c) => c.tipo === tab).sort((a, b) => a.ordem - b.ordem),

@@ -5,6 +5,7 @@ vi.mock('../../utils/deviceId.js', () => ({ getDeviceId: () => 'device-1' }));
 import { createNodeSqliteDriver } from '../drivers/nodeSqliteDriver.js';
 import { runMigrations } from '../migrationRunner.js';
 import { migrations } from '../migrations/index.js';
+import { enqueue } from './syncQueue.js';
 import { downloadRemoteChanges, getCursor, listConflictLog } from './downloadRemoteChanges.js';
 
 const BASE = { tipo: 'despesa', descricao: 'Feira', valor: 50, dataVencimento: '2026-07-10', status: 'pago' };
@@ -121,5 +122,43 @@ describe('downloadRemoteChanges', () => {
     );
     expect(JSON.parse(row.dados)).toMatchObject({ nome: 'Meta remota', valorAlvo: 500 });
     expect(row.sync_status).toBe('synced');
+  });
+
+  it('drops a stale queued payload when the remote version wins', async () => {
+    await enqueue(driver, {
+      entidade: 'metas',
+      registroId: 'm1',
+      operacao: 'update',
+      payload: { nome: 'Edição local antiga' },
+    });
+    await driver.run(
+      `INSERT INTO local_documents
+       (dominio,id,dados,created_at,updated_at,deleted_at,device_id,sync_status,local_version)
+       VALUES (?,?,?,?,?,NULL,?,'pending',1)`,
+      ['metas', 'm1', JSON.stringify({ nome: 'Edição local antiga' }), '2026-07-01T00:00:00.000Z', '2026-07-01T00:00:00.000Z', 'device-1']
+    );
+
+    await downloadRemoteChanges({
+      driver,
+      uid: 'u1',
+      entidade: 'metas',
+      storage: 'documents',
+      fetchChangedSince: vi.fn().mockResolvedValue([{
+        id: 'm1',
+        nome: 'Edição remota nova',
+        createdAt: '2026-07-01T00:00:00.000Z',
+        updatedAt: '2026-07-02T00:00:00.000Z',
+      }]),
+    });
+
+    expect(await driver.get(
+      'SELECT id FROM sync_queue WHERE entidade=? AND registro_id=?',
+      ['metas', 'm1']
+    )).toBeNull();
+    const row = await driver.get(
+      'SELECT dados FROM local_documents WHERE dominio=? AND id=?',
+      ['metas', 'm1']
+    );
+    expect(JSON.parse(row.dados).nome).toBe('Edição remota nova');
   });
 });

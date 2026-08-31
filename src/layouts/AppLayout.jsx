@@ -7,11 +7,14 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import OnboardingWizard from '../features/onboarding/components/OnboardingWizard.jsx';
 import { repositories } from '../repositories/index.js';
 import AdMobBannerController from '../features/ads/components/AdMobBannerController.jsx';
+import { PREMIUM_ENFORCED } from '../config/premium.js';
+import { usePremium } from '../contexts/PremiumContext.jsx';
 
 /** Mobile-first: bottom nav + stacked content. From md breakpoint up: sidebar layout. */
 export default function AppLayout() {
   const location = useLocation();
   const { user } = useAuth();
+  const { hasCloudAccess, loading: premiumLoading } = usePremium();
   const [onboardingOpen, setOnboardingOpen] = useState(false);
 
   useEffect(() => {
@@ -23,8 +26,16 @@ export default function AppLayout() {
     return () => window.removeEventListener('contafechada:open-onboarding', open);
   }, [user]);
 
-  if (!Capacitor.isNativePlatform() && location.pathname !== '/controle-assinaturas') {
-    return <Navigate to="/baixar-app" replace />;
+  const isWeb = !Capacitor.isNativePlatform();
+  const webAlwaysAllowed = ['/opcoes', '/opcoes/meu-plano', '/controle-assinaturas'];
+  if (
+    isWeb
+    && PREMIUM_ENFORCED
+    && !premiumLoading
+    && !hasCloudAccess
+    && !webAlwaysAllowed.includes(location.pathname)
+  ) {
+    return <Navigate to="/opcoes/meu-plano" replace />;
   }
   return (
     <div className="flex min-h-screen bg-paper text-ink-900 dark:bg-ink-900 dark:text-ink-50 selection:bg-ledger-200">

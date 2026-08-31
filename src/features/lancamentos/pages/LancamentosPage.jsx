@@ -28,6 +28,7 @@ import FinancialTotalsGrid from '../../../components/ui/FinancialTotalsGrid.jsx'
 import FeedbackMessage from '../../../components/ui/FeedbackMessage.jsx';
 import LoadingScreen from '../../../components/ui/LoadingScreen.jsx';
 import Topbar from '../../../components/layout/Topbar.jsx';
+import { useSyncRevision } from '../../sync/hooks/useSyncRevision.js';
 
 // A importação de fatura em PDF foi desativada (docs/ROADMAP_MONETIZACAO.txt,
 // item 2) — o componente, o parser e o pdf.worker continuam no repositório
@@ -63,6 +64,7 @@ function readPeriodSession() {
 }
 
 export default function LancamentosPage() {
+  const syncRevision = useSyncRevision();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const uid = user?.uid;
@@ -121,6 +123,7 @@ export default function LancamentosPage() {
       : `${defaultMonthKeyForNovo}-01`;
 
   const reload = useCallback(async () => {
+    void syncRevision;
     if (!uid) return;
     const meses = monthKeysInRange(gte, lte);
 
@@ -138,7 +141,7 @@ export default function LancamentosPage() {
     setLancamentos(gerouAlgo ? await repositories.lancamentos.listByRange(uid, gte, lte) : items);
     setRecorrencias(todasRecorrencias);
     setCarregado(true);
-  }, [uid, gte, lte]);
+  }, [uid, gte, lte, syncRevision]);
 
   useEffect(() => {
     reload();

@@ -1,6 +1,7 @@
 import { listUserDocsUpdatedSince } from '../../firebase/firestore.js';
 import { DOMAIN_ROW_CONFIG, toIsoString } from '../domainRowMappers.js';
 import { createLocalDocumentStore } from '../../repositories/sqlite/localDocumentStore.js';
+import { getRemoteCollection } from './localFirstTransfer.js';
 
 /**
  * Fase 7 do roadmap local-first: traz alterações remotas (feitas em outro
@@ -54,7 +55,9 @@ export async function downloadRemoteChanges({
   storage = 'typed',
 }) {
   const config = DOMAIN_ROW_CONFIG[entidade];
-  const fetcher = fetchChangedSince ?? ((ent, since) => listUserDocsUpdatedSince(uid, ent, since));
+  const fetcher = fetchChangedSince ?? ((ent, since) => (
+    listUserDocsUpdatedSince(uid, getRemoteCollection(ent), since, { source: 'server' })
+  ));
 
   const cursor = await getCursor(driver, entidade);
   const remoteItems = await fetcher(entidade, cursor);
@@ -126,8 +129,15 @@ export async function downloadRemoteChanges({
         continue;
       }
 
-      if (storage === 'documents') await store.putRemote(entidade, remote);
-      else await tx.run(config.insertSql, config.toRow(remote));
+      if (storage === 'documents') {
+        // The remote version won the timestamp comparison. Any queued local
+        // payload for this record is now stale and must not be uploaded after
+        // we apply the winner.
+        await tx.run('DELETE FROM sync_queue WHERE entidade=? AND registro_id=?', [entidade, remote.id]);
+        await store.putRemote(entidade, remote);
+      } else {
+        await tx.run(config.insertSql, config.toRow(remote));
+      }
       applied++;
       if (updatedAtIso > newestSeen) newestSeen = updatedAtIso;
     }
