@@ -10,6 +10,7 @@ const metadataPath = path.join(root, 'downloads', 'conta-fechada.json');
 const generatedApk = path.join(root, 'android', 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk');
 const inputs = [
   'android/app/build.gradle',
+  'android/app/google-services.json',
   'android/app/src/main',
   'android/build.gradle',
   'android/variables.gradle',

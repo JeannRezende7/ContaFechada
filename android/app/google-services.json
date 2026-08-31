@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "747882689573-f1p2719141bm784nnm1rhukh50htavfs.apps.googleusercontent.com",
+          "client_id": "747882689573-r3us05jibjd2ebiqr3kqahbv87s9btto.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.contafechada.app",
-            "certificate_hash": "a90947d4974046c0e926b6c1ce4f716d16d3dc30"
+            "certificate_hash": "54dc806492fb437dca313fcd17043afb83f44c37"
           }
         },
         {
