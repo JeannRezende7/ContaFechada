@@ -19,7 +19,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      navigate('/');
+      navigate(__NATIVE_ANDROID_BUILD__ ? '/' : '/lancamentos');
     } catch (err) {
       setError(err?.message || 'Não foi possível entrar. Tente novamente.');
       reportError(err, 'google_sign_in');

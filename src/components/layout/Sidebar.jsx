@@ -6,7 +6,7 @@ import { usePremium } from '../../contexts/PremiumContext.jsx';
 import { track, EVENTS } from '../../utils/analytics.js';
 
 const ITEMS = [
-  { to: '/', label: 'Lançamentos', icon: Receipt },
+  { to: __NATIVE_ANDROID_BUILD__ ? '/' : '/lancamentos', label: 'Lançamentos', icon: Receipt },
   { to: '/resumo', label: 'Resumo', icon: LayoutDashboard },
   { to: '/planejamento', label: 'Planejamento', icon: CalendarRange },
   { to: '/categorias', label: 'Categorias', icon: Tag },
@@ -34,7 +34,7 @@ export default function Sidebar() {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
+              end={item.to === '/' || item.to === '/lancamentos'}
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-pill px-3.5 py-2.5 lg:py-3 text-sm lg:text-base font-medium transition-colors ${
                   isActive ? 'bg-ledger-500 text-white' : 'text-ink-100 hover:bg-ink-700'

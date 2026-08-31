@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Receipt, Tag, CalendarRange } from 'lucide-react';
 
 const ITEMS = [
-  { to: '/', label: 'Lançamentos', icon: Receipt },
+  { to: __NATIVE_ANDROID_BUILD__ ? '/' : '/lancamentos', label: 'Lançamentos', icon: Receipt },
   { to: '/resumo', label: 'Resumo', icon: LayoutDashboard },
   { to: '/planejamento', label: 'Planejar', icon: CalendarRange },
   { to: '/categorias', label: 'Categorias', icon: Tag },
@@ -22,7 +22,7 @@ export default function BottomNav() {
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === '/'}
+            end={item.to === '/' || item.to === '/lancamentos'}
             className={({ isActive }) =>
               `flex flex-1 min-w-0 flex-col items-center gap-1 py-2.5 px-0.5 text-[10px] font-medium ${
                 isActive ? 'text-ledger-600 dark:text-ledger-400' : 'text-ink-500 dark:text-ink-300'

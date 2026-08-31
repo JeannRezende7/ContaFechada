@@ -1,4 +1,4 @@
-import { Download, ShieldCheck, Smartphone } from 'lucide-react';
+import { Download, LogIn, ShieldCheck, Smartphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import BrandIcon from '../../../components/ui/BrandIcon.jsx';
 
@@ -20,6 +20,13 @@ export default function DownloadAppPage() {
           >
             <Download size={18} /> Baixar aplicativo Android
           </a>
+
+          <Link
+            to="/lancamentos"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-pill border border-ledger-500 px-5 py-3 text-sm font-semibold text-ledger-600 transition hover:bg-ledger-50 dark:text-ledger-400 dark:hover:bg-ledger-500/10"
+          >
+            <LogIn size={18} /> Entrar na versão Web
+          </Link>
 
           <div className="mt-6 space-y-3 text-left text-xs text-ink-500 dark:text-ink-100">
             <p className="flex gap-2"><Smartphone size={16} className="mt-0.5 shrink-0 text-ledger-600" />Abra o arquivo baixado e autorize a instalação pelo navegador quando o Android solicitar.</p>
