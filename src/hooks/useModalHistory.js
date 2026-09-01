@@ -4,6 +4,10 @@ import { App } from '@capacitor/app';
 
 const HISTORY_KEY = '__contafechadaModal';
 
+export function shouldCloseModalOnPopState(state, modalId) {
+  return state?.[HISTORY_KEY] !== modalId;
+}
+
 /** Makes browser/Android Back close an open modal before leaving its page. */
 export function useModalHistory(open, onClose) {
   const modalIdRef = useRef(`modal-${crypto.randomUUID()}`);
@@ -21,7 +25,15 @@ export function useModalHistory(open, onClose) {
       );
     }
 
-    const handlePopState = () => onClose();
+    // Nested modals each own one history entry. When the child closes, the
+    // browser returns to the parent's entry and emits the same popstate event
+    // to both listeners. The parent must stay open because it is now the
+    // active history entry; only the modal whose id is no longer current
+    // should close.
+    const handlePopState = (event) => {
+      if (!shouldCloseModalOnPopState(event.state, modalId)) return;
+      onClose();
+    };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [open, onClose]);

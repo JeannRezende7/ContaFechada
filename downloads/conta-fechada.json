@@ -1,8 +1,8 @@
 {
   "version": "5.3.18",
-  "versionCode": 32,
-  "sourceSha256": "1f8e75eb4c86e6ca94d16fb46dd7972c1858eaf4bb4cd9ee0b8faed5ca02e8bd",
-  "apkSha256": "e71e41ede995ce1a28aa575a5a847be2efbe3a49d74d59e624ebb7f937533ff1",
-  "size": 31233498,
-  "generatedAt": "2026-09-01T14:12:41.260Z"
+  "versionCode": 33,
+  "sourceSha256": "a396f6548c145e4550e669e540f32de32e9bb038a9e8ce5531d2c6c1d3324ced",
+  "apkSha256": "0ecce71889fd2b958fdecceb7aac89e0cb46246e70533c821999805c9c1febae",
+  "size": 31233522,
+  "generatedAt": "2026-09-01T14:45:48.157Z"
 }
