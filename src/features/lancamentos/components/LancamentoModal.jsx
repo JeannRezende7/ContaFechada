@@ -486,6 +486,7 @@ export default function LancamentoModal({
             categorias={categoriasDoTipo}
             value={form.categoriaId}
             onChange={(id) => update('categoriaId', id)}
+            inline
           />
         </div>
 

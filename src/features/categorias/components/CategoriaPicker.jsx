@@ -9,7 +9,7 @@ import { useModalHistory } from '../../../hooks/useModalHistory.js';
  * <select> — the colored icon doubles as a visual index while browsing,
  * not just after picking.
  */
-export default function CategoriaPicker({ categorias, value, onChange, compact = false, emptyLabel = 'Sem categoria', EmptyIcon = Ban }) {
+export default function CategoriaPicker({ categorias, value, onChange, compact = false, inline = false, emptyLabel = 'Sem categoria', EmptyIcon = Ban }) {
   const [open, setOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const rootRef = useRef(null);
@@ -46,7 +46,40 @@ export default function CategoriaPicker({ categorias, value, onChange, compact =
 
   return (
     <div ref={rootRef} onKeyDown={handleKeyDown} className="relative">
-      {compact ? (
+      {inline ? (
+        <div className="grid grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-8">
+          {principais.map((c) => {
+            const color = getColor(c.corKey);
+            const Icon = getIcon(c.icone);
+            const selected = value === c.id;
+            return (
+              <button
+                type="button"
+                key={c.id}
+                onClick={() => pick(c.id)}
+                aria-label={`Categoria ${c.nome}`}
+                aria-pressed={selected}
+                className="flex min-w-0 flex-col items-center gap-1"
+              >
+                <span
+                  className={`flex h-12 w-12 items-center justify-center rounded-full transition-all ${color.dot} ${
+                    selected ? 'ring-2 ring-ink-900 ring-offset-2 dark:ring-ink-50 dark:ring-offset-ink-700' : 'opacity-90 hover:opacity-100'
+                  }`}
+                >
+                  <Icon size={19} strokeWidth={2} className="text-white" />
+                </span>
+                <span className="line-clamp-2 text-center text-[11px] leading-tight text-ink-500">{c.nome}</span>
+              </button>
+            );
+          })}
+          <button type="button" onClick={() => setShowAll(true)} aria-label="Mostrar todas as categorias" className="flex min-w-0 flex-col items-center gap-1">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-ink-100 text-ink-500 transition-colors hover:bg-ledger-50 hover:text-ledger-600 dark:bg-ink-900">
+              <Plus size={22} strokeWidth={2} />
+            </span>
+            <span className="text-center text-[11px] leading-tight text-ink-500">Mais</span>
+          </button>
+        </div>
+      ) : compact ? (
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
