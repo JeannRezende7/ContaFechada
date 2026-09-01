@@ -36,7 +36,7 @@ export default function DownloadAppPage() {
           <p className="mt-6 text-[11px] text-ink-300">Versão {__APP_VERSION__} · distribuição temporária</p>
         </section>
         <p className="mt-5 text-center text-xs text-ink-300">
-          <Link to="/termos" className="underline">Termos de Uso</Link>{' · '}<Link to="/privacidade" className="underline">Privacidade</Link>{' · '}<Link to="/excluir-conta" className="underline">Excluir conta</Link>
+          <Link to="/termos" className="underline">Termos de Uso</Link>{' · '}<Link to="/privacidade" className="underline">Privacidade</Link>
         </p>
       </div>
     </main>
